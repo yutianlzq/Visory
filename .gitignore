@@ -224,3 +224,38 @@ upstream/daily_stock_analysis/
 # Local temporary files
 *.bak
 *.tmp
+
+# Daily Stock Analysis local configuration and runtime artifacts
+.env.*
+*.env
+*.env.local
+.env.*.local
+!.env.example
+/.codex/
+/.tmp/
+/review.md
+/litellm_config.yaml
+/litellm_config.*.yaml
+/data/
+/.llm_usage_hmac_secret
+**/.llm_usage_hmac_secret
+/logs/
+/reports/
+*.db
+*.sqlite
+*.sqlite3
+/local/
+/run.sh
+/static/
+/node_modules/
+/apps/dsa-web/node_modules/
+/apps/dsa-web/dist/
+/apps/dsa-web/build/
+/apps/dsa-web/coverage/
+/apps/dsa-desktop/node_modules/
+/apps/dsa-desktop/dist/
+
+# Local AI collaboration artifacts; shared rules remain in AGENTS.md.
+.claude/*
+!.claude/skills/
+!.claude/skills/**

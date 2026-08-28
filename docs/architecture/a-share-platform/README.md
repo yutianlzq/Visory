@@ -1,10 +1,10 @@
 # Visory 架构索引
 
-状态：Implementation Documentation Baseline（代码尚未按目标架构完成）
+状态：DSA Engineering Baseline Imported / Verified（目标架构 Work Package 0/45）
 最后更新：2026-08-28
 
 本文是 **Visory** 个人A股研究平台的架构索引。面向Claude Code和Codex的需求、契约、页面、编码、实施和部署总入口见[Visory开发总指引](CLAUDE-CODE-GUIDE.md)。当前文档集已经形成可编码基线，但不代表相应能力已经完成开发；实现状态只能由代码、Migration、测试和运行证据证明。
-> 当前工作区状态：`daily_stock_analysis` 仅以只读归档保存在 `upstream/daily_stock_analysis/`，其他外部项目保存在 `references/repos/`。Visory 第一方代码尚未导入或创建；该目录调整不改变“以 daily_stock_analysis 为迁移底座”的架构决策。
+> 当前工作区状态：G002 已将 `daily_stock_analysis` 固定提交 `fb4735a1055caefa2396982af3b09121feb9ff30` 导入项目，形成可安装、可测试、可构建的迁移底座；历史快照仍只读保存在 `upstream/daily_stock_analysis/`，其他外部项目保存在 `references/repos/`。这不代表目标架构已经实现：45 个 Work Package 仍全部 `NOT_STARTED`。
 
 ## 项目标识
 
@@ -121,18 +121,24 @@ Fleur 不作为运行时依赖。平台只吸收其数据契约、分层建模�
 | 页面与交互 | 信息架构、路由、线框图、页面状态、Evidence与响应式 | React/Vite统一前端 | MVP UX基线已形成 | [页面信息架构与低保真原型 v1](page-prototypes-and-information-architecture-v1.md) |
 | 工程与实施 | 代码规范、Migration、测试、Work Package、回填和Exit Gate | 当前仓库及目标平台 | M0—M9执行基线已形成 | [工程与编码规范 v1](engineering-and-coding-standards-v1.md)；[实施路线与验收方案 v1](implementation-roadmap-and-acceptance-v1.md) |
 | 仓库与参考治理 | 文档、基础上游、外部参考快照、只读边界和后续代码目录规划 | daily_stock_analysis及九类参考项目 | 目录治理基线已形成 | [仓库布局与目录责任](repository-layout.md)；[参考项目采用矩阵](reference-adoption-matrix.md) |
-| 实现状态 | Work Package真实代码、验证和发布状态 | 全部平台模块 | 当前全部目标WP尚未开始 | [Visory实现状态](IMPLEMENTATION-STATUS.md) |
+| 实现状态 | Goal、底座、Work Package真实代码、验证和发布状态 | 全部平台模块 | G001/G002完成；DSA底座已导入验证；目标WP 0/45 | [Visory实现状态](IMPLEMENTATION-STATUS.md)；[G002验收](GOAL-G002-STATUS.md) |
 
 ## 仓库与参考项目治理
 
 当前目录按职责分为：
 
-- `docs/`：Visory 第一方需求、架构、契约和实施文档；
-- `upstream/daily_stock_analysis/`：后续迁移使用的本地只读基础上游历史快照；
+- `src/`、`api/`、`apps/`、`scripts/`、`tests/` 等：已导入的 DSA 迁移底座；
+- `.github/workflows/ci.yml`：唯一启用的 Visory 安全 CI；
+- `docs/`：Visory 第一方需求、架构、契约、Goal/WP 状态，以及重定位的上游文档；
+- `upstream-baseline/` 与 `third_party/`：固定提交清单、验证结果和许可证归属；
+- `upstream/daily_stock_analysis/`：本地只读基础上游历史快照，不提交；
 - `references/repos/`：九个本地只读外部参考快照，不属于运行时代码；
 - `references/README.md` 与 `references/manifest.yaml`：可提交的参考治理说明和机器可读核验清单。
 
-2026-08-28 已按 GitHub 默认分支 HEAD、Git tree/blob SHA 和提交历史完成十个快照核验：八个与核验时 HEAD 完全一致，`daily_stock_analysis` 与 `Financial-API` 对应已定位历史提交。Sequoia-X 与本地治理名为 UZI-Skill 的衍生快照（直接来源 `gosinkx/UZI-SKILL-astock`）的 MIT 信息仅来自 HEAD README 声明，其余许可证由 GitHub License API 检测。目录责任和未来第一方代码规划见[仓库布局与目录责任](repository-layout.md)，允许采用方式和 Work Package 边界见[参考项目采用矩阵](reference-adoption-matrix.md)，完整核验信息见[`../../../references/manifest.yaml`](../../../references/manifest.yaml)。核验不代表允许整体复制或直接依赖；代码吸收仍需按许可证、契约和独立 Work Package 执行。
+2026-08-28 已按 GitHub 默认分支 HEAD、Git tree/blob SHA 和提交历史完成十个快照核验：八个与核验时 HEAD 完全一致，`daily_stock_analysis` 与 `Financial-API` 对应已定位历史提交。Sequoia-X 与本地治理名为 UZI-Skill 的衍生快照（直接来源 `gosinkx/UZI-SKILL-astock`）的 MIT 信息仅来自 HEAD README 声明，其余许可证由 GitHub License API 检测。目录责任见[仓库布局与目录责任](repository-layout.md)，允许采用方式和 Work Package 边界见[参考项目采用矩阵](reference-adoption-matrix.md)，完整核验信息见[`../../../references/manifest.yaml`](../../../references/manifest.yaml)。核验不代表允许整体复制或直接依赖；代码吸收仍需按许可证、契约和独立 Work Package 执行。
+
+G002 已按固定提交完成 DSA 底座导入与验证：1126/1126 blob 验签，Python 失败差异经对称重跑归一化为 `baseline_regression_delta=0`，固定 DSA 与 Visory 的 Web lint/build 均通过，`web_lint_build_regression_delta=0`。详细证据见 [Visory-G002 进度与验收记录](GOAL-G002-STATUS.md)。归档在 `docs/upstream/daily_stock_analysis/workflows/` 的上游 workflow 仅作测试证据，未启用。
+
 ## 推荐实施顺序
 
 数据平台、Feature Store、市场/板块、复盘、研究、策略、Hikyuu回测、主平台及公网部署已经形成可编码文档基线。实现必须遵循[实施路线与验收方案](implementation-roadmap-and-acceptance-v1.md)，且所有代码、Migration、Compose和恢复流程先在本地/隔离环境验收，不直接在服务器边开发边试错：

@@ -1,0 +1,104 @@
+schema_version: 1
+name: daily_stock_analysis
+repository: https://github.com/ZhuLinsen/daily_stock_analysis
+imported_commit: fb4735a1055caefa2396982af3b09121feb9ff30
+imported_tree: 1fa51b5f3fde0084af85d6ad4e463aed3610cd0a
+historical_local_snapshot: 96bc532dfcb21e3a7d0fdbdfa87d764b9b61d2ee
+import_method: git-tree-blob-reconstruction
+integrity:
+  expected_blobs: 1126
+  verified_blobs: 1126
+  missing_blobs: 0
+  mismatched_blobs: 0
+  extra_files: 0
+included_paths:
+  - .env.example
+  - .gitattributes
+  - .github/requirements-ci.txt
+  - .github/ci-test-durations.json
+  - .github/scripts/ai_review.py
+  - .github/scripts/build_release_notes.py
+  - api/
+  - apps/
+  - bot/
+  - data_provider/
+  - docker/
+  - main.py
+  - pyproject.toml
+  - requirements.txt
+  - scripts/
+  - server.py
+  - setup.cfg
+  - src/
+  - strategies/
+  - templates/
+  - tests/
+  - webui.py
+relocated_paths:
+  - source: LICENSE
+    destination: third_party/licenses/daily_stock_analysis-MIT.txt
+  - source: README.md
+    destination: docs/upstream/daily_stock_analysis/README.md
+  - source: docs/
+    destination: docs/upstream/daily_stock_analysis/
+  - source: SKILL.md
+    destination: docs/upstream/daily_stock_analysis/SKILL.md
+archived_workflow_evidence:
+  active: false
+  destination: docs/upstream/daily_stock_analysis/workflows/
+  files:
+    - 00-daily-analysis.yml
+    - ci.yml
+    - docker-publish.yml
+    - ghcr-dockerhub.yml
+active_visory_workflows:
+  - .github/workflows/ci.yml
+excluded_paths:
+  - .claude/
+  - .github/CODEOWNERS
+  - .github/copilot-instructions.md
+  - .github/FUNDING.yml
+  - .github/instructions/
+  - .github/ISSUE_TEMPLATE/
+  - .github/PULL_REQUEST_TEMPLATE.md
+  - .github/release.yml
+  - .github/scripts/label-docs-only.js
+  - .github/scripts/label-pr.js
+  - .github/scripts/pr_ai_review.js
+  - .github/workflows/
+  - .dockerignore
+  - .gitignore
+  - AGENTS.md
+  - CLAUDE.md
+exclusion_notes:
+  github_workflows: Upstream workflows are not copied into the active .github/workflows directory; four files are archived outside the Actions discovery path as fixed-baseline test evidence.
+  repository_governance: Visory root governance, ignore rules, README, LICENSE and architecture documents are retained.
+license:
+  expression: MIT
+  file: third_party/licenses/daily_stock_analysis-MIT.txt
+notice: third_party/NOTICE.md
+verification_commands:
+  python_install: python -m pip install -r .github/requirements-ci.txt
+  python_syntax: python -m compileall -q main.py server.py webui.py src api bot data_provider strategies
+  python_import_smoke: python -c "from api.app import app; from src.config import get_config; print('imports ok')"
+  python_offline_tests: python -m pytest -m "not network" -ra
+  web_install: npm ci --prefix apps/dsa-web
+  web_lint: npm run lint --prefix apps/dsa-web
+  web_build: npm run build --prefix apps/dsa-web
+  repository_audit: python scripts/check_visory_baseline.py
+validation_result:
+  status: verified
+  verified_on: 2026-08-28
+  environment: Windows 11, Python 3.12.9, Node 22.20.0, npm 11.11.0
+  clean_upstream: "6265 passed, 83 failed, 5 skipped, 4 deselected"
+  visory_import: "6263 passed, 85 failed, 5 skipped, 4 deselected"
+  failure_normalization:
+    raw_visory_only: 3
+    raw_baseline_only: 1
+    symmetric_rerun: "one process-group test passed in both; two macOS signature tests failed in both because WSL bash returned E_ACCESSDENIED"
+  baseline_regression_delta: 0
+  web_clean_upstream: passed
+  web_visory_import: passed
+  web_lint_build_regression_delta: 0
+  visory_safety_contracts: "78 passed"
+  archived_workflows_enabled: false

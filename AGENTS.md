@@ -44,9 +44,9 @@
 ## 2. AI 协作资产治理
 
 - `AGENTS.md` 是仓库内 AI 协作规则的唯一真源。
-- `CLAUDE.md` 必须是指向 `AGENTS.md` 的软链接，用于兼容 Claude 生态。
-- `.github/copilot-instructions.md` 与 `.github/instructions/*.instructions.md` 是 GitHub Copilot / Coding Agent 的镜像或分层补充；若与本文件冲突，以 `AGENTS.md` 为准。
-- 仓库协作 skill 存放在 `.claude/skills/`，分析产物存放在 `.claude/reviews/`；前者可以入库，后者默认视为本地产物。
+- `CLAUDE.md` 是只指向 `AGENTS.md` 的兼容入口。优先保留可靠的软链接；若目标 Windows 环境不能可靠读取，可改为简短普通 Markdown 指引，但不得复制完整规则。
+- 若未来新增 `.github/copilot-instructions.md`、`.github/instructions/*.instructions.md` 或 `.claude/skills/`，它们只能是镜像或分层补充；若与本文件冲突，以 `AGENTS.md` 为准。
+- `.claude/reviews/` 等分析产物默认视为本地产物，不得作为运行时依赖。
 - 根目录 `SKILL.md` 与 `docs/openclaw-skill-integration.md` 属于产品或外部集成说明，不是仓库协作规则真源。
 - 若未来新增 `.agents/skills/` 或其他 agent 专用目录，必须先明确单一真源，再通过脚本或镜像同步；禁止手工长期维护多份同义内容。
 - 修改 AI 协作治理资产时，执行：
@@ -54,6 +54,15 @@
 ```bash
 python scripts/check_ai_assets.py
 ```
+
+## 2.1 Work Package 与上游边界
+
+- 每个实现任务只推进一个 Work Package；未获得新目标前，不顺手实现相邻 WP。
+- 只读取当前 WP 所需的最小文档集；发生明确契约冲突时再按领域补读。
+- `upstream/` 与 `references/` 中的外部源码均为只读证据，不在其中开发、运行脚本或写入产物。
+- `docs/upstream/daily_stock_analysis/` 保存重定位后的上游文档与非激活 workflow 证据；其中 workflow 不属于 `.github/workflows/`，不得作为 Visory 自动化启用。
+- DSA 导入代码中的 Legacy SQLite 和内存 Task Queue 仅属于迁移基线，不是 Visory 目标架构实现。
+- 没有可复现测试或等价验证证据，不得把 Goal、WP 或能力标记为 `VERIFIED`。
 
 ## 3. 仓库速览
 
@@ -64,7 +73,7 @@ python scripts/check_ai_assets.py
   - `server.py`：FastAPI 服务入口
   - `apps/dsa-web/`：Web 前端
   - `apps/dsa-desktop/`：Electron 桌面端
-  - `.github/workflows/`：CI、发布、每日任务
+  - `.github/workflows/`：Visory 安全 CI；上游发布与每日任务仅在 `docs/upstream/daily_stock_analysis/workflows/` 归档，不启用
 - 核心职责：
   - `src/core/`：主流程编排
   - `src/services/`：业务服务层
@@ -147,16 +156,15 @@ gh run view <run_id> --log-failed
 
 ### CI 覆盖原则
 
-当前仓库 CI 主要包含：
+当前仓库只启用 `.github/workflows/ci.yml`，包含三个阻断 Job：
 
 | 检查项 | 来源 | 说明 | 是否阻断 |
 | --- | --- | --- | --- |
-| `ai-governance` | `.github/workflows/ci.yml` | 校验 `AGENTS.md` / `CLAUDE.md` / `.github` 指令 / `.claude/skills` 关系 | 是 |
-| `backend-gate` | `.github/workflows/ci.yml` | 执行 `./scripts/ci_gate.sh` | 是 |
-| `docker-build` | `.github/workflows/ci.yml` | Docker 构建与关键模块导入 smoke | 是 |
-| `web-gate` | `.github/workflows/ci.yml` | 前端改动时执行 `npm run lint` + `npm run build` | 是（触发时） |
-| `network-smoke` | `.github/workflows/network-smoke.yml` | `pytest -m network` + `scripts/test.sh quick` | 否，观测项 |
-| `pr-review` | `.github/workflows/pr-review.yml` | PR 静态检查 + AI 审查 + 自动标签 | 否，辅助项 |
+| `governance` | `.github/workflows/ci.yml` | 执行 `scripts/check_ai_assets.py` 与 `scripts/check_visory_baseline.py`，校验治理、外部源码边界、许可证、链接和 workflow 安全 | 是 |
+| `backend` | `.github/workflows/ci.yml` | 安装 `.github/requirements-ci.txt` 并执行 `bash scripts/ci_gate.sh` | 是 |
+| `web` | `.github/workflows/ci.yml` | 在 `apps/dsa-web/` 执行 `npm ci`、`npm run lint`、`npm run build` | 是 |
+
+上游每日分析、镜像发布、Release 和桌面发布 workflow 未在 `.github/workflows/` 启用；用于固定基线契约测试的非激活副本位于 `docs/upstream/daily_stock_analysis/workflows/`。
 
 若 PR 上已有对应 CI 结果，可直接引用 CI 结论；若 CI 未覆盖改动面，或本地与 CI 环境差异较大，需要补充说明本地验证与缺口。
 

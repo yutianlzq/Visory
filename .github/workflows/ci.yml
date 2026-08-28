@@ -1,0 +1,75 @@
+name: Visory Baseline CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visory-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  governance:
+    name: Governance and repository boundaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Check AI governance
+        run: python scripts/check_ai_assets.py
+      - name: Check baseline, links, licenses and workflow safety
+        run: python scripts/check_visory_baseline.py
+
+  backend:
+    name: Python deterministic gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            .github/requirements-ci.txt
+      - name: Install Python dependencies
+        run: python -m pip install -r .github/requirements-ci.txt
+      - name: Run deterministic backend gate
+        run: bash scripts/ci_gate.sh
+
+  web:
+    name: Web lint and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/dsa-web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/dsa-web/package-lock.json
+      - name: Install Web dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
