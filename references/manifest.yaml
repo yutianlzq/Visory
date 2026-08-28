@@ -1,0 +1,408 @@
+version: 2
+last_updated: '2026-08-28'
+projects:
+- id: daily_stock_analysis
+  display_name: daily_stock_analysis
+  repository: https://github.com/ZhuLinsen/daily_stock_analysis
+  original_directory: daily_stock_analysis-main
+  local_path: upstream/daily_stock_analysis
+  source_type: archive_snapshot
+  branch_hint: main
+  default_branch: main
+  commit: 96bc532dfcb21e3a7d0fdbdfa87d764b9b61d2ee
+  commit_status: verified_historical_commit_except_windows_symlink
+  github_head_commit: fb4735a1055caefa2396982af3b09121feb9ff30
+  head_committed_at: '2026-08-25T14:54:01Z'
+  snapshot_committed_at: '2026-08-19T15:46:49Z'
+  verified_at: '2026-08-28T06:14:15Z'
+  content_match: differs_from_current_head
+  missing_local_files: 13
+  extra_local_files: 0
+  mismatched_files: 79
+  license: MIT
+  license_status: github_verified
+  role: base_upstream
+  adoption_mode: migration
+  allowed_use:
+  - 读取 React/FastAPI、LLM、报告、通知、历史能力和现有测试作为迁移基线
+  - 在后续独立工作包中制定可回滚的底座导入方案
+  prohibited_use:
+  - 本轮直接复制到项目根目录
+  - 把 SQLite、内存任务或现有数据抓取口径视为 Visory 目标契约
+  - 在未核验 commit 与 LICENSE 前吸收代码
+  relevant_work_packages:
+  - WP-0003
+  - WP-0103
+  - WP-0501
+  - WP-0502
+  - WP-0503
+  - WP-0505
+  - WP-0701
+  - WP-0703
+  - WP-0802
+  relevant_paths:
+  - README.md
+  - api/
+  - apps/dsa-web/
+  - data_provider/
+  - src/
+  - tests/
+  verification_status: verified_historical_snapshot_except_windows_symlink
+  verification_note: 本地内容对应历史提交；除 CLAUDE.md 在 Windows ZIP 解压后由符号链接物化为空普通文件外，其余文件与该提交一致。
+- id: a-stock-data
+  display_name: a-stock-data
+  repository: https://github.com/simonlin1212/a-stock-data
+  original_directory: a-stock-data-main
+  local_path: references/repos/a-stock-data
+  source_type: archive_snapshot
+  branch_hint: main
+  default_branch: main
+  commit: f90d67853b8108f13d286e1df20b357e2c5198a9
+  commit_status: verified_default_branch_head
+  github_head_commit: f90d67853b8108f13d286e1df20b357e2c5198a9
+  head_committed_at: '2026-08-20T05:05:28Z'
+  verified_at: '2026-08-28T06:14:15Z'
+  content_match: exact
+  missing_local_files: 0
+  extra_local_files: 0
+  mismatched_files: 0
+  license: Apache-2.0
+  license_status: github_verified
+  role: primary_data_provider_reference
+  adoption_mode: adapter
+  allowed_use:
+  - 核对 A 股数据能力、Provider 经验、限流和 fallback 思路
+  - 为 Canonical Provider Adapter 设计提供参考
+  prohibited_use:
+  - 将外部字段直接作为 Visory Canonical Schema
+  - 整体复制 Skill 或抓取实现
+  - 绕过 Snapshot 和质量门禁直接供页面、AI 或回测消费
+  relevant_work_packages:
+  - WP-0201
+  - WP-0202
+  - WP-0203
+  - WP-0204
+  - WP-0205
+  relevant_paths:
+  - README.md
+  - README_en.md
+  - SKILL.md
+  verification_status: verified_default_branch_head
+- id: financial-api
+  display_name: Financial-API
+  repository: https://github.com/HiThink-Tech/Financial-API
+  original_directory: Financial-API-main
+  local_path: references/repos/Financial-API
+  source_type: archive_snapshot
+  branch_hint: main
+  default_branch: main
+  commit: 2ec779c94e798ea941befb2d1c951c9420fdadd0
+  commit_status: verified_historical_commit
+  github_head_commit: 765513c2616030803ad80915ed65b205f425a942
+  head_committed_at: '2026-08-27T13:39:15Z'
+  snapshot_committed_at: '2026-08-27T06:14:58Z'
+  verified_at: '2026-08-28T06:14:15Z'
+  content_match: differs_from_current_head
+  missing_local_files: 12
+  extra_local_files: 0
+  mismatched_files: 64
+  license: MIT
+  license_status: github_verified
+  role: supplementary_data_provider_reference
+  adoption_mode: adapter
+  allowed_use:
+  - 核对官方同花顺数据能力、批量接口和灾备补充路径
+  - 为补充 Provider Adapter 与双源校验设计提供参考
+  prohibited_use:
+  - 逐行静默混合多个数据来源
+  - 把 API Key 写入仓库、日志或示例
+  - 在未核验 commit 与 LICENSE 前吸收 SDK 代码
+  relevant_work_packages:
+  - WP-0201
+  - WP-0202
+  - WP-0203
+  - WP-0204
+  - WP-0205
+  relevant_paths:
+  - README.md
+  - docs/api/
+  - python/
+  - hithink-finance-cli/
+  verification_status: verified_historical_snapshot
+  verification_note: 本地内容精确对应已定位的历史提交，而非核验时默认分支 HEAD。
+- id: fleur
+  display_name: Fleur
+  repository: https://github.com/WackyGem/Fleur
+  original_directory: Fleur-main
+  local_path: references/repos/Fleur
+  source_type: archive_snapshot
+  branch_hint: main
+  default_branch: main
+  commit: cecda70b702451834993d1d1cb6753cb7568b895
+  commit_status: verified_default_branch_head
+  github_head_commit: cecda70b702451834993d1d1cb6753cb7568b895
+  head_committed_at: '2026-08-02T14:44:49Z'
+  verified_at: '2026-08-28T06:14:15Z'
+  content_match: exact
+  missing_local_files: 0
+  extra_local_files: 0
+  mismatched_files: 0
+  license: MIT
+  license_status: github_verified
+  role: design_reference
+  adoption_mode: design_reference
+  allowed_use:
+  - 参考分层建模、数据契约、任务幂等、五阶段回测和工程治理思想
+  - 参考事实、派生结果和运行结果的边界划分
+  prohibited_use:
+  - 引入第二套正式回测引擎
+  - 直接引入 RustFS、NATS、Dagster、ClickHouse 或完整运行栈
+  - 整体复制其应用和基础设施
+  relevant_work_packages:
+  - WP-0001
+  - WP-0103
+  - WP-0201
+  - WP-0204
+  - WP-0301
+  - WP-0302
+  - WP-0604
+  relevant_paths:
+  - README.md
+  - pipeline/
+  - engines/
+  - app/
+  verification_status: verified_default_branch_head
+- id: hikyuu
+  display_name: Hikyuu
+  repository: https://github.com/fasiondog/hikyuu
+  original_directory: hikyuu-master
+  local_path: references/repos/hikyuu
+  source_type: archive_snapshot
+  branch_hint: master
+  default_branch: master
+  commit: 350ee401f59a122f74ce5f13f973b79eab30cd6c
+  commit_status: verified_default_branch_head
+  github_head_commit: 350ee401f59a122f74ce5f13f973b79eab30cd6c
+  head_committed_at: '2026-08-26T08:33:54Z'
+  verified_at: '2026-08-28T06:14:15Z'
+  content_match: exact
+  missing_local_files: 0
+  extra_local_files: 0
+  mismatched_files: 0
+  license: Apache-2.0
+  license_status: github_verified
+  role: runtime_dependency
+  adoption_mode: dependency
+  allowed_use:
+  - 作为 Visory 唯一正式回测和组合模拟内核的依赖候选
+  - 核对 Adapter、市场模拟、组合和结果接口
+  prohibited_use:
+  - 作为 Visory 权威事实、特征或指标唯一存储
+  - 在未固定版本、核验许可证和完成确定性测试前进入正式运行
+  - 扩展第二套 FORMAL 回测内核
+  relevant_work_packages:
+  - WP-0305
+  - WP-0602
+  - WP-0603
+  - WP-0604
+  - WP-0605
+  - WP-0606
+  - WP-0607
+  relevant_paths:
+  - readme.md
+  - hikyuu/
+  - hikyuu_cpp/
+  - requirements.txt
+  verification_status: verified_default_branch_head
+- id: sequoia-x
+  display_name: Sequoia-X
+  repository: https://github.com/sngyai/Sequoia-X
+  original_directory: Sequoia-X-master
+  local_path: references/repos/Sequoia-X
+  source_type: archive_snapshot
+  branch_hint: master
+  default_branch: master
+  commit: 444c0db69ff36b46ef2b22ab265051d60c16029d
+  commit_status: verified_default_branch_head
+  github_head_commit: 444c0db69ff36b46ef2b22ab265051d60c16029d
+  head_committed_at: '2026-05-09T07:18:30Z'
+  verified_at: '2026-08-28T06:14:15Z'
+  content_match: exact
+  missing_local_files: 0
+  extra_local_files: 0
+  mismatched_files: 0
+  license: MIT
+  license_status: declared_in_github_head_readme
+  role: strategy_reference
+  adoption_mode: clean_reimplementation
+  allowed_use:
+  - 参考首批 A 股选股策略的方法和测试反例
+  - 将策略语义人工迁移为受控 StrategySpec
+  prohibited_use:
+  - 直接执行任意 Python 策略代码
+  - 复用其 SQLite 数据口径作为 Visory 正式事实
+  - 未经 PIT 和市场规则复核直接宣称策略有效
+  relevant_work_packages:
+  - WP-0601
+  - WP-0602
+  - WP-0603
+  relevant_paths:
+  - README.md
+  - sequoia_x/strategy/
+  - tests/
+  verification_status: verified_default_branch_head
+- id: tick-stock-panel
+  display_name: tick-stock-panel
+  repository: https://github.com/shy3130/tick-stock-panel
+  original_directory: tick-stock-panel-main
+  local_path: references/repos/tick-stock-panel
+  source_type: archive_snapshot
+  branch_hint: main
+  default_branch: main
+  commit: afbf432eae21e964f9f871ff23b0bfbfaa98f204
+  commit_status: verified_default_branch_head
+  github_head_commit: afbf432eae21e964f9f871ff23b0bfbfaa98f204
+  head_committed_at: '2026-08-26T14:07:40Z'
+  verified_at: '2026-08-28T06:14:15Z'
+  content_match: exact
+  missing_local_files: 0
+  extra_local_files: 0
+  mismatched_files: 0
+  license: MIT
+  license_status: github_verified
+  role: ui_reference
+  adoption_mode: design_reference
+  allowed_use:
+  - 参考 Dashboard 信息密度、交互和可视化证据
+  - 为统一 React/Vite 前端的低保真和视觉验收提供参考
+  prohibited_use:
+  - 作为第二套独立应用拼入 Visory
+  - 复制其数据口径或后端运行时
+  - 未经截图和契约验收直接迁移页面
+  relevant_work_packages:
+  - WP-0403
+  - WP-0404
+  - WP-0703
+  relevant_paths:
+  - README.md
+  - screenshots/
+  - frontend/
+  verification_status: verified_default_branch_head
+- id: tradingagents-astock
+  display_name: TradingAgents-astock
+  repository: https://github.com/simonlin1212/TradingAgents-astock
+  original_directory: TradingAgents-astock-main
+  local_path: references/repos/TradingAgents-astock
+  source_type: archive_snapshot
+  branch_hint: main
+  default_branch: main
+  commit: ed778c51eeb2c4c3431f6fa7aae68103cd441acc
+  commit_status: verified_default_branch_head
+  github_head_commit: ed778c51eeb2c4c3431f6fa7aae68103cd441acc
+  head_committed_at: '2026-08-19T07:50:46Z'
+  verified_at: '2026-08-28T06:14:15Z'
+  content_match: exact
+  missing_local_files: 0
+  extra_local_files: 0
+  mismatched_files: 0
+  license: Apache-2.0
+  license_status: github_verified
+  role: deep_research_reference
+  adoption_mode: clean_reimplementation
+  allowed_use:
+  - 参考 L2 七角色研究、辩论、风险审查和结构化输出
+  - 参考深度研究的人工触发和资源控制
+  prohibited_use:
+  - 自动下单
+  - 对全市场自动运行多 Agent
+  - 让模型输出绕过 FactPack、Evidence 或人工确认
+  relevant_work_packages:
+  - WP-0704
+  relevant_paths:
+  - README.md
+  - tradingagents/agents/
+  - tradingagents/graph/
+  - tests/
+  verification_status: verified_default_branch_head
+- id: uzi-skill-astock
+  display_name: UZI-SKILL-astock
+  repository: https://github.com/gosinkx/UZI-SKILL-astock
+  original_directory: UZI-SKILL-astock-master
+  local_path: references/repos/UZI-SKILL-astock
+  source_type: archive_snapshot
+  branch_hint: master
+  default_branch: master
+  commit: d4d12ab7a795f6018f56ec48234bf1241061fc19
+  commit_status: verified_default_branch_head
+  github_head_commit: d4d12ab7a795f6018f56ec48234bf1241061fc19
+  head_committed_at: '2026-06-24T06:08:30Z'
+  verified_at: '2026-08-28T06:14:15Z'
+  content_match: exact
+  missing_local_files: 0
+  extra_local_files: 0
+  mismatched_files: 0
+  license: MIT
+  license_status: declared_in_github_head_readme
+  role: stock_research_skill_reference
+  adoption_mode: clean_reimplementation
+  allowed_use:
+  - 参考 L1 研究覆盖矩阵、机械自查和研究流程
+  - 记录其基于 wbh604/UZI-Skill v3.9.1 的衍生关系，来源身份以 gosinkx/UZI-SKILL-astock 为准
+  prohibited_use:
+  - 将该公开衍生仓库误写为 wbh604/UZI-Skill 官方原始仓库
+  - 整体复制 Skill、脚本或远程可变规则
+  - 让参考 Skill 绕过 Visory FactPack、Evidence 和人工确认
+  relevant_work_packages:
+  - WP-0702
+  relevant_paths:
+  - README.md
+  - UPSTREAM_VERSION
+  - deep-analysis/
+  - investor-panel/
+  - lhb-analyzer/
+  - trap-detector/
+  verification_status: verified_default_branch_head
+- id: vibe-research
+  display_name: Vibe-Research
+  repository: https://github.com/simonlin1212/Vibe-Research
+  original_directory: Vibe-Research-main
+  local_path: references/repos/Vibe-Research
+  source_type: archive_snapshot
+  branch_hint: main
+  default_branch: main
+  commit: ab4ffa077e0b1806fc53164dc7b28731f834e79e
+  commit_status: verified_default_branch_head
+  github_head_commit: ab4ffa077e0b1806fc53164dc7b28731f834e79e
+  head_committed_at: '2026-08-20T10:30:59Z'
+  verified_at: '2026-08-28T06:14:15Z'
+  content_match: exact
+  missing_local_files: 0
+  extra_local_files: 0
+  mismatched_files: 0
+  license: MIT
+  license_status: github_verified
+  role: market_observation_and_ui_reference
+  adoption_mode: clean_reimplementation
+  allowed_use:
+  - 参考市场、板块、收盘复盘和个股页面的信息架构
+  - 参考 React/FastAPI 交互与观察能力
+  prohibited_use:
+  - 运行第二套独立数据后端或应用
+  - 让其事实口径绕过 Visory Canonical Data 和 Snapshot
+  - 整体复制嵌入的第三方仓库
+  relevant_work_packages:
+  - WP-0401
+  - WP-0402
+  - WP-0403
+  - WP-0404
+  - WP-0405
+  - WP-0501
+  - WP-0505
+  relevant_paths:
+  - README.md
+  - backend/
+  - frontend/
+  - docs/screenshots/
+  verification_status: verified_default_branch_head
+verification_method: GitHub repository metadata, default-branch commit API, recursive tree listing, and Git blob SHA-1 comparison
+  against local archive files

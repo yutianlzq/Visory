@@ -216,3 +216,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# External source snapshots
+references/repos/
+upstream/daily_stock_analysis/
+
+# Local temporary files
+*.bak
+*.tmp
