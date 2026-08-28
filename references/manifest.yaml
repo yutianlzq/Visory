@@ -1,5 +1,12 @@
 version: 2
 last_updated: '2026-08-28'
+github_heads_reverified_at: '2026-08-28T07:20:38Z'
+github_head_summary:
+  current_head_snapshots: 8
+  historical_snapshots: 2
+  historical_snapshot_ids:
+  - daily_stock_analysis
+  - financial-api
 projects:
 - id: daily_stock_analysis
   display_name: daily_stock_analysis
@@ -325,10 +332,10 @@ projects:
   - tests/
   verification_status: verified_default_branch_head
 - id: uzi-skill-astock
-  display_name: UZI-SKILL-astock
+  display_name: UZI-Skill
   repository: https://github.com/gosinkx/UZI-SKILL-astock
   original_directory: UZI-SKILL-astock-master
-  local_path: references/repos/UZI-SKILL-astock
+  local_path: references/repos/UZI-Skill
   source_type: archive_snapshot
   branch_hint: master
   default_branch: master
@@ -362,6 +369,7 @@ projects:
   - lhb-analyzer/
   - trap-detector/
   verification_status: verified_default_branch_head
+  verification_note: 本地治理目录名为 UZI-Skill；直接来源仍为 gosinkx/UZI-SKILL-astock，README 与 UPSTREAM_VERSION 证明其基于 wbh604/UZI-Skill，未冒充官方原仓库。
 - id: vibe-research
   display_name: Vibe-Research
   repository: https://github.com/simonlin1212/Vibe-Research

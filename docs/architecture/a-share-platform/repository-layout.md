@@ -18,7 +18,7 @@ Visory/
 ├── upstream/
 │   └── daily_stock_analysis/      # 基础上游归档，仅本地只读
 ├── references/
-│   ├── repos/                     # 九个外部参考快照，仅本地只读
+│   ├── repos/                     # 九个外部参考快照及空 _unverified 隔离目录，仅本地只读
 │   ├── README.md
 │   └── manifest.yaml
 ├── .gitignore
@@ -38,7 +38,7 @@ Visory/
 | `docs/参考项目/` | 旧位置兼容标记 | 保留为空，不再放完整源码，不删除 |
 | `upstream/daily_stock_analysis/` | Visory 基础上游历史快照 | 仅本地只读；底座导入必须单独规划、核验和回滚 |
 | `references/` | 参考治理说明和清单 | `README.md`、`manifest.yaml` 可提交和维护 |
-| `references/repos/` | 九个外部参考快照 | 仅本地只读；不执行、不安装、不提交、不进入构建上下文 |
+| `references/repos/` | 九个外部参考快照及空 `_unverified/` 隔离目录 | 仅本地只读；不执行、不安装、不提交、不进入构建上下文；隔离目录不计入已核验项目 |
 
 后续若收到来源、commit 或许可证不能完整确认的快照，应先在本地隔离并标记未验证；完成核验前不得把它提升为正式上游、依赖或“当前 HEAD”。当前十个快照均已定位直接来源和提交，详见 [`../../../references/manifest.yaml`](../../../references/manifest.yaml)。
 

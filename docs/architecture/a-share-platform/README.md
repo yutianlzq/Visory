@@ -132,7 +132,7 @@ Fleur 不作为运行时依赖。平台只吸收其数据契约、分层建模�
 - `references/repos/`：九个本地只读外部参考快照，不属于运行时代码；
 - `references/README.md` 与 `references/manifest.yaml`：可提交的参考治理说明和机器可读核验清单。
 
-2026-08-28 已按 GitHub 默认分支 HEAD、Git tree/blob SHA 和提交历史完成十个快照核验：八个与核验时 HEAD 完全一致，`daily_stock_analysis` 与 `Financial-API` 对应已定位历史提交。Sequoia-X 与 UZI-SKILL-astock 的 MIT 信息仅来自 HEAD README 声明，其余许可证由 GitHub License API 检测。目录责任和未来第一方代码规划见[仓库布局与目录责任](repository-layout.md)，允许采用方式和 Work Package 边界见[参考项目采用矩阵](reference-adoption-matrix.md)，完整核验信息见[`../../../references/manifest.yaml`](../../../references/manifest.yaml)。核验不代表允许整体复制或直接依赖；代码吸收仍需按许可证、契约和独立 Work Package 执行。
+2026-08-28 已按 GitHub 默认分支 HEAD、Git tree/blob SHA 和提交历史完成十个快照核验：八个与核验时 HEAD 完全一致，`daily_stock_analysis` 与 `Financial-API` 对应已定位历史提交。Sequoia-X 与本地治理名为 UZI-Skill 的衍生快照（直接来源 `gosinkx/UZI-SKILL-astock`）的 MIT 信息仅来自 HEAD README 声明，其余许可证由 GitHub License API 检测。目录责任和未来第一方代码规划见[仓库布局与目录责任](repository-layout.md)，允许采用方式和 Work Package 边界见[参考项目采用矩阵](reference-adoption-matrix.md)，完整核验信息见[`../../../references/manifest.yaml`](../../../references/manifest.yaml)。核验不代表允许整体复制或直接依赖；代码吸收仍需按许可证、契约和独立 Work Package 执行。
 ## 推荐实施顺序
 
 数据平台、Feature Store、市场/板块、复盘、研究、策略、Hikyuu回测、主平台及公网部署已经形成可编码文档基线。实现必须遵循[实施路线与验收方案](implementation-roadmap-and-acceptance-v1.md)，且所有代码、Migration、Compose和恢复流程先在本地/隔离环境验收，不直接在服务器边开发边试错：

@@ -25,7 +25,7 @@
 | Financial-API | `supplementary_data_provider_reference` | `adapter` | 补充、校验和批量灾备能力 | 静默逐行混合双源；暴露 API Key | WP-0201～0205 |
 | Vibe-Research | `market_observation_and_ui_reference` | `clean_reimplementation` | 市场、板块、复盘和页面信息架构 | 运行第二套应用或绕过统一事实口径 | WP-0401～0405、WP-0501、WP-0505 |
 | Sequoia-X | `strategy_reference` | `clean_reimplementation` | 首批策略方法和测试反例 | 直接执行任意 Python 策略；复用其 SQLite 为正式事实 | WP-0601～0603 |
-| UZI-SKILL-astock | `stock_research_skill_reference` | `clean_reimplementation` | L1 覆盖矩阵、机械自查和研究流程 | 把远程可变 Skill 当事实源；整体复制脚本 | WP-0702 |
+| UZI-Skill | `stock_research_skill_reference` | `clean_reimplementation` | L1 覆盖矩阵、机械自查和研究流程 | 把远程可变 Skill 当事实源；整体复制脚本 | WP-0702 |
 | TradingAgents-astock | `deep_research_reference` | `clean_reimplementation` | L2 七角色、辩论和风险审查 | 自动下单或全市场自动多 Agent | WP-0704 |
 | tick-stock-panel | `ui_reference` | `design_reference` | Dashboard 信息密度、交互和视觉证据 | 直接拼入独立应用或复用其数据口径 | WP-0403、WP-0404、WP-0703 |
 
@@ -41,4 +41,4 @@
 
 2026-08-28 按 GitHub 默认分支、Git tree/blob SHA 和提交历史复核十个本地快照：八个快照与核验时默认分支 HEAD 完全一致；`daily_stock_analysis` 与 `Financial-API` 分别对应已定位的历史提交，不标记为当前 HEAD。完整 SHA、差异计数和许可证证据等级见 [`../../../references/manifest.yaml`](../../../references/manifest.yaml)。
 
-`UZI-SKILL-astock` 本地快照的直接来源已确认是 `gosinkx/UZI-SKILL-astock`；其 README 声明基于 `wbh604/UZI-Skill v3.9.1` 做 A 股数据源优化。因此采用矩阵按直接来源命名，同时保留原始上游关系说明。来源核验不改变本矩阵的 clean reimplementation 边界，也不代表可以整体复制或直接执行参考代码。
+`UZI-Skill` 是本地治理名；快照的直接来源已确认是 `gosinkx/UZI-SKILL-astock`，其 README 与 `UPSTREAM_VERSION` 说明该衍生版基于 `wbh604/UZI-Skill`。因此本地目录按 Goal 统一为 `references/repos/UZI-Skill`，manifest 继续记录直接来源，不将衍生版冒充官方原仓库。来源核验不改变本矩阵的 clean reimplementation 边界，也不代表可以整体复制或直接执行参考代码。

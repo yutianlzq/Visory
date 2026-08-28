@@ -22,6 +22,7 @@ Visory/
     ├── README.md                   # 可提交的治理说明
     ├── manifest.yaml               # 可提交的机器可读核验清单
     └── repos/                      # 九个普通参考快照，仅本地保留
+        ├── _unverified/                # 空隔离目录，不计入已核验项目
         ├── a-stock-data/
         ├── Financial-API/
         ├── Fleur/
@@ -29,7 +30,7 @@ Visory/
         ├── Sequoia-X/
         ├── tick-stock-panel/
         ├── TradingAgents-astock/
-        ├── UZI-SKILL-astock/
+        ├── UZI-Skill/
         └── Vibe-Research/
 ```
 
