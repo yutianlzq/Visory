@@ -1,0 +1,72 @@
+{
+  "$defs": {
+    "RevisionKind": {
+      "enum": [
+        "INITIAL",
+        "CORRECTION",
+        "REBUILD",
+        "MIGRATION"
+      ],
+      "title": "RevisionKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "definition_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Definition Version"
+    },
+    "policy_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Policy Version"
+    },
+    "revision": {
+      "minimum": 1,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "revision_kind": {
+      "$ref": "#/$defs/RevisionKind"
+    },
+    "schema_version": {
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "supersedes_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Supersedes Id"
+    }
+  },
+  "required": [
+    "schema_version",
+    "revision",
+    "revision_kind"
+  ],
+  "title": "RevisionMetadata",
+  "type": "object"
+}

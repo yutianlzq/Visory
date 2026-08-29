@@ -1,0 +1,21 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "content_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Content Hash",
+      "type": "string"
+    },
+    "hash_algorithm": {
+      "default": "sha256",
+      "pattern": "^sha256$",
+      "title": "Hash Algorithm",
+      "type": "string"
+    }
+  },
+  "required": [
+    "content_hash"
+  ],
+  "title": "ContentHashValue",
+  "type": "object"
+}

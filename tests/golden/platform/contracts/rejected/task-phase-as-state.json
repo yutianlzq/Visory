@@ -1,0 +1,8 @@
+{
+  "contract_id": "C-001/TaskStateMetadata",
+  "reason": "Domain phase is not a task state",
+  "payload": {
+    "task_state": "RUNNING_HIKYUU"
+  },
+  "expected_error_fields": []
+}

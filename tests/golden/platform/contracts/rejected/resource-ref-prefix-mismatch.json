@@ -1,0 +1,9 @@
+{
+  "contract_id": "C-002/ResourceRef",
+  "reason": "Resource type must match the ID prefix",
+  "payload": {
+    "resource_id": "fs_019c5f2a-8c34-75cd-a013-4b4ee2b25a48",
+    "resource_type": "data_snapshot"
+  },
+  "expected_error_fields": []
+}

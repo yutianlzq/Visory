@@ -1,0 +1,9 @@
+{
+  "contract_id": "C-002/ResourceRef",
+  "reason": "Resource prefix must be registered",
+  "payload": {
+    "resource_id": "unknown_019c5f2a-8c34-75cd-a013-4b4ee2b25a48",
+    "resource_type": "feature_snapshot"
+  },
+  "expected_error_fields": []
+}

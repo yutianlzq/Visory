@@ -7,6 +7,7 @@ syntax_check() {
   python -m py_compile main.py src/config.py src/auth.py src/analyzer.py src/notification.py
   python -m py_compile src/storage.py src/scheduler.py src/search_service.py
   python -m py_compile src/market_analyzer.py src/stock_analyzer.py
+  python -m compileall -q src/schemas/platform scripts/export_platform_contracts.py
   python -m py_compile data_provider/*.py
 }
 
@@ -17,6 +18,7 @@ flake8_checks() {
 
 deterministic_checks() {
   echo "==> backend-gate: local deterministic checks"
+  python scripts/export_platform_contracts.py --check
   ./scripts/test.sh code
   ./scripts/test.sh yfinance
 }

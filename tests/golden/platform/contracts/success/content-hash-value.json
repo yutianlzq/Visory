@@ -1,0 +1,13 @@
+{
+  "contract_id": "C-001/ContentHashValue",
+  "payload": {
+    "hash_algorithm": "sha256",
+    "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "hash_input": {
+    "asset_type": "stock",
+    "canonical_id": "sh600519",
+    "revision": 1
+  },
+  "expected_hash": "sha256:d189e8449756f615071cfb1941d28d10cbb67a0446f6ea03e42f5472f3a01a97"
+}

@@ -1,6 +1,6 @@
 # Visory 实现状态
 
-最后更新：2026-08-28
+最后更新：2026-08-29
 
 ## 1. 当前结论
 
@@ -8,9 +8,9 @@
 
 工程底座状态：DSA 固定提交 `fb4735a1055caefa2396982af3b09121feb9ff30` 已完成导入和双基线验收，状态为 `IMPORTED / VERIFIED`。导入代码中的 React/FastAPI、Legacy SQLite、内存 Task Queue、分析、LLM、报告、通知和数据 Fetcher 仍是迁移基线，不能作为 Visory 新契约已实现的证据。
 
-目标架构状态：implemented work packages 为 `0/45`；`WP-0001` 与其余 44 个 WP 全部 `NOT_STARTED`。
+目标架构状态：implemented work packages 为 `0/45`；`WP-0001` 正在 G003 分支实现并处于 `IN_PROGRESS`，其余 44 个 WP 为 `NOT_STARTED`。
 
-下一 Work Package：`WP-0001 Contract Registry 与公共 Schema`。
+当前 Work Package：`WP-0001 Contract Registry 与公共 Schema`；完成本地门禁、PR 与 GitHub CI 前不得标记为 `VERIFIED`。
 
 交付阶段：MVP 一期为本地核心功能版（M0—M6 + WP-0701—0703）；MVP 二期为本地生产预演与服务器发布版（WP-0704 + M8）。未过 Local Release Gate 不得将 WP 标记为 `RELEASED`。
 
@@ -20,8 +20,9 @@
 | --- | --- | --- |
 | Visory-G001 | COMPLETE | [G001 进度与验收记录](GOAL-STATUS.md) |
 | Visory-G002 | COMPLETE | [G002 进度与验收记录](GOAL-G002-STATUS.md) |
+| Visory-G003 | IN_PROGRESS | [G003 / WP-0001 进度与验收记录](GOAL-G003-STATUS.md) |
 | DSA Baseline | IMPORTED / VERIFIED | 1126/1126 blob 验签；Python/Web 双基线；`baseline_regression_delta=0`；`web_lint_build_regression_delta=0` |
-| Implemented Work Packages | 0/45 | 下表 45 项全部 `NOT_STARTED` |
+| Implemented Work Packages | 0/45 | `WP-0001` 为 `IN_PROGRESS`；其余 44 项 `NOT_STARTED` |
 
 ## 2. 状态定义
 
@@ -39,7 +40,7 @@ RELEASED     已部署且通过运行观察和回滚/恢复要求
 
 | WP | 交付物 | 状态 | 证据 |
 | --- | --- | --- | --- |
-| WP-0001 | Contract Registry与公共Schema | NOT_STARTED | — |
+| WP-0001 | Contract Registry与公共Schema | IN_PROGRESS | G003 分支已建立公共 Schema、Golden Payload 与确定性导出；待完整本地门禁、PR 和 GitHub CI |
 | WP-0002 | PostgreSQL与Alembic基础 | NOT_STARTED | — |
 | WP-0003 | API Envelope、Error与生成类型 | NOT_STARTED | — |
 | WP-0101 | Asset Identity与Alias Resolver | NOT_STARTED | — |

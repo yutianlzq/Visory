@@ -1,0 +1,54 @@
+{
+  "$defs": {
+    "ResourceType": {
+      "enum": [
+        "task",
+        "attempt",
+        "data_snapshot",
+        "feature_snapshot",
+        "observation_snapshot",
+        "fact_pack",
+        "research",
+        "review",
+        "strategy",
+        "backtest_run",
+        "prediction",
+        "artifact",
+        "report",
+        "provider_run",
+        "sector",
+        "taxonomy",
+        "indicator",
+        "raw_object",
+        "canonical_partition",
+        "feature_partition",
+        "fact_block",
+        "claim",
+        "watch_condition",
+        "quality_report",
+        "request",
+        "checkpoint",
+        "backup",
+        "deployment"
+      ],
+      "title": "ResourceType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "resource_id": {
+      "title": "Resource Id",
+      "type": "string"
+    },
+    "resource_type": {
+      "$ref": "#/$defs/ResourceType"
+    }
+  },
+  "required": [
+    "resource_type",
+    "resource_id"
+  ],
+  "title": "ResourceRef",
+  "type": "object"
+}

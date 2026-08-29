@@ -1,0 +1,21 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "available_at": {
+      "format": "date-time",
+      "title": "Available At",
+      "type": "string"
+    },
+    "cutoff_at": {
+      "format": "date-time",
+      "title": "Cutoff At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "available_at",
+    "cutoff_at"
+  ],
+  "title": "PointInTimeWindow",
+  "type": "object"
+}

@@ -1,0 +1,10 @@
+{
+  "contract_id": "C-001/RevisionMetadata",
+  "reason": "Revision starts at one",
+  "payload": {
+    "revision_kind": "INITIAL",
+    "schema_version": "1.0.0",
+    "revision": 0
+  },
+  "expected_error_fields": []
+}

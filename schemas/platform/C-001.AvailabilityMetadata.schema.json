@@ -1,0 +1,94 @@
+{
+  "$defs": {
+    "AvailabilityBasis": {
+      "enum": [
+        "SOURCE_DISCLOSURE",
+        "PROVIDER_TIMESTAMP",
+        "EXCHANGE_CALENDAR_RULE",
+        "PLATFORM_OBSERVED",
+        "VERSIONED_ASSUMPTION"
+      ],
+      "title": "AvailabilityBasis",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "availability_basis": {
+      "$ref": "#/$defs/AvailabilityBasis"
+    },
+    "availability_policy_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Availability Policy Version"
+    },
+    "available_at": {
+      "format": "date-time",
+      "title": "Available At",
+      "type": "string"
+    },
+    "event_time": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Event Time"
+    },
+    "ingested_at": {
+      "format": "date-time",
+      "title": "Ingested At",
+      "type": "string"
+    },
+    "is_historical_backfill": {
+      "default": false,
+      "title": "Is Historical Backfill",
+      "type": "boolean"
+    },
+    "observed_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Observed At"
+    },
+    "source_published_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Published At"
+    }
+  },
+  "required": [
+    "ingested_at",
+    "available_at",
+    "availability_basis"
+  ],
+  "title": "AvailabilityMetadata",
+  "type": "object"
+}

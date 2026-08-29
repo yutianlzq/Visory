@@ -1,0 +1,9 @@
+{
+  "contract_id": "C-002/ResourceRef",
+  "reason": "Resource IDs are canonical lowercase",
+  "payload": {
+    "resource_id": "FS_019C5F2A-8C34-75CD-A013-4B4EE2B25A48",
+    "resource_type": "feature_snapshot"
+  },
+  "expected_error_fields": []
+}
