@@ -41,3 +41,5 @@ Makefile text eol=lf
 *.crt binary
 *.key binary
 *.p12 binary
+# Deterministic generated platform contract exports must compare byte-for-byte on Windows.
+schemas/platform/*.json text eol=lf
