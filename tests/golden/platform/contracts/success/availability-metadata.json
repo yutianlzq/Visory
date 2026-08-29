@@ -1,0 +1,12 @@
+{
+  "contract_id": "C-001/AvailabilityMetadata",
+  "payload": {
+    "event_time": "2026-08-27T15:00:00+08:00",
+    "source_published_at": "2026-08-27T15:35:12+08:00",
+    "observed_at": "2026-08-27T16:02:10+08:00",
+    "ingested_at": "2026-08-27T16:02:11+08:00",
+    "available_at": "2026-08-27T15:35:12+08:00",
+    "availability_basis": "SOURCE_DISCLOSURE",
+    "is_historical_backfill": false
+  }
+}

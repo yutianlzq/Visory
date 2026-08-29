@@ -1,0 +1,7 @@
+{
+  "contract_id": "C-001/PublicationMetadata",
+  "payload": {
+    "publication_status": "CERTIFIED",
+    "quality_status": "COMPLETE"
+  }
+}

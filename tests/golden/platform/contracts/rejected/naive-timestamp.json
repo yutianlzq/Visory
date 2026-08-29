@@ -1,0 +1,9 @@
+{
+  "contract_id": "C-001/PointInTimeWindow",
+  "reason": "Timestamp must include a timezone",
+  "payload": {
+    "cutoff_at": "2026-08-27T19:00:00+08:00",
+    "available_at": "2026-08-27T15:35:12"
+  },
+  "expected_error_fields": []
+}

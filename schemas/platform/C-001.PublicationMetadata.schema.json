@@ -1,0 +1,48 @@
+{
+  "$defs": {
+    "PublicationStatus": {
+      "enum": [
+        "DRAFT",
+        "PROVISIONAL",
+        "CERTIFIED",
+        "RETIRED"
+      ],
+      "title": "PublicationStatus",
+      "type": "string"
+    },
+    "QualityStatus": {
+      "enum": [
+        "COMPLETE",
+        "PARTIAL",
+        "FAILED",
+        "UNAVAILABLE",
+        "STALE"
+      ],
+      "title": "QualityStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "certified_capabilities": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Certified Capabilities",
+      "type": "array"
+    },
+    "publication_status": {
+      "$ref": "#/$defs/PublicationStatus"
+    },
+    "quality_status": {
+      "$ref": "#/$defs/QualityStatus"
+    }
+  },
+  "required": [
+    "publication_status",
+    "quality_status"
+  ],
+  "title": "PublicationMetadata",
+  "type": "object"
+}

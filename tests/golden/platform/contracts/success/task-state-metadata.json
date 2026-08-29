@@ -1,0 +1,6 @@
+{
+  "contract_id": "C-001/TaskStateMetadata",
+  "payload": {
+    "task_state": "RUNNING"
+  }
+}

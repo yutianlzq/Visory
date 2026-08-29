@@ -1,0 +1,9 @@
+{
+  "contract_id": "C-001/PublicationMetadata",
+  "reason": "CORRECTION is a revision kind, not a publication status",
+  "payload": {
+    "quality_status": "COMPLETE",
+    "publication_status": "CORRECTION"
+  },
+  "expected_error_fields": []
+}

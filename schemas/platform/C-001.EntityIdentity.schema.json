@@ -1,0 +1,39 @@
+{
+  "$defs": {
+    "AssetType": {
+      "enum": [
+        "stock",
+        "index",
+        "etf",
+        "convertible_bond",
+        "fund",
+        "future",
+        "fx",
+        "commodity"
+      ],
+      "title": "AssetType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "asset_type": {
+      "$ref": "#/$defs/AssetType"
+    },
+    "canonical_id": {
+      "title": "Canonical Id",
+      "type": "string"
+    },
+    "entity_key": {
+      "title": "Entity Key",
+      "type": "string"
+    }
+  },
+  "required": [
+    "asset_type",
+    "canonical_id",
+    "entity_key"
+  ],
+  "title": "EntityIdentity",
+  "type": "object"
+}

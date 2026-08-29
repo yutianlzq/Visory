@@ -1,0 +1,9 @@
+{
+  "contract_id": "C-001/ContentHashValue",
+  "reason": "Hash must be sha256 lowercase hex",
+  "payload": {
+    "content_hash": "SHA256:ABC",
+    "hash_algorithm": "sha256"
+  },
+  "expected_error_fields": []
+}

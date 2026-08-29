@@ -1,6 +1,6 @@
 # Visory 文档中心
 
-这里是 Visory 当前文档工作区的统一入口。G002 已将固定的 `daily_stock_analysis` 运行底座导入项目仓库并完成双基线验收；目标架构 Work Package 仍为 `0/45`，下一项是 `WP-0001 Contract Registry 与公共 Schema`。
+这里是 Visory 当前文档工作区的统一入口。G002 已将固定的 `daily_stock_analysis` 运行底座导入项目仓库并完成双基线验收；G003 已完成 `WP-0001 Contract Registry 与公共 Schema`，目标架构已验证 Work Package 为 `1/45`，其余 44 项仍为 `NOT_STARTED`。
 
 ## 快速入口
 
@@ -10,6 +10,7 @@
 | 按统一规则开展后续实现 | [Visory 开发总指引](architecture/a-share-platform/CLAUDE-CODE-GUIDE.md) |
 | 查看真实实施状态 | [Visory 实现状态](architecture/a-share-platform/IMPLEMENTATION-STATUS.md) |
 | 查看 DSA 底座导入验收 | [Visory-G002 进度与验收记录](architecture/a-share-platform/GOAL-G002-STATUS.md) |
+| 查看 WP-0001 实现与验收结果 | [Visory-G003 进度与验收记录](architecture/a-share-platform/GOAL-G003-STATUS.md) |
 | 查看 DSA 固定提交与导入清单 | [DSA baseline manifest](../upstream-baseline/daily_stock_analysis.yaml) |
 | 查看里程碑和 Work Package | [实施路线与验收方案](architecture/a-share-platform/implementation-roadmap-and-acceptance-v1.md) |
 | 查看当前目录责任 | [仓库布局与目录责任](architecture/a-share-platform/repository-layout.md) |

@@ -1,0 +1,11 @@
+{
+  "contract_id": "C-001/RevisionMetadata",
+  "payload": {
+    "schema_version": "1.0.0",
+    "definition_version": "1.0.0",
+    "policy_version": "provider_policy_cn_a_1.0.0",
+    "revision": 1,
+    "revision_kind": "INITIAL",
+    "supersedes_id": null
+  }
+}

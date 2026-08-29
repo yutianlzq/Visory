@@ -1,0 +1,67 @@
+{
+  "$defs": {
+    "TaskState": {
+      "enum": [
+        "ACCEPTED",
+        "QUEUED",
+        "BLOCKED",
+        "LEASED",
+        "RUNNING",
+        "RETRY_WAIT",
+        "SUCCEEDED",
+        "DEGRADED",
+        "FAILED",
+        "CANCELLED"
+      ],
+      "title": "TaskState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "blocked_reason_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Blocked Reason Code"
+    },
+    "failure_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Failure Code"
+    },
+    "task_state": {
+      "$ref": "#/$defs/TaskState"
+    },
+    "unblock_condition": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Unblock Condition"
+    }
+  },
+  "required": [
+    "task_state"
+  ],
+  "title": "TaskStateMetadata",
+  "type": "object"
+}

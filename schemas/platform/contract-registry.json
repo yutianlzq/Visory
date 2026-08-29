@@ -1,0 +1,357 @@
+{
+  "contract_registry_version": "1.0.0",
+  "contracts": [
+    {
+      "business_key": "source fact identity + available_at",
+      "compatibility": "new availability bases require a schema minor or major version and explicit policy",
+      "consumers": [
+        "snapshot builder",
+        "PIT consumers"
+      ],
+      "contract_id": "C-001/AvailabilityMetadata",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/availability-metadata.json",
+        "tests/golden/platform/contracts/rejected/historical-backfill-fake-availability.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-001.AvailabilityMetadata.schema.json",
+      "lineage_fields": [
+        "availability_basis"
+      ],
+      "owner_module": "src.schemas.platform.temporal",
+      "producer": "provider and normalization workers",
+      "quality_semantics": [
+        "historical backfill must preserve provable PIT availability"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "embedded control metadata",
+      "time_semantics": [
+        "event_time",
+        "source_published_at",
+        "observed_at",
+        "ingested_at",
+        "available_at"
+      ],
+      "version_semantics": [
+        "availability_policy_version"
+      ]
+    },
+    {
+      "business_key": "content_hash",
+      "compatibility": "hash profile changes require a versioned profile and schema review",
+      "consumers": [
+        "contract validators",
+        "artifact integrity checks"
+      ],
+      "contract_id": "C-001/ContentHashValue",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/content-hash-value.json",
+        "tests/golden/platform/contracts/rejected/invalid-content-hash.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-001.ContentHashValue.schema.json",
+      "lineage_fields": [
+        "content_hash"
+      ],
+      "owner_module": "src.schemas.platform.hashing",
+      "producer": "all immutable resource producers",
+      "quality_semantics": [
+        "sha256 lowercase canonical digest"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "embedded JSON value",
+      "time_semantics": [],
+      "version_semantics": [
+        "hash_profile.profile_id"
+      ]
+    },
+    {
+      "business_key": "entity_key",
+      "compatibility": "additive fields require optional defaults; breaking identity changes require a major schema version",
+      "consumers": [
+        "all asset modules"
+      ],
+      "contract_id": "C-001/EntityIdentity",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/entity-identity.json",
+        "tests/golden/platform/contracts/rejected/entity-key-mismatch.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-001.EntityIdentity.schema.json",
+      "lineage_fields": [],
+      "owner_module": "src.schemas.platform.identity",
+      "producer": "Identity Resolver",
+      "quality_semantics": [
+        "identity conflicts are rejected"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "control-plane projection; no physical path",
+      "time_semantics": [],
+      "version_semantics": [
+        "identity schema_version"
+      ]
+    },
+    {
+      "business_key": "available_at + cutoff_at",
+      "compatibility": "timestamps remain RFC 3339 timezone-aware values",
+      "consumers": [
+        "snapshot",
+        "feature",
+        "review",
+        "research",
+        "backtest"
+      ],
+      "contract_id": "C-001/PointInTimeWindow",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/point-in-time-window.json",
+        "tests/golden/platform/contracts/rejected/naive-timestamp.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-001.PointInTimeWindow.schema.json",
+      "lineage_fields": [],
+      "owner_module": "src.schemas.platform.temporal",
+      "producer": "platform computation boundary",
+      "quality_semantics": [
+        "available_at must not exceed cutoff_at"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "embedded JSON object",
+      "time_semantics": [
+        "available_at",
+        "cutoff_at"
+      ],
+      "version_semantics": []
+    },
+    {
+      "business_key": "published resource id",
+      "compatibility": "CORRECTION is represented only by revision_kind",
+      "consumers": [
+        "published resource consumers"
+      ],
+      "contract_id": "C-001/PublicationMetadata",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/publication-metadata.json",
+        "tests/golden/platform/contracts/rejected/publication-correction.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-001.PublicationMetadata.schema.json",
+      "lineage_fields": [],
+      "owner_module": "src.schemas.platform.versioning",
+      "producer": "resource publication gate",
+      "quality_semantics": [
+        "publication_status",
+        "quality_status",
+        "certified_capabilities"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "embedded control metadata",
+      "time_semantics": [],
+      "version_semantics": []
+    },
+    {
+      "business_key": "resource business identity + revision",
+      "compatibility": "old revisions remain immutable and addressable",
+      "consumers": [
+        "all immutable resource consumers"
+      ],
+      "contract_id": "C-001/RevisionMetadata",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/revision-metadata.json",
+        "tests/golden/platform/contracts/correction/revision-correction.json",
+        "tests/golden/platform/contracts/rejected/correction-without-supersedes.json",
+        "tests/golden/platform/contracts/rejected/empty-not-applicable-field.json",
+        "tests/golden/platform/contracts/rejected/revision-zero.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-001.RevisionMetadata.schema.json",
+      "lineage_fields": [
+        "supersedes_id"
+      ],
+      "owner_module": "src.schemas.platform.versioning",
+      "producer": "resource owner module",
+      "quality_semantics": [
+        "Correction requires a direct supersedes relationship"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "embedded control metadata",
+      "time_semantics": [],
+      "version_semantics": [
+        "schema_version",
+        "definition_version",
+        "policy_version",
+        "revision",
+        "revision_kind"
+      ]
+    },
+    {
+      "business_key": "task_id",
+      "compatibility": "domain phases remain separate from task_state",
+      "consumers": [
+        "scheduler",
+        "worker",
+        "operations"
+      ],
+      "contract_id": "C-001/TaskStateMetadata",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/task-state-metadata.json",
+        "tests/golden/platform/contracts/rejected/task-phase-as-state.json",
+        "tests/golden/platform/contracts/rejected/failed-task-without-code.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-001.TaskStateMetadata.schema.json",
+      "lineage_fields": [],
+      "owner_module": "src.schemas.platform.versioning",
+      "producer": "task control plane",
+      "quality_semantics": [
+        "task_state",
+        "blocked_reason_code",
+        "failure_code"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "embedded task control metadata",
+      "time_semantics": [],
+      "version_semantics": []
+    },
+    {
+      "business_key": "resource_type + resource_id",
+      "compatibility": "new resource prefixes are additive only after shared registry and parser tests",
+      "consumers": [
+        "all cross-domain references"
+      ],
+      "contract_id": "C-002/ResourceRef",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/resource-ref.json",
+        "tests/golden/platform/contracts/rejected/resource-id-not-uuidv7.json",
+        "tests/golden/platform/contracts/rejected/resource-id-unknown-prefix.json",
+        "tests/golden/platform/contracts/rejected/resource-id-uppercase.json",
+        "tests/golden/platform/contracts/rejected/resource-ref-prefix-mismatch.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-002.ResourceRef.schema.json",
+      "lineage_fields": [
+        "resource_id"
+      ],
+      "owner_module": "src.schemas.platform.resources",
+      "producer": "shared resource ID generator",
+      "quality_semantics": [
+        "resource type and prefix must agree"
+      ],
+      "resource_id_field": "resource_id",
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "structured reference; no free-form combined string",
+      "time_semantics": [],
+      "version_semantics": [
+        "resource prefix registry"
+      ]
+    },
+    {
+      "business_key": "storage_backend + storage_namespace + relative_path",
+      "compatibility": "namespace roots may be rebound without changing stored references",
+      "consumers": [
+        "API",
+        "backup",
+        "result modules"
+      ],
+      "contract_id": "C-003/StorageRef",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/storage-ref.json",
+        "tests/golden/platform/contracts/rejected/storage-absolute-path.json",
+        "tests/golden/platform/contracts/rejected/storage-backslash-path.json",
+        "tests/golden/platform/contracts/rejected/storage-empty-segment.json",
+        "tests/golden/platform/contracts/rejected/storage-invalid-backend.json",
+        "tests/golden/platform/contracts/rejected/storage-invalid-media-type.json",
+        "tests/golden/platform/contracts/rejected/storage-invalid-namespace.json",
+        "tests/golden/platform/contracts/rejected/storage-negative-size.json",
+        "tests/golden/platform/contracts/rejected/storage-path-traversal.json",
+        "tests/golden/platform/contracts/rejected/storage-windows-drive.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-003.StorageRef.schema.json",
+      "lineage_fields": [
+        "content_hash"
+      ],
+      "owner_module": "src.schemas.platform.storage",
+      "producer": "artifact and durable workers",
+      "quality_semantics": [
+        "path containment and content integrity"
+      ],
+      "resource_id_field": null,
+      "retention_class": "REBUILDABLE",
+      "schema_version": "1.0.0",
+      "storage_profile": "local_fs namespace app with logical relative POSIX paths",
+      "time_semantics": [],
+      "version_semantics": [
+        "storage namespace binding policy"
+      ]
+    }
+  ]
+}

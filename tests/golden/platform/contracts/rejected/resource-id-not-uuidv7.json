@@ -1,0 +1,9 @@
+{
+  "contract_id": "C-002/ResourceRef",
+  "reason": "Resource IDs require UUIDv7",
+  "payload": {
+    "resource_id": "fs_550e8400-e29b-41d4-a716-446655440000",
+    "resource_type": "feature_snapshot"
+  },
+  "expected_error_fields": []
+}

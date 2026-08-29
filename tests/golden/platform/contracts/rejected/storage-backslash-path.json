@@ -1,0 +1,13 @@
+{
+  "contract_id": "C-003/StorageRef",
+  "reason": "Storage paths use forward slashes",
+  "payload": {
+    "storage_namespace": "app",
+    "media_type": "application/json",
+    "size_bytes": 1,
+    "content_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "relative_path": "features\\file",
+    "storage_backend": "local_fs"
+  },
+  "expected_error_fields": []
+}

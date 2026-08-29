@@ -1,0 +1,10 @@
+{
+  "contract_id": "C-001/EntityIdentity",
+  "reason": "entity_key must match asset_type and canonical_id",
+  "payload": {
+    "canonical_id": "sh600519",
+    "asset_type": "stock",
+    "entity_key": "stock:sz000001"
+  },
+  "expected_error_fields": []
+}

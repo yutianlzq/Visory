@@ -1,0 +1,10 @@
+{
+  "contract_id": "C-001/RevisionMetadata",
+  "payload": {
+    "schema_version": "1.0.0",
+    "definition_version": "1.0.0",
+    "revision": 2,
+    "revision_kind": "CORRECTION",
+    "supersedes_id": "ds_019c5f2a-8c33-7ce9-882c-43a965c39b2d"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "contract_id": "C-001/TaskStateMetadata",
+  "reason": "Failure cannot be silently represented without a failure code",
+  "payload": {
+    "task_state": "FAILED"
+  },
+  "expected_error_fields": []
+}

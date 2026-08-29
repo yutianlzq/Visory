@@ -1,0 +1,8 @@
+{
+  "contract_id": "C-001/EntityIdentity",
+  "payload": {
+    "asset_type": "stock",
+    "canonical_id": "sh600519",
+    "entity_key": "stock:sh600519"
+  }
+}
