@@ -12,6 +12,8 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from api.platform.boundary import is_platform_path
+from api.platform.errors import platform_error_response
 from src.auth import COOKIE_NAME, is_auth_enabled, verify_session
 
 logger = logging.getLogger(__name__)
@@ -35,7 +37,7 @@ def _path_exempt(path: str) -> bool:
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
-    """Require valid session for /api/v1/* when auth is enabled."""
+    """Require valid session for Legacy and platform APIs when auth is enabled."""
 
     async def dispatch(
         self,
@@ -49,11 +51,15 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if _path_exempt(path):
             return await call_next(request)
 
-        if not path.startswith("/api/v1/"):
+        is_legacy_api = path.startswith("/api/v1/")
+        is_platform_api = is_platform_path(path)
+        if not is_legacy_api and not is_platform_api:
             return await call_next(request)
 
         cookie_val = request.cookies.get(COOKIE_NAME)
         if not cookie_val or not verify_session(cookie_val):
+            if is_platform_api:
+                return platform_error_response(request, status_code=401)
             return JSONResponse(
                 status_code=401,
                 content={

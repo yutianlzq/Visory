@@ -1,0 +1,12 @@
+{
+  "model": "PlatformErrorEnvelope",
+  "payload": {
+    "error": {
+      "code": "RESOURCE_NOT_FOUND",
+      "message": "资源不存在",
+      "details": {},
+      "retryable": false,
+      "request_id": "req_0123456789abcdef0123456789abcdef"
+    }
+  }
+}

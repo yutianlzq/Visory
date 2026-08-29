@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] Visory-G005 / WP-0003 建立 C-010 成功/错误 Envelope、平台 Request ID 与稳定异常映射、`/api/platform/v1` 渐进边界，以及由公共 Schema 确定性生成 OpenAPI 和前端 TypeScript 类型的 drift 门禁；Legacy `/api/v1`、健康检查、认证与 SSE body 保持兼容。
+
 - [新功能] Visory-G004 / WP-0002 引入固定同步 PostgreSQL 栈、脱敏配置与 Secret 文件引用、连接池/健康检查/显式事务、Alembic 可复现基线和隔离测试数据库；Legacy SQLite 与现有 API 行为保持不变。
 
 - [新功能] 完成 Visory-G003 / WP-0001 公共契约底座：新增 C-001 至 C-003 严格 Schema、UUIDv7 资源 ID、PIT/Revision/状态校验、确定性 Hash、StorageRef、Contract Registry、Golden Payload 与 JSON Schema drift 门禁；现有 API 路径保持不变。

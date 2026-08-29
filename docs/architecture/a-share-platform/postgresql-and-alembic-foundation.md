@@ -1,6 +1,6 @@
 # PostgreSQL 与 Alembic 基础（WP-0002）
 
-最后更新：2026-08-29
+最后更新：2026-08-30
 
 ## 1. 范围与固定技术栈
 
@@ -77,7 +77,7 @@ Alembic 配置：
 - Migration 根：`migrations/`；
 - 当前唯一 revision：`0001_wp0002_baseline`；
 - parent：`<base>`；
-- baseline revision 不创建任何业务表，只建立 `alembic_version` 状态。
+- baseline revision 不创建任何业务表，只建立 `alembic_version` 状态；`WP-0003` 不新增数据库对象或 Migration，当前 head 仍为 `0001_wp0002_baseline`。
 
 必须在 PostgreSQL 在线连接上运行；离线 SQL 生成不属于本 WP 支持范围。
 
