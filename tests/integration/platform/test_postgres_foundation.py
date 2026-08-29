@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import socket
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
@@ -38,7 +39,11 @@ def test_empty_database_upgrade_is_idempotent_and_reversible(isolated_postgres_d
     assert initial.head_revision == BASELINE_REVISION
     assert initial.is_at_head is False
 
+    existing_logger = logging.getLogger("visory.wp0002.migration-probe")
+    existing_logger.disabled = False
+
     upgrade_database(database.engine)
+    assert existing_logger.disabled is False
     upgraded = get_migration_status(database.engine)
     first_tables = _table_names(database)
     assert upgraded.current_revision == BASELINE_REVISION

@@ -115,6 +115,8 @@ def test_missing_secret_file_is_safely_rejected(tmp_path: Path) -> None:
 def test_unreadable_secret_file_is_safely_rejected(tmp_path: Path, monkeypatch) -> None:
     secret_path = (tmp_path / "postgres-password").resolve()
     secret_path.write_text("placeholder", encoding="utf-8")
+    if os.name != "nt":
+        secret_path.chmod(0o600)
 
     def deny_read(_self: Path) -> bytes:
         raise PermissionError("denied /private/secret/path")
