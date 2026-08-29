@@ -153,7 +153,9 @@ def test_malformed_secret_file_is_safely_rejected(tmp_path: Path, payload: bytes
 
     assert captured.value.error_code == "DATABASE_SECRET_FILE_INVALID"
     assert captured.value.retryable is False
-    assert payload.decode("utf-8", errors="ignore") not in str(captured.value)
+    decoded_payload = payload.decode("utf-8", errors="ignore")
+    if decoded_payload:
+        assert decoded_payload not in str(captured.value)
 
 
 def test_secret_file_accepts_one_terminal_newline(tmp_path: Path) -> None:
@@ -217,4 +219,3 @@ def test_platform_database_error_has_stable_public_shape_without_cause_leakage()
     assert isinstance(error.cause, RuntimeError)
     assert secret not in str(error)
     assert secret not in repr(error)
-

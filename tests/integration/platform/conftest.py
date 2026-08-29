@@ -73,4 +73,3 @@ def isolated_postgres_database() -> PostgresDatabase:
             )
             connection.exec_driver_sql(f'DROP DATABASE IF EXISTS "{database_name}"')
         admin_engine.dispose(close=True)
-
