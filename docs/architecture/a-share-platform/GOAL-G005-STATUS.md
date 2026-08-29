@@ -6,14 +6,14 @@
 
 - Goal：`Visory-G005`
 - Work Package：`WP-0003 API Envelope、Error 与生成类型`
-- Goal 状态：`IN_PROGRESS`
-- Work Package 状态：`IN_PROGRESS`
+- Goal 状态：`READY_TO_MERGE`
+- Work Package 状态：`VERIFIED`
 - 固定基线：`main=75132082544239b011682d37cd626a29bca15b49`
 - 工作分支：`goal/g005-wp-0003-api-envelope-types`
-- 已验证 Work Package：`2/45`
+- 已验证 Work Package：`3/45`
 - Alembic head：`0001_wp0002_baseline`（本 Goal 不新增 Migration）
 
-本分支已核验本地 HEAD、`origin/main` 与 GitHub `main` 均为固定基线 `7513208`，且开始时工作区干净。C-010 实现与本地定向验收已完成，当前等待 PR 的 GitHub 三项阻断 CI；在 CI 全绿前不得标记为 `VERIFIED`，implemented work packages 继续保持 `2/45`。
+本分支已核验本地 HEAD、`origin/main` 与 GitHub `main` 均为固定基线 `7513208`，且开始时工作区干净。C-010 实现、本地定向验收和 PR #4 首轮 GitHub 三项阻断 CI 已全部通过，因此 WP-0003 标记为 `VERIFIED`，implemented work packages 更新为 `3/45`。owner 已批准在本状态提交触发的第二轮 CI 全绿后以普通 merge commit 合入。
 
 ## 2. 目标范围
 
@@ -40,8 +40,21 @@
 - Windows clean-worktree 完整 `bash scripts/ci_gate.sh`：`6428 passed, 83 failed, 11 skipped, 4 deselected, 572 subtests passed`。失败集中于 native Windows 不支持的 POSIX 进程组/管道、环境相关 Codex CLI、SQLite 文件锁、Git Bash macOS 脚本路径及一个时序测试；固定基线同环境 524 项代表性对照为 `441 passed, 81 failed, 2 skipped`，分支对应对照为 `440 passed, 82 failed, 2 skipped`，额外的 storage 失败单独重跑通过。该结果不伪装为全绿，最终阻断裁决由 GitHub Linux CI 给出；
 - 本机未配置一次性 PostgreSQL，因此 WP-0002 的 5 项 PostgreSQL 集成测试本地跳过；本 Goal 未修改数据库层或 Migration。
 
-## 5. 待完成
+## 5. GitHub 验收与合入状态
 
-- 创建 PR，并等待 Governance、Python deterministic、Web lint/build 三项阻断 Job 全绿；
-- CI 全绿后再将 WP-0003 标记为 `VERIFIED`、implemented work packages 更新为 `3/45`；
-- owner 已授权在验收证据齐全后普通合并；不得 force push、改写历史、部署或启动 WP-0101。
+PR #4 首轮 GitHub Actions Run `33265028192`：
+
+- Governance and repository boundaries：通过；
+- Python deterministic gate：通过，`6522 passed, 4 deselected, 49 warnings, 572 subtests passed`；
+- Web lint and build：通过；
+- Python Job 使用 Ubuntu 24.04、Python 3.11.16 与一次性 PostgreSQL `16.15` service，服务容器、临时网络和测试数据库均由 CI 清理；
+- `scripts/ci_gate.sh` 完整通过，包含 deterministic export drift、Legacy 完整离线回归与 WP-0002 PostgreSQL 集成基线。
+
+当前结论：WP-0003 已达到 `VERIFIED`，M0 三个 Work Package 全部验证完成。owner 已批准后续普通合并；本状态提交 push 后仍须等待第二轮 Governance、Python、Web 三项 CI 全绿，随后才可合并 PR #4。不得 force push、改写历史、部署或启动 WP-0101。
+
+## 6. 回滚
+
+- 合并前：关闭 PR #4；
+- 合并后：普通 revert PR #4 的 merge commit；
+- 本 Goal 无数据库 revision、业务表或数据写入，不需要 Alembic downgrade；
+- 生成文件必须通过 `python scripts/export_platform_contracts.py` 恢复，不手工编辑。
