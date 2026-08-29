@@ -1,6 +1,6 @@
 # Visory-G005 / WP-0003 进度与验收记录
 
-最后更新：2026-08-29
+最后更新：2026-08-30
 
 ## 1. 当前状态
 
@@ -13,7 +13,7 @@
 - 已验证 Work Package：`2/45`
 - Alembic head：`0001_wp0002_baseline`（本 Goal 不新增 Migration）
 
-本分支已核验本地 HEAD、`origin/main` 与 GitHub `main` 均为固定基线 `7513208`，且开始时工作区干净。WP-0003 的实现、完整回归和 GitHub 阻断 CI 尚未完成，因此不得标记为 `VERIFIED`，implemented work packages 继续保持 `2/45`。
+本分支已核验本地 HEAD、`origin/main` 与 GitHub `main` 均为固定基线 `7513208`，且开始时工作区干净。C-010 实现与本地定向验收已完成，当前等待 PR 的 GitHub 三项阻断 CI；在 CI 全绿前不得标记为 `VERIFIED`，implemented work packages 继续保持 `2/45`。
 
 ## 2. 目标范围
 
@@ -21,11 +21,27 @@
 
 明确不实现身份、Artifact、Task、业务数据表、业务 Migration、正式认证、Turnstile、Cloudflare、NPM、部署或任何后续 Work Package；不修改 `upstream/`、`references/`。
 
-## 3. 验收状态
+## 3. 实现结果
 
-- C-010 Golden / rejected payload：待实现与验证；
-- 指定 HTTP 状态和未知异常：待实现与验证；
-- Request ID Header / Envelope / Error / structured log 一致性：待实现与验证；
-- OpenAPI 示例与前端类型确定性生成：待实现与验证；
-- Legacy Smoke、完整回归和 GitHub 三项阻断 Job：待验证；
-- PR：待创建，未经 owner 明确批准不得合并。
+- 公共 Schema：在 `src/schemas/platform/api.py` 定义严格的成功、列表、错误 Envelope、Meta、Page 与公开错误对象，Schema 版本为 `1.0.0`；
+- 平台边界：新增 `/api/platform/v1`，本 WP 不添加业务资源；Legacy `/api/v1`、健康检查、认证、validation 与 Agent Stream/SSE body 保持原语义；
+- Request ID：使用 `X-Request-ID` 与 `req_<32 lowercase hex>`；只传播单个合法 ASCII 值，缺失、重复、非法或非 ASCII 输入均生成新值；Header、Envelope、Error 与结构化日志共享同一 ID；
+- 错误映射：实现 400、401、403、404、409、422、429、503 与未知异常 500；公开响应和平台未知异常日志不回显堆栈、路径、SQL、DSN、Secret 或原始异常文本；
+- 生成链：`scripts/export_platform_contracts.py` 从公共 Schema 确定性生成 `schemas/platform/C-010.openapi.json` 与 `apps/dsa-web/src/types/generated/platform-api.ts`，`--check` 检测 drift；生成 TypeScript 固定 LF；
+- Migration：本 Goal 未新增数据库对象或 revision，Alembic head 仍为 `0001_wp0002_baseline`。
+
+## 4. 本地验收证据
+
+- C-010 平台 API 契约测试：`35 passed`；
+- 平台契约与 Legacy/API 定向回归：`112 passed`；
+- Python compileall、flake8 critical checks、生成链 `--check` 与 `git diff --check`：通过；
+- Web：`npm ci`、`npm run lint`、`npm run build` 通过，Vite 构建 `3236 modules transformed`；
+- 治理：clean worktree 中 `check_ai_assets.py`、`check_visory_baseline.py` 通过，`broken_relative_links=0`、`imported_secrets=0`；
+- Windows clean-worktree 完整 `bash scripts/ci_gate.sh`：`6428 passed, 83 failed, 11 skipped, 4 deselected, 572 subtests passed`。失败集中于 native Windows 不支持的 POSIX 进程组/管道、环境相关 Codex CLI、SQLite 文件锁、Git Bash macOS 脚本路径及一个时序测试；固定基线同环境 524 项代表性对照为 `441 passed, 81 failed, 2 skipped`，分支对应对照为 `440 passed, 82 failed, 2 skipped`，额外的 storage 失败单独重跑通过。该结果不伪装为全绿，最终阻断裁决由 GitHub Linux CI 给出；
+- 本机未配置一次性 PostgreSQL，因此 WP-0002 的 5 项 PostgreSQL 集成测试本地跳过；本 Goal 未修改数据库层或 Migration。
+
+## 5. 待完成
+
+- 创建 PR，并等待 Governance、Python deterministic、Web lint/build 三项阻断 Job 全绿；
+- CI 全绿后再将 WP-0003 标记为 `VERIFIED`、implemented work packages 更新为 `3/45`；
+- owner 已授权在验收证据齐全后普通合并；不得 force push、改写历史、部署或启动 WP-0101。

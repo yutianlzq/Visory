@@ -1,6 +1,6 @@
 # Visory 实现状态
 
-最后更新：2026-08-29
+最后更新：2026-08-30
 
 ## 1. 当前结论
 
@@ -10,7 +10,7 @@
 
 目标架构状态：implemented work packages 为 `2/45`；`WP-0001`、`WP-0002` 均为 `VERIFIED`，`WP-0003` 为 `IN_PROGRESS`，其余 42 个 WP 为 `NOT_STARTED`。
 
-最近完成的 Work Package：`WP-0002 PostgreSQL 与 Alembic 基础`。`Visory-G004` 已通过 PR #3 以 merge commit `75132082544239b011682d37cd626a29bca15b49` 合入 `main`。`Visory-G005 / WP-0003` 已从该固定基线启动并保持 `IN_PROGRESS`；验收证据齐全前 implemented work packages 仍为 `2/45`。
+最近完成的 Work Package：`WP-0002 PostgreSQL 与 Alembic 基础`。`Visory-G004` 已通过 PR #3 以 merge commit `75132082544239b011682d37cd626a29bca15b49` 合入 `main`。`Visory-G005 / WP-0003` 已完成 C-010、平台路由边界、Request ID、稳定错误映射和确定性前端类型生成的本地实现与定向验收，当前等待 GitHub 三项阻断 CI；验收证据齐全前 implemented work packages 仍为 `2/45`。
 
 交付阶段：MVP 一期为本地核心功能版（M0—M6 + WP-0701—0703）；MVP 二期为本地生产预演与服务器发布版（WP-0704 + M8）。未过 Local Release Gate 不得将 WP 标记为 `RELEASED`。
 
@@ -44,7 +44,7 @@ RELEASED     已部署且通过运行观察和回滚/恢复要求
 | --- | --- | --- | --- |
 | WP-0001 | Contract Registry与公共Schema | VERIFIED | Commit `5537569`；PR #2；GitHub Actions Run `33242596600` 的 Governance、Python、Web 三项阻断 Job 全绿；平台契约测试 93 passed |
 | WP-0002 | PostgreSQL与Alembic基础 | VERIFIED | 实现 head `32b318a`；PR #3；Migration `0001_wp0002_baseline`；GitHub Actions Run `33250185521` 三项阻断 Job 全绿；Python 6487 passed，含 PostgreSQL 16 真实集成验收 |
-| WP-0003 | API Envelope、Error与生成类型 | IN_PROGRESS | 固定基线 `7513208`；分支 `goal/g005-wp-0003-api-envelope-types`；完成全部验收前不得标记为 `VERIFIED` |
+| WP-0003 | API Envelope、Error与生成类型 | IN_PROGRESS | 固定基线 `7513208`；本地 C-010/Legacy 定向回归 112 passed，平台契约 35 passed，Web/治理/生成链通过；等待 GitHub 三项阻断 CI |
 | WP-0101 | Asset Identity与Alias Resolver | NOT_STARTED | — |
 | WP-0102 | Storage Namespace与Artifact Publisher | NOT_STARTED | — |
 | WP-0103 | Durable Task Control Plane | NOT_STARTED | — |
