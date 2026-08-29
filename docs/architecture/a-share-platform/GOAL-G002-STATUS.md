@@ -1,6 +1,6 @@
 # Visory-G002 进度与验收记录
 
-最后更新：2026-08-28
+最后更新：2026-08-29
 
 ## 1. 当前结论
 
@@ -9,6 +9,8 @@
 - 项目仓库：`https://github.com/yutianlzq/Visory`
 - 工作分支：`goal/g002-dsa-baseline-import`
 - Visory 起始基线：`c4b108f0055fb779cfb5a030fab5d08bdcdd07ca`
+- G002 核心导入提交：`23bb3d18276f991a9a18f4de41ae9bb83f94058a`
+- 远端交付分支：`origin/goal/g002-dsa-baseline-import`
 - DSA 固定提交：`fb4735a1055caefa2396982af3b09121feb9ff30`
 - DSA 固定 Git tree：`1fa51b5f3fde0084af85d6ad4e463aed3610cd0a`
 - G001：`COMPLETE`
@@ -104,7 +106,7 @@ web_lint_build_regression_delta=0
 - `bash scripts/ci_gate.sh`：本地未启动；`C:\Windows\system32\bash.exe` 在创建 WSL 实例时返回 `Bash/Service/CreateInstance/E_ACCESSDENIED`。Linux CI 仍将该脚本作为阻断门禁。
 - `git fetch --all --prune`：通过，远端 refs 无新增或删除。
 - 全量 `git diff --cached --check`：因固定 DSA 上游原始文件包含既有 trailing whitespace 与 EOF 空行而返回非零；为保持与固定 Git blob 的审计关系，不对上游快照做无关格式化。Visory 第一方与本轮适配文件的范围化 `git diff --cached --check -- <paths>` 已通过。
-- 提交后远端核验：在最终推送阶段复核。
+- 远端交付核验：`goal/g002-dsa-baseline-import` 已推送；本地跟踪分支 ahead/behind 为 `0/0`，GitHub 已确认核心导入提交 `23bb3d18276f991a9a18f4de41ae9bb83f94058a` 可访问。
 
 本地 Windows 的 WSL/bash、文件锁和 POSIX 进程组限制已与固定 DSA 双基线证据分开记录，没有伪装为全部通过。
 
