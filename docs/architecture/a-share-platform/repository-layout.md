@@ -6,79 +6,87 @@
 
 ```text
 Visory/
-├── README.md
-├── LICENSE
-├── AGENTS.md
+├── main.py / server.py / webui.py       # DSA 导入的运行入口
+├── src/ api/ bot/ data_provider/         # DSA Python 迁移底座
+├── apps/
+│   ├── dsa-web/                          # React/Vite Web 底座
+│   └── dsa-desktop/                      # Electron 桌面端底座
+├── scripts/ docker/ tests/               # 构建、容器和回归测试
+├── .github/
+│   ├── workflows/ci.yml                  # 唯一启用的 Visory workflow
+│   ├── requirements-ci.txt
+│   ├── ci-test-durations.json
+│   └── scripts/                          # 固定基线测试所需脚本
 ├── docs/
-│   ├── architecture/
-│   │   └── a-share-platform/
-│   ├── 参考项目/                  # 保留的空目录，不再存放源码
+│   ├── architecture/a-share-platform/    # Visory 第一方架构和 Goal/WP 状态
+│   ├── upstream/daily_stock_analysis/    # 重定位的上游文档与非激活 workflow 证据
+│   ├── 参考项目/                         # 保留空目录
 │   ├── CHANGELOG.md
 │   └── INDEX.md
-├── upstream/
-│   └── daily_stock_analysis/      # 基础上游归档，仅本地只读
+├── upstream-baseline/                    # 可提交的 DSA 固定提交清单
+├── third_party/                          # DSA/衍生代码许可证和 NOTICE
+├── upstream/daily_stock_analysis/        # 本地只读历史快照，不提交
 ├── references/
-│   ├── repos/                     # 九个外部参考快照及空 _unverified 隔离目录，仅本地只读
+│   ├── repos/                            # 九个本地只读参考快照，不提交
 │   ├── README.md
 │   └── manifest.yaml
-├── .gitignore
-└── .dockerignore
+├── AGENTS.md / CLAUDE.md
+├── README.md / LICENSE
+├── .gitignore / .dockerignore
+└── requirements.txt / pyproject.toml / setup.cfg
 ```
 
-项目 Git 仓库为 `https://github.com/yutianlzq/Visory`，默认分支为 `main`。当前仓库以文档和治理基线为主，尚无按目标架构完成的 Visory 第一方运行时代码；该结构不代表 MVP 已实现。
+项目 Git 仓库为 `https://github.com/yutianlzq/Visory`，默认分支为 `main`。G002 在 `goal/g002-dsa-baseline-import` 分支导入 DSA 固定提交 `fb4735a1055caefa2396982af3b09121feb9ff30`，形成可安装、可导入、可测试和可构建的工程底座。
 
-`upstream/daily_stock_analysis/` 与 `references/repos/` 只存在于本地工作区，由 `.gitignore` 排除，不提交到 Visory 仓库。GitHub 上仅保存第一方治理文件、文档和机器可读核验清单。
+该运行底座不是 Visory 目标架构已实现的证据。Legacy SQLite、内存 Task Queue、DSA API/UI 和现有报告链路仍是迁移基线；目标 Work Package 当前实现数为 `0/45`。
 
 ## 2. 目录责任
 
 | 目录 | 责任 | 当前写入规则 |
 | --- | --- | --- |
-| `docs/` | Visory 第一方需求、架构、契约、实施与治理文档 | 可按文档工作流更新 |
-| `docs/architecture/a-share-platform/` | Visory 架构单一文档基线 | 不因参考项目变化重写已确认架构结论 |
-| `docs/参考项目/` | 旧位置兼容标记 | 保留为空，不再放完整源码，不删除 |
-| `upstream/daily_stock_analysis/` | Visory 基础上游历史快照 | 仅本地只读；底座导入必须单独规划、核验和回滚 |
-| `references/` | 参考治理说明和清单 | `README.md`、`manifest.yaml` 可提交和维护 |
-| `references/repos/` | 九个外部参考快照及空 `_unverified/` 隔离目录 | 仅本地只读；不执行、不安装、不提交、不进入构建上下文；隔离目录不计入已核验项目 |
+| `src/`、`api/`、`bot/`、`data_provider/` | 导入的 DSA Python 运行底座 | 可在明确 Goal/WP 中渐进迁移；不得冒充目标契约已完成 |
+| `apps/dsa-web/`、`apps/dsa-desktop/` | 导入的 Web/Desktop 客户端底座 | 保留兼容；用户可见变更需同步文档与构建验证 |
+| `scripts/`、`docker/`、`tests/` | 构建、容器、验证与回归契约 | 优先复用；平台差异必须记录 |
+| `.github/workflows/` | Visory 实际启用的 GitHub Actions | 当前只允许 `ci.yml`；禁止复制启用上游 schedule/release/publish/deploy workflow |
+| `.github/scripts/`、`.github/ci-test-durations.json` | 固定 DSA 测试和 CI shard 支撑 | 可提交；不等于启用上游自动化 |
+| `docs/architecture/a-share-platform/` | Visory 架构、Goal 和 WP 单一文档基线 | 状态必须由代码和可复现证据更新 |
+| `docs/upstream/daily_stock_analysis/` | 重定位的上游文档和非激活 workflow 证据 | 只作归属、迁移和测试证据；其中 YAML 不会被 Actions 启用 |
+| `upstream-baseline/` | DSA 固定提交、路径和验证结果清单 | 每次上游同步必须显式更新并验签 |
+| `third_party/` | 许可证和第三方 NOTICE | 导入代码必须保留归属链 |
+| `upstream/daily_stock_analysis/` | 本地历史只读快照 | 不执行、不修改、不提交 |
+| `references/repos/` | 九个外部参考快照 | 不执行、不安装、不修改、不提交、不进入构建上下文 |
+| `references/README.md`、`references/manifest.yaml` | 可提交的参考治理记录 | 只记录已核验身份，不把历史快照误称为当前 HEAD |
 
-后续若收到来源、commit 或许可证不能完整确认的快照，应先在本地隔离并标记未验证；完成核验前不得把它提升为正式上游、依赖或“当前 HEAD”。当前十个快照均已定位直接来源和提交，详见 [`../../../references/manifest.yaml`](../../../references/manifest.yaml)。
+## 3. Workflow 与外部源码边界
 
-## 3. 只读与安全边界
+- `.github/workflows/` 只有 `ci.yml`，触发器仅为 `pull_request`、`workflow_dispatch`，权限为 `contents: read`。
+- `docs/upstream/daily_stock_analysis/workflows/` 中的 `00-daily-analysis.yml`、`ci.yml`、`docker-publish.yml`、`ghcr-dockerhub.yml` 是固定提交的非激活证据，不是 Visory workflow。
+- `upstream/` 和 `references/repos/` 由 `.gitignore`、`.dockerignore` 与 `scripts/check_visory_baseline.py` 共同保护。
+- 不从外部快照读取或复制密钥、Cookie、Token、Session、数据库、缓存、日志、报告或运行产物。
+- 代码吸收前必须确认来源 commit、许可证、适用 Goal/WP、契约和回滚方式。
 
-- 不执行 `upstream/` 或 `references/repos/` 中的脚本、Docker、安装器和代理指令。
-- 不修改参考仓库内部内容；需要补充说明时更新根级治理文档。
-- 不从参考项目读取密钥、Cookie、Token、Session 或本地运行配置。
-- 参考代码不直接进入生产镜像，相关目录由 `.dockerignore` 排除。
-- 参考源码归档由 `.gitignore` 排除；治理文件保留在项目根级。
-- 代码吸收前必须核验仓库、commit、许可证、适用 Work Package 和回滚方式。
+## 4. Goal 与 Work Package 状态
 
-## 4. 未来第一方代码规划
+| 范围 | 状态 | 说明 |
+| --- | --- | --- |
+| Visory-G001 | COMPLETE | 参考项目目录与治理基线完成 |
+| Visory-G002 | COMPLETE | DSA 固定底座已导入并验证 |
+| DSA Baseline | IMPORTED / VERIFIED | 1126/1126 blob 验签；Python/Web 双基线完成 |
+| WP-0001 | NOT_STARTED | 下一项：Contract Registry 与公共 Schema |
+| WP-0002—WP-0805 | NOT_STARTED | 其余 44 项未开始 |
+| Implemented Work Packages | 0/45 | G002 不改变目标架构实现计数 |
 
-本轮不创建业务目录。完成 `daily_stock_analysis` 底座导入方案后，再按照架构契约和独立 Work Package 建立实际目录。预期职责如下，最终名称以底座导入设计为准：
-
-```text
-apps/                         # Web、Desktop 等用户界面
-services/                     # API、Worker 或明确的进程入口
-packages/                     # 公共 Schema、契约、SDK 和共享模块
-migrations/                   # PostgreSQL/Alembic Migration
-scripts/                      # 项目级验证、构建、迁移和运维脚本
-tests/                        # 契约、单元、集成、确定性和端到端测试
-```
-
-目录创建必须满足：
-
-1. 不破坏现有 `daily_stock_analysis` 迁移基线；
-2. 先完成 WP-0001 Contract Registry 与公共 Schema；
-3. 模块所有权、Schema、时间语义、StorageRef 和失败语义有明确归属；
-4. 本地验证通过后才进入 Docker 和服务器部署阶段。
+详细证据见 [Visory-G002 进度与验收记录](GOAL-G002-STATUS.md) 和 [Visory 实现状态](IMPLEMENTATION-STATUS.md)。
 
 ## 5. 后续迁移顺序
 
 ```text
-复核 upstream 身份、许可证与历史提交
-→ 制定 daily_stock_analysis 底座导入和回滚方案
-→ 建立 Visory 第一方工程骨架
-→ 实施 WP-0001
-→ 按 M0—M8 路线推进
+G001 参考治理 COMPLETE
+→ G002 DSA 底座 IMPORTED / VERIFIED
+→ WP-0001 Contract Registry 与公共 Schema
+→ 按 M0—M8 逐个 Work Package 推进
+→ 本地 Release Gate
+→ 服务器部署
 ```
 
-参考项目角色和允许采用方式见 [`reference-adoption-matrix.md`](reference-adoption-matrix.md)，快照身份见 [`../../../references/manifest.yaml`](../../../references/manifest.yaml)。
+不得跳过 WP 边界，也不得因为 DSA 已可运行就把目标能力标记为 `VERIFIED` 或 `RELEASED`。

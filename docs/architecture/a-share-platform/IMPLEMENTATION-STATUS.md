@@ -6,11 +6,22 @@
 
 文档状态：可执行基线已形成。
 
-代码状态：Visory尚未按M0—M8完成实现。当前`daily_stock_analysis`仓库的React/FastAPI、SQLite、内存Task Queue、分析、LLM、报告、通知和数据Fetcher是迁移基线，不能作为新契约已实现的证据。
+工程底座状态：DSA 固定提交 `fb4735a1055caefa2396982af3b09121feb9ff30` 已完成导入和双基线验收，状态为 `IMPORTED / VERIFIED`。导入代码中的 React/FastAPI、Legacy SQLite、内存 Task Queue、分析、LLM、报告、通知和数据 Fetcher 仍是迁移基线，不能作为 Visory 新契约已实现的证据。
 
-下一Work Package：`WP-0001 Contract Registry与公共Schema`。
+目标架构状态：implemented work packages 为 `0/45`；`WP-0001` 与其余 44 个 WP 全部 `NOT_STARTED`。
 
-交付阶段：MVP一期为本地核心功能版（M0—M6 + WP-0701—0703）；MVP二期为本地生产预演与服务器发布版（WP-0704 + M8）。未过Local Release Gate不得将WP标记为`RELEASED`。
+下一 Work Package：`WP-0001 Contract Registry 与公共 Schema`。
+
+交付阶段：MVP 一期为本地核心功能版（M0—M6 + WP-0701—0703）；MVP 二期为本地生产预演与服务器发布版（WP-0704 + M8）。未过 Local Release Gate 不得将 WP 标记为 `RELEASED`。
+
+### Goal 与底座状态
+
+| 范围 | 状态 | 证据 |
+| --- | --- | --- |
+| Visory-G001 | COMPLETE | [G001 进度与验收记录](GOAL-STATUS.md) |
+| Visory-G002 | COMPLETE | [G002 进度与验收记录](GOAL-G002-STATUS.md) |
+| DSA Baseline | IMPORTED / VERIFIED | 1126/1126 blob 验签；Python/Web 双基线；`baseline_regression_delta=0`；`web_lint_build_regression_delta=0` |
+| Implemented Work Packages | 0/45 | 下表 45 项全部 `NOT_STARTED` |
 
 ## 2. 状态定义
 

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 - [文档] 完成 Visory-G001 参考项目目录治理验收：按已核验上游关系将 UZI 衍生快照统一放置于 `references/repos/UZI-Skill`，保留 `gosinkx/UZI-SKILL-astock` 直接来源，并补充检查点证据。
+- [改进] 完成 Visory-G002：导入并验签 `daily_stock_analysis` 固定提交 `fb4735a1055caefa2396982af3b09121feb9ff30`，建立安全 CI、许可证归属、非激活 workflow 证据和 Python/Web 双基线，归一化回归差异均为 0；目标 Work Package 仍为 0/45。
 
 - [文档] 使用 GitHub 默认分支 HEAD、提交历史和 Git blob SHA 校验十个外部快照，补齐仓库、提交、许可证与匹配状态；确认八个快照为核验时 HEAD，daily_stock_analysis 与 Financial-API 为可定位历史提交，并确认 UZI 衍生版直接来源。
 

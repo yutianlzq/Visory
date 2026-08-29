@@ -1,6 +1,6 @@
 # Visory 文档中心
 
-这里是 Visory 当前文档工作区的统一入口。当前仓库保存目标架构、实施路线、基础上游快照和外部参考治理；Visory 第一方运行时代码尚未开始实现。
+这里是 Visory 当前文档工作区的统一入口。G002 已将固定的 `daily_stock_analysis` 运行底座导入项目仓库并完成双基线验收；目标架构 Work Package 仍为 `0/45`，下一项是 `WP-0001 Contract Registry 与公共 Schema`。
 
 ## 快速入口
 
@@ -9,6 +9,8 @@
 | 理解项目定位和总体架构 | [Visory 架构索引](architecture/a-share-platform/README.md) |
 | 按统一规则开展后续实现 | [Visory 开发总指引](architecture/a-share-platform/CLAUDE-CODE-GUIDE.md) |
 | 查看真实实施状态 | [Visory 实现状态](architecture/a-share-platform/IMPLEMENTATION-STATUS.md) |
+| 查看 DSA 底座导入验收 | [Visory-G002 进度与验收记录](architecture/a-share-platform/GOAL-G002-STATUS.md) |
+| 查看 DSA 固定提交与导入清单 | [DSA baseline manifest](../upstream-baseline/daily_stock_analysis.yaml) |
 | 查看里程碑和 Work Package | [实施路线与验收方案](architecture/a-share-platform/implementation-roadmap-and-acceptance-v1.md) |
 | 查看当前目录责任 | [仓库布局与目录责任](architecture/a-share-platform/repository-layout.md) |
 | 确认参考项目使用边界 | [参考项目采用矩阵](architecture/a-share-platform/reference-adoption-matrix.md) |
@@ -72,8 +74,10 @@
 
 ## 上游与参考项目
 
-- 基础上游 `upstream/daily_stock_analysis/` 仅本地保留，其来源和历史提交见下方治理说明与清单。
+- 固定 DSA 提交 `fb4735a1055caefa2396982af3b09121feb9ff30` 的运行底座已导入项目；身份、路径与验证结果见 [`upstream-baseline/daily_stock_analysis.yaml`](../upstream-baseline/daily_stock_analysis.yaml)。
+- 重定位的 DSA 文档位于 [`docs/upstream/daily_stock_analysis/`](upstream/daily_stock_analysis/README.md)；其中 `workflows/` 仅为非激活测试证据。
+- 基础历史快照 `upstream/daily_stock_analysis/` 仅本地保留、只读且不提交。
 - 参考治理说明：[`references/README.md`](../references/README.md)
-- 快照清单：[`references/manifest.yaml`](../references/manifest.yaml)
+- 参考快照清单：[`references/manifest.yaml`](../references/manifest.yaml)
 - 外部参考源码位于 `references/repos/`，默认只读且不进入 Git 或 Docker 构建上下文。
 - 原 `docs/参考项目/` 保留为空目录，不再存放完整源码仓库。
