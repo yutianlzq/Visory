@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from .api_export import render_platform_openapi_json
 from .registry import PLATFORM_CONTRACTS, ContractRegistration
 
 
@@ -52,6 +53,7 @@ def render_contract_exports() -> dict[str, str]:
         filename = _schema_filename(registration)
         rendered[filename] = _json_text(registration.json_schema)
         registry_rows.append(_registration_export(registration))
+    rendered["C-010.openapi.json"] = render_platform_openapi_json()
     rendered["contract-registry.json"] = _json_text(
         {
             "contract_registry_version": "1.0.0",

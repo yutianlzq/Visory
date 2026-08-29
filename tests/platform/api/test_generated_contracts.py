@@ -66,7 +66,7 @@ def test_generated_frontend_types_are_strict_and_cover_c010_fields() -> None:
     assert "DO NOT EDIT" in generated
     assert "export interface PlatformResponseMeta" in generated
     assert "readonly request_id: string;" in generated
-    assert "readonly schema_version: string;" in generated
+    assert 'readonly schema_version: "1.0.0";' in generated
     assert "readonly generated_at: string;" in generated
     assert "readonly data_snapshot_id: string | null;" in generated
     assert "readonly warnings: ReadonlyArray<string>;" in generated

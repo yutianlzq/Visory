@@ -1,0 +1,255 @@
+{
+  "components": {
+    "schemas": {
+      "PlatformAPIError": {
+        "additionalProperties": false,
+        "description": "Stable public error fields required by C-010.",
+        "properties": {
+          "code": {
+            "pattern": "^[A-Z][A-Z0-9_]{2,63}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "message": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "request_id": {
+            "pattern": "^req_[0-9a-f]{32}$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "retryable": {
+            "title": "Retryable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details",
+          "retryable",
+          "request_id"
+        ],
+        "title": "PlatformAPIError",
+        "type": "object"
+      },
+      "PlatformErrorEnvelope": {
+        "additionalProperties": false,
+        "description": "C-010 error response.",
+        "examples": [
+          {
+            "error": {
+              "code": "RESOURCE_NOT_FOUND",
+              "details": {},
+              "message": "资源不存在",
+              "request_id": "req_0123456789abcdef0123456789abcdef",
+              "retryable": false
+            }
+          }
+        ],
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/PlatformAPIError"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "PlatformErrorEnvelope",
+        "type": "object"
+      },
+      "PlatformListEnvelope": {
+        "additionalProperties": false,
+        "description": "C-010 list success response with opaque cursor metadata.",
+        "examples": [
+          {
+            "data": [
+              {
+                "resource_id": "example"
+              }
+            ],
+            "meta": {
+              "data_snapshot_id": null,
+              "generated_at": "2026-08-27T12:00:00+08:00",
+              "request_id": "req_0123456789abcdef0123456789abcdef",
+              "schema_version": "1.0.0",
+              "warnings": []
+            },
+            "page": {
+              "cursor": null,
+              "has_more": false,
+              "limit": 50,
+              "next_cursor": null
+            }
+          }
+        ],
+        "properties": {
+          "data": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PlatformResponseMeta"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PlatformPage"
+          }
+        },
+        "required": [
+          "data",
+          "meta",
+          "page"
+        ],
+        "title": "PlatformListEnvelope",
+        "type": "object"
+      },
+      "PlatformPage": {
+        "additionalProperties": false,
+        "description": "Opaque cursor metadata for C-010 list responses.",
+        "properties": {
+          "cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cursor"
+          },
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "limit": {
+            "maximum": 1000,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "cursor",
+          "next_cursor",
+          "limit",
+          "has_more"
+        ],
+        "title": "PlatformPage",
+        "type": "object"
+      },
+      "PlatformResponseMeta": {
+        "additionalProperties": false,
+        "description": "C-010 metadata shared by all successful platform responses.",
+        "properties": {
+          "data_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Snapshot Id"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "request_id": {
+            "pattern": "^req_[0-9a-f]{32}$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "request_id",
+          "schema_version",
+          "generated_at",
+          "data_snapshot_id",
+          "warnings"
+        ],
+        "title": "PlatformResponseMeta",
+        "type": "object"
+      },
+      "PlatformSuccessEnvelope": {
+        "additionalProperties": false,
+        "description": "C-010 object success response.",
+        "examples": [
+          {
+            "data": {
+              "resource_id": "example"
+            },
+            "meta": {
+              "data_snapshot_id": null,
+              "generated_at": "2026-08-27T12:00:00+08:00",
+              "request_id": "req_0123456789abcdef0123456789abcdef",
+              "schema_version": "1.0.0",
+              "warnings": []
+            }
+          }
+        ],
+        "properties": {
+          "data": {
+            "additionalProperties": true,
+            "title": "Data",
+            "type": "object"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PlatformResponseMeta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "PlatformSuccessEnvelope",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "C-010 public response components. Runtime resources are added by later Work Packages under /api/platform/v1; Legacy /api/v1 responses are not wrapped.",
+    "title": "Visory Platform API Contracts",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {}
+}

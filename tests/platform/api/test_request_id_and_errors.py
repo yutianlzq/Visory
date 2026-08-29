@@ -14,8 +14,12 @@ from fastapi.testclient import TestClient
 
 from api.platform.boundary import PLATFORM_API_PREFIX
 from api.platform.errors import platform_error
-from api.platform.request_id import REQUEST_ID_HEADER, REQUEST_ID_PATTERN
-from src.schemas.platform.api import build_list_envelope, build_success_envelope
+from api.platform.request_id import (
+    REQUEST_ID_HEADER,
+    REQUEST_ID_PATTERN,
+    resolve_request_id,
+)
+from api.platform.responses import build_list_envelope, build_success_envelope
 
 # This contract test does not exercise LLM providers. Avoid LiteLLM's optional
 # import-time tokenizer download so the RED/GREEN target stays offline.
@@ -89,6 +93,24 @@ def _assert_c010_error(response, *, status_code: int, code: str, retryable: bool
     assert body["error"]["request_id"] == response.headers[REQUEST_ID_HEADER]
     assert re.fullmatch(REQUEST_ID_PATTERN, body["error"]["request_id"])
     return body
+
+
+@pytest.mark.parametrize(
+    "incoming_headers",
+    [
+        [
+            (b"x-request-id", VALID_REQUEST_ID.encode("ascii")),
+            (b"x-request-id", VALID_REQUEST_ID.encode("ascii")),
+        ],
+        [(b"x-request-id", b"req_\xff")],
+    ],
+    ids=["duplicate", "non-ascii"],
+)
+def test_ambiguous_or_non_ascii_request_id_headers_are_replaced(incoming_headers) -> None:
+    resolved = resolve_request_id({"type": "http", "headers": incoming_headers})
+
+    assert resolved != VALID_REQUEST_ID
+    assert re.fullmatch(REQUEST_ID_PATTERN, resolved)
 
 
 def test_success_and_list_envelopes_share_request_id_with_response_header(tmp_path: Path) -> None:

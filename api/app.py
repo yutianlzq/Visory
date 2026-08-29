@@ -166,6 +166,8 @@ def _warn_if_open_cors_without_auth() -> None:
 from api.v1 import api_v1_router
 from api.middlewares.auth import add_auth_middleware
 from api.middlewares.error_handler import add_error_handlers
+from api.platform.request_id import add_request_id_middleware
+from api.platform.router import router as platform_router
 from api.v1.schemas.common import HealthResponse
 from src.auth import is_auth_enabled
 from src.data.stock_index_loader import find_existing_stock_index_path
@@ -375,12 +377,15 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
     )
 
     add_auth_middleware(app)
+    # Registered last so Request ID wraps auth short-circuits and all routes.
+    add_request_id_middleware(app)
     
     # ============================================================
     # 注册路由
     # ============================================================
     
     app.include_router(api_v1_router, prefix="/api/v1")
+    app.include_router(platform_router, prefix="/api")
     add_error_handlers(app)
     
     # ============================================================
