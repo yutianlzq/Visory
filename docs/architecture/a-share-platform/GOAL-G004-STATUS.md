@@ -10,11 +10,11 @@
 - Work Package 状态：`VERIFIED`
 - 固定基线：`origin/main=10edc2594a65a2a10674b8e83ef896414f3265dc`
 - 工作分支：`goal/g004-wp-0002-postgres-alembic`
-- PR：`#3 feat: add PostgreSQL and Alembic foundation`
+- PR：`#3 feat: add PostgreSQL and Alembic foundation`，已通过 merge commit `75132082544239b011682d37cd626a29bca15b49` 合入 `main`
 - 已验证 Work Package：`2/45`
-- 下一 Work Package：`WP-0003 NOT_STARTED`
+- 下一 Work Package：`WP-0003 IN_PROGRESS`（由 Visory-G005 从 merge commit `7513208` 启动）
 
-实现 head `32b318a` 已通过 GitHub Actions Run `33250185521` 的 Governance、Python、Web 三项阻断 Job。WP-0002 的真实 PostgreSQL、Migration、事务、Secret、安全错误与 Legacy 回归证据齐全，达到合入条件；PR 尚未合并，未经 owner 明确批准不得合并或启动 WP-0003。
+实现 head `32b318a` 已通过 GitHub Actions Run `33250185521` 的 Governance、Python、Web 三项阻断 Job；最终状态 head `866354d` 已通过 Run `33250547659` 的同组三项阻断 Job。PR #3 已于 2026-08-29 通过普通 merge commit `75132082544239b011682d37cd626a29bca15b49` 合入 `main`，WP-0002 的真实 PostgreSQL、Migration、事务、Secret、安全错误与 Legacy 回归证据完整保留。
 
 ## 2. 已完成范围
 
@@ -79,4 +79,4 @@ Windows clean-worktree 完整 `bash scripts/ci_gate.sh` 为 `6396 passed, 80 fai
 - CI Secret 仅使用 runner 临时文件引用，值为非生产占位值；文档、日志、错误和状态记录不包含密码、DSN 或 Secret 值。
 - Migration baseline 只管理 Alembic 版本状态，不证明任何后续业务 Schema 已实现。
 - 最小回滚：合并前关闭 PR；合并后普通 revert G004 commits，必要时对隔离 PostgreSQL downgrade 到 `base`；移除 `VISORY_POSTGRES_*` 后 Legacy SQLite/API 继续沿用原路径。
-- 当前结论：达到合入条件，但必须等待 owner 明确批准。合入后可进入 WP-0003；合入前不得启动。
+- 当前结论：PR #3 已按 owner 批准以普通 merge commit 合入 `main`；G004 正式结束，可从 merge commit `7513208` 启动 WP-0003。
