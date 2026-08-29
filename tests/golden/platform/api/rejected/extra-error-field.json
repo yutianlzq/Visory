@@ -1,0 +1,14 @@
+{
+  "model": "PlatformErrorEnvelope",
+  "payload": {
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "服务器内部错误",
+      "details": {},
+      "retryable": false,
+      "request_id": "req_0123456789abcdef0123456789abcdef",
+      "stack": "must not be accepted"
+    }
+  },
+  "expected_error_locations": ["error.stack"]
+}

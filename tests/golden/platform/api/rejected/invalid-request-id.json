@@ -1,0 +1,14 @@
+{
+  "model": "PlatformSuccessEnvelope",
+  "payload": {
+    "data": {},
+    "meta": {
+      "request_id": "request-123",
+      "schema_version": "1.0.0",
+      "generated_at": "2026-08-27T12:00:00+08:00",
+      "data_snapshot_id": null,
+      "warnings": []
+    }
+  },
+  "expected_error_locations": ["meta.request_id"]
+}

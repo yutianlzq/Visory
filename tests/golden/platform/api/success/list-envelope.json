@@ -1,0 +1,19 @@
+{
+  "model": "PlatformListEnvelope",
+  "payload": {
+    "data": [{"resource_id": "example"}],
+    "meta": {
+      "request_id": "req_0123456789abcdef0123456789abcdef",
+      "schema_version": "1.0.0",
+      "generated_at": "2026-08-27T12:00:00+08:00",
+      "data_snapshot_id": null,
+      "warnings": []
+    },
+    "page": {
+      "cursor": null,
+      "next_cursor": null,
+      "limit": 50,
+      "has_more": false
+    }
+  }
+}
