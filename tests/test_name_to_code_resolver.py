@@ -510,14 +510,36 @@ class TestAkShareSingleFlightConcurrency:
         fake = _FakeAkShareFetch()
         monkeypatch.setattr(ntc, "_fetch_akshare_df", fake.fetch)
 
+        # fetch_started 只证明后台 fetch 已开始，不能证明触发拉取的解析线程
+        # 已进入 Future.result()。用实例级 barrier 对齐两个等待者的超时起点，
+        # 避免繁忙 CI 中首线程被延迟到 release 后才开始等待而误拿成功结果。
+        waiters_ready = threading.Barrier(2)
+        original_spawn = ntc._spawn_refresh_locked
+
+        def synchronized_spawn():
+            fut = original_spawn()
+            original_result = fut.result
+
+            def synchronized_result(timeout=None):
+                waiters_ready.wait(timeout=5)
+                return original_result(timeout=timeout)
+
+            fut.result = synchronized_result
+            return fut
+
+        monkeypatch.setattr(ntc, "_spawn_refresh_locked", synchronized_spawn)
+
         t1, r1 = _run_resolver_in_thread("浦发银行")
         t2 = None
         try:
             assert fake.fetch_started.wait(timeout=5)
             t2, r2 = _run_resolver_in_thread("浦发银行")
             # 拉取持续挂起时，所有冷启动等待者（含触发拉取的那一个）都必须
-            # 在超时上界内自行返回，而非无限等待
-            t2.join(timeout=10)
+            # 在超时上界内自行返回，而非无限等待。必须在 release 前观察到
+            # 两者均完成，否则 finally 的释放会把竞态伪装成成功返回。
+            assert _wait_until(
+                lambda: not t1.is_alive() and not t2.is_alive(), timeout=10
+            )
         finally:
             fake.release_fetch.set()
             t1.join(timeout=10)
