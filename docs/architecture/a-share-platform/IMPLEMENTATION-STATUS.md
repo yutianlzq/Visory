@@ -8,9 +8,9 @@
 
 工程底座状态：DSA 固定提交 `fb4735a1055caefa2396982af3b09121feb9ff30` 已完成导入和双基线验收，状态为 `IMPORTED / VERIFIED`。导入代码中的 React/FastAPI、Legacy SQLite、内存 Task Queue、分析、LLM、报告、通知和数据 Fetcher 仍是迁移基线，不能作为 Visory 新契约已实现的证据。
 
-目标架构状态：implemented work packages 为 `1/45`；`WP-0001` 已在 G003 分支完成并处于 `VERIFIED`，其余 44 个 WP 为 `NOT_STARTED`。
+目标架构状态：implemented work packages 为 `1/45`；`WP-0001` 为 `VERIFIED`。`WP-0002` 已在 G004 分支进入 `IN_PROGRESS`，GitHub PostgreSQL/三项阻断 CI 证据齐全前不计入已验证数量；其余 43 个 WP 为 `NOT_STARTED`。
 
-最近完成的 Work Package：`WP-0001 Contract Registry 与公共 Schema`。下一项 `WP-0002 PostgreSQL 与 Alembic 基础` 仍为 `NOT_STARTED`，需由独立 Goal 明确启动。
+最近完成的 Work Package：`WP-0001 Contract Registry 与公共 Schema`。当前 `Visory-G004` 正在实现 `WP-0002 PostgreSQL 与 Alembic 基础`，状态为 `IN_PROGRESS`；不得提前启动 WP-0003。
 
 交付阶段：MVP 一期为本地核心功能版（M0—M6 + WP-0701—0703）；MVP 二期为本地生产预演与服务器发布版（WP-0704 + M8）。未过 Local Release Gate 不得将 WP 标记为 `RELEASED`。
 
@@ -21,8 +21,9 @@
 | Visory-G001 | COMPLETE | [G001 进度与验收记录](GOAL-STATUS.md) |
 | Visory-G002 | COMPLETE | [G002 进度与验收记录](GOAL-G002-STATUS.md) |
 | Visory-G003 | COMPLETE | [G003 / WP-0001 进度与验收记录](GOAL-G003-STATUS.md) |
+| Visory-G004 | IN_PROGRESS | [G004 / WP-0002 进度与验收记录](GOAL-G004-STATUS.md) |
 | DSA Baseline | IMPORTED / VERIFIED | 1126/1126 blob 验签；Python/Web 双基线；`baseline_regression_delta=0`；`web_lint_build_regression_delta=0` |
-| Implemented Work Packages | 1/45 | `WP-0001` 为 `VERIFIED`；其余 44 项 `NOT_STARTED` |
+| Implemented Work Packages | 1/45 | `WP-0001` 为 `VERIFIED`；`WP-0002` 为 `IN_PROGRESS`；其余 43 项 `NOT_STARTED` |
 
 ## 2. 状态定义
 
@@ -41,7 +42,7 @@ RELEASED     已部署且通过运行观察和回滚/恢复要求
 | WP | 交付物 | 状态 | 证据 |
 | --- | --- | --- | --- |
 | WP-0001 | Contract Registry与公共Schema | VERIFIED | Commit `5537569`；PR #2；GitHub Actions Run `33242596600` 的 Governance、Python、Web 三项阻断 Job 全绿；平台契约测试 93 passed |
-| WP-0002 | PostgreSQL与Alembic基础 | NOT_STARTED | — |
+| WP-0002 | PostgreSQL与Alembic基础 | IN_PROGRESS | Commit `b20b3fb`；Migration `0001_wp0002_baseline`；本地单元测试与 89.20% 覆盖率通过；真实 PostgreSQL 与 GitHub 三项阻断 CI 待验收 |
 | WP-0003 | API Envelope、Error与生成类型 | NOT_STARTED | — |
 | WP-0101 | Asset Identity与Alias Resolver | NOT_STARTED | — |
 | WP-0102 | Storage Namespace与Artifact Publisher | NOT_STARTED | — |

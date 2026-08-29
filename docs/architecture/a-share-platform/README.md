@@ -1,10 +1,10 @@
 # Visory 架构索引
 
-状态：DSA Engineering Baseline Imported / Verified（目标架构 Work Package 1/45；WP-0001 VERIFIED）
+状态：DSA Engineering Baseline Imported / Verified（目标架构 Work Package 1/45；WP-0001 VERIFIED，WP-0002 IN_PROGRESS）
 最后更新：2026-08-29
 
 本文是 **Visory** 个人A股研究平台的架构索引。面向Claude Code和Codex的需求、契约、页面、编码、实施和部署总入口见[Visory开发总指引](CLAUDE-CODE-GUIDE.md)。当前文档集已经形成可编码基线，但不代表相应能力已经完成开发；实现状态只能由代码、Migration、测试和运行证据证明。
-> 当前工作区状态：G002 已将 `daily_stock_analysis` 固定提交 `fb4735a1055caefa2396982af3b09121feb9ff30` 导入项目，形成可安装、可测试、可构建的迁移底座；历史快照仍只读保存在 `upstream/daily_stock_analysis/`，其他外部项目保存在 `references/repos/`。G003 已完成 `WP-0001 Contract Registry 与公共 Schema` 并通过本地契约验证及 GitHub 三项阻断 CI，状态为 `VERIFIED`；其余 44 个 Work Package 仍为 `NOT_STARTED`。
+> 当前工作区状态：G002 已将 `daily_stock_analysis` 固定提交 `fb4735a1055caefa2396982af3b09121feb9ff30` 导入项目，形成可安装、可测试、可构建的迁移底座；历史快照仍只读保存在 `upstream/daily_stock_analysis/`，其他外部项目保存在 `references/repos/`。G003 已完成 `WP-0001 Contract Registry 与公共 Schema` 并通过本地契约验证及 GitHub 三项阻断 CI，状态为 `VERIFIED`；G004 正在实现 `WP-0002 PostgreSQL 与 Alembic 基础`，真实 PostgreSQL 与 GitHub 阻断 CI 通过前保持 `IN_PROGRESS`；其余 43 个 Work Package 为 `NOT_STARTED`。
 
 ## 项目标识
 
@@ -121,7 +121,7 @@ Fleur 不作为运行时依赖。平台只吸收其数据契约、分层建模�
 | 页面与交互 | 信息架构、路由、线框图、页面状态、Evidence与响应式 | React/Vite统一前端 | MVP UX基线已形成 | [页面信息架构与低保真原型 v1](page-prototypes-and-information-architecture-v1.md) |
 | 工程与实施 | 代码规范、Migration、测试、Work Package、回填和Exit Gate | 当前仓库及目标平台 | M0—M9执行基线已形成 | [工程与编码规范 v1](engineering-and-coding-standards-v1.md)；[实施路线与验收方案 v1](implementation-roadmap-and-acceptance-v1.md) |
 | 仓库与参考治理 | 文档、基础上游、外部参考快照、只读边界和后续代码目录规划 | daily_stock_analysis及九类参考项目 | 目录治理基线已形成 | [仓库布局与目录责任](repository-layout.md)；[参考项目采用矩阵](reference-adoption-matrix.md) |
-| 实现状态 | Goal、底座、Work Package真实代码、验证和发布状态 | 全部平台模块 | G001/G002/G003完成；WP-0001已验证；已验证目标WP 1/45 | [Visory实现状态](IMPLEMENTATION-STATUS.md)；[G002验收](GOAL-G002-STATUS.md)；[G003验收](GOAL-G003-STATUS.md) |
+| 实现状态 | Goal、底座、Work Package真实代码、验证和发布状态 | 全部平台模块 | G001/G002/G003完成；G004/WP-0002进行中；已验证目标WP 1/45 | [Visory实现状态](IMPLEMENTATION-STATUS.md)；[G004进度](GOAL-G004-STATUS.md) |
 
 ## 仓库与参考项目治理
 
@@ -150,4 +150,4 @@ G002 已按固定提交完成 DSA 底座导入与验证：1126/1126 blob 验签�
 5. M8：认证、Cloudflare/NPM、备份恢复和MVP发布；
 6. M9：样本外自动权重、MVO、AI Overlay等MVP后能力。
 
-`WP-0001 Contract Registry与公共Schema` 已完成并处于 `VERIFIED`；下一项 `WP-0002 PostgreSQL与Alembic基础` 仍为 `NOT_STARTED`，未在 G003 中启动。每个Package必须补齐目标、边界、输入/输出契约、时序、存储、失败语义、追溯、测试、迁移、回滚和运行证据。
+`WP-0001 Contract Registry与公共Schema` 已完成并处于 `VERIFIED`；`WP-0002 PostgreSQL与Alembic基础` 已由 G004 启动并处于 `IN_PROGRESS`，必须在真实 PostgreSQL 和 GitHub 三项阻断 CI 全绿后才能标记为 `VERIFIED`。每个Package必须补齐目标、边界、输入/输出契约、时序、存储、失败语义、追溯、测试、迁移、回滚和运行证据。
