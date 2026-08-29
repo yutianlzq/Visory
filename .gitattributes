@@ -43,3 +43,4 @@ Makefile text eol=lf
 *.p12 binary
 # Deterministic generated platform contract exports must compare byte-for-byte on Windows.
 schemas/platform/*.json text eol=lf
+apps/dsa-web/src/types/generated/*.ts text eol=lf
