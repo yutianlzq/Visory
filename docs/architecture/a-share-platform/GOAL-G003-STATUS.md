@@ -6,12 +6,13 @@
 
 - Goal：`Visory-G003`
 - Work Package：`WP-0001 Contract Registry 与公共 Schema`
-- 状态：`IN_PROGRESS`
+- Goal 状态：`COMPLETE`
+- Work Package 状态：`VERIFIED`
 - 基线：`origin/main=e20cdb384d03655320238b2ddaf001a8dfa8a18d`
 - 工作分支：`goal/g003-wp-0001-contract-registry`
-- 已验证 Work Package：`0/45`
+- 已验证 Work Package：`1/45`
 
-`VERIFIED` 仅在公共契约实现、Golden/拒绝测试、确定性 Schema 导出、本地完整门禁、Pull Request 和 GitHub Governance/Python/Web 三个阻断 Job 全部通过后更新。
+验收证据已齐全：实现提交 `5537569` 已推送至 PR #2，GitHub Actions Run `33242596600` 的 Governance、Python、Web 三个阻断 Job 全绿；`WP-0001` 因此更新为 `VERIFIED`，Visory-G003 更新为 `COMPLETE`。
 
 ## 2. 范围
 
@@ -54,13 +55,16 @@
 | `npm ci && npm run lint && npm run build`（`apps/dsa-web`） | 通过 |
 | Legacy API 定向回归 | 32 passed（Pydantic API Schema、health、CI workflow contract） |
 
-## 4. 待完成验收
+## 4. 最终验收证据
 
-- 完整 diff、边界和生成物审计；
-- commit、普通 push、Pull Request；
-- 在干净 Linux checkout 中执行原始 `scripts/ci_gate.sh`；本地 Windows 已完成其 syntax/deterministic 阶段和实际仓库范围 flake8，完整离线套件的 79 个平台无关失败交由 Linux CI 对照；
-- GitHub Governance、Python、Web 三个阻断 Job 全绿；
-- 全绿后将本文件和 `IMPLEMENTATION-STATUS.md` 更新为 `VERIFIED` / `1/45`。
+- 最终 diff 与边界审计：实现提交 `5537569` 共 70 个文件、2903 行新增、11 行删除；仅涉及 WP-0001 公共契约、生成物、测试、CI 接线和状态文档，未触及 `upstream/`、`references/`、API、数据库、Web/桌面运行代码或其他 Work Package；
+- Pull Request：[#2 feat: add platform contract registry](https://github.com/yutianlzq/Visory/pull/2)，目标为 `main`，未合并；
+- GitHub Actions：[Run 33242596600](https://github.com/yutianlzq/Visory/actions/runs/33242596600)；
+- `Governance and repository boundaries`：通过（9 秒）；
+- `Python deterministic gate`：通过（6 分 53 秒），在干净 Linux checkout 中执行原始后端门禁；
+- `Web lint and build`：通过（1 分 8 秒）；
+- 结论：C-001 至 C-003 的 WP-0001 公共契约、Golden/拒绝 Payload、确定性 Schema 导出和兼容边界满足验收，`WP-0001=VERIFIED`，implemented work packages 更新为 `1/45`；
+- 下一项 `WP-0002` 保持 `NOT_STARTED`，本 Goal 未启动数据库或 Alembic 工作。
 
 ## 5. 风险与回滚
 

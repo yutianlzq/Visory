@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-- [新功能] 实现 Visory-G003 / WP-0001 公共契约底座：新增 C-001 至 C-003 严格 Schema、UUIDv7 资源 ID、PIT/Revision/状态校验、确定性 Hash、StorageRef、Contract Registry、Golden Payload 与 JSON Schema drift 门禁；现有 API 路径保持不变。
+- [新功能] 完成 Visory-G003 / WP-0001 公共契约底座：新增 C-001 至 C-003 严格 Schema、UUIDv7 资源 ID、PIT/Revision/状态校验、确定性 Hash、StorageRef、Contract Registry、Golden Payload 与 JSON Schema drift 门禁；现有 API 路径保持不变。
 - [文档] 完成 Visory-G001 参考项目目录治理验收：按已核验上游关系将 UZI 衍生快照统一放置于 `references/repos/UZI-Skill`，保留 `gosinkx/UZI-SKILL-astock` 直接来源，并补充检查点证据。
 - [改进] 完成 Visory-G002：导入并验签 `daily_stock_analysis` 固定提交 `fb4735a1055caefa2396982af3b09121feb9ff30`，建立安全 CI、许可证归属、非激活 workflow 证据和 Python/Web 双基线，归一化回归差异均为 0；目标 Work Package 仍为 0/45。
 
