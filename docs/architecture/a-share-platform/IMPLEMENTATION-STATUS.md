@@ -8,9 +8,9 @@
 
 工程底座状态：DSA 固定提交 `fb4735a1055caefa2396982af3b09121feb9ff30` 已完成导入和双基线验收，状态为 `IMPORTED / VERIFIED`。导入代码中的 React/FastAPI、Legacy SQLite、内存 Task Queue、分析、LLM、报告、通知和数据 Fetcher 仍是迁移基线，不能作为 Visory 新契约已实现的证据。
 
-目标架构状态：implemented work packages 为 `6/45`；`WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103` 均为 `VERIFIED`，其余 38 个 WP 为 `NOT_STARTED`。
+目标架构状态：implemented work packages 为 `7/45`；`WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104` 均为 `VERIFIED`，其余 38 个 WP 为 `NOT_STARTED`。
 
-最近完成的 Work Package：`WP-0103 Durable Task Control Plane`。`Visory-G009 / WP-0104` 的真实认证后端与 PostgreSQL SSE replay 补充测试正在当前分支验证，PR 与最终 CI 待登记。
+最近完成的 Work Package：`WP-0104 Operations 最小页面`。`Visory-G009` 完成真实认证 ASGI/浏览器旅程、PostgreSQL SSE replay、连接池清理和 Operations 回归验收；PR #15 已合并，merge commit `9c03666740a1e7a90a616a2d774efc57ca5a0e6b`，最终 Run `33329710242` 的 Governance、Python、Web 三项阻断 Job 全部成功，状态为 `COMPLETE / MERGED / VERIFIED / 7/45`。
 
 交付阶段：MVP 一期为本地核心功能版（M0—M6 + WP-0701—0703）；MVP 二期为本地生产预演与服务器发布版（WP-0704 + M8）。未过 Local Release Gate 不得将 WP 标记为 `RELEASED`。
 
@@ -26,9 +26,9 @@
 | Visory-G006 | COMPLETE / MERGED | [G006 / WP-0101 进度与验收记录](GOAL-G006-STATUS.md)；PR #5 merge commit `01e1a986`；最终 Run `33288412520` 全绿 |
 | Visory-G007 | COMPLETE / MERGED | [G007 / WP-0102 进度与验收记录](GOAL-G007-STATUS.md)；PR #6；merge commit `a9a640b`；最终 Run `33299476674` 三项全绿 |
 | Visory-G008 | COMPLETE / MERGED | [G008 / WP-0103 进度与验收记录](GOAL-G008-STATUS.md)；merge commit `ea4f8b1`；PR #7；Run `33315054696` 三项全绿 |
-| Visory-G009 | IN_PROGRESS | [G009 / WP-0104 进度与验收记录](GOAL-G009-STATUS.md)；当前分支补充真实认证 ASGI/浏览器旅程、PostgreSQL SSE replay 和连接清理证据；PR 与最终 CI 待登记 |
+| Visory-G009 | COMPLETE / MERGED | [G009 / WP-0104 进度与验收记录](GOAL-G009-STATUS.md)；PR #15 merge commit `9c03666740a1e7a90a616a2d774efc57ca5a0e6b`；真实认证 ASGI/浏览器旅程、PostgreSQL SSE replay 和连接清理通过；Run `33329710242` 三项阻断 Job 全绿 |
 | DSA Baseline | IMPORTED / VERIFIED | 1126/1126 blob 验签；Python/Web 双基线；`baseline_regression_delta=0`；`web_lint_build_regression_delta=0` |
-| Implemented Work Packages | 6/45 | `WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104` 为 `VERIFIED`；其余 38 项 `NOT_STARTED` |
+| Implemented Work Packages | 7/45 | `WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104` 为 `VERIFIED`；其余 38 项 `NOT_STARTED` |
 
 ## 2. 状态定义
 
@@ -52,7 +52,7 @@ RELEASED     已部署且通过运行观察和回滚/恢复要求
 | WP-0101 | Asset Identity与Alias Resolver | VERIFIED | 实现提交 `a272b25`；PR #5；Migration `0002_wp0101_asset_identity`；GitHub Actions Run `33288021328` 三项阻断 Job 全绿；Python 6549 passed，含 PostgreSQL 16 Migration、排他约束、Quarantine、并发、事务与连接清理验收 |
 | WP-0102 | Storage Namespace与Artifact Publisher | VERIFIED | [G007 / WP-0102 进度与验收记录](GOAL-G007-STATUS.md)；实现 head `92ddde7`；PR #6；Migration `0003_wp0102_artifact_registry`；平台 218 passed、本地 PostgreSQL 16 集成 15 passed；Run `33299055144` 三项全绿，Python 6591 passed |
 | WP-0103 | Durable Task Control Plane | VERIFIED | [G008 / WP-0103 进度与验收记录](GOAL-G008-STATUS.md)；实现 head `826aacfa2965c98efff8a8795a46dc9f72edec5f`；PR #7；Migration `0004_wp0103_durable_task_control_plane`；平台 257 passed、5 skipped，本地 PostgreSQL 16 集成 30 passed，Legacy 定向回归 106 passed；Run `33314470672` 三项全绿 |
-| WP-0104 | Operations最小页面 | IN_PROGRESS | [G009 / WP-0104 进度与验收记录](GOAL-G009-STATUS.md)；现有页面 PR #9、#12、#13、#14 已合并；当前分支补充真实认证 ASGI/浏览器旅程、PostgreSQL SSE replay 和连接池清理；平台 260 passed、5 skipped；集成 31 skipped（本地容器已单独验证）；Playwright 6 passed + 真实认证 1 passed；最终 CI 待登记 |
+| WP-0104 | Operations最小页面 | VERIFIED | [G009 / WP-0104 进度与验收记录](GOAL-G009-STATUS.md)；PR #9、#12、#13、#14、#15 已合并；真实认证 ASGI/浏览器旅程、PostgreSQL SSE replay 和连接池清理通过；平台 260 passed、5 skipped；集成目录本地 PostgreSQL 16 实例 31 passed（清理后默认 31 skipped）；Playwright 6 passed + 真实认证 1 passed；Run `33329710242` 三项阻断 Job 全绿 |
 | WP-0201 | Dataset/Provider Registry | NOT_STARTED | — |
 | WP-0202 | Raw Ingestion | NOT_STARTED | — |
 | WP-0203 | Canonical Normalization | NOT_STARTED | — |

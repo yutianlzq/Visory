@@ -6,12 +6,12 @@
 
 - Goal：`Visory-G009`
 - Work Package：`WP-0104 Operations 最小页面`
-- Goal 状态：`IN_PROGRESS`
-- Work Package 状态：`IN_PROGRESS`
-- 固定基线：`main=ea4f8b1f27b79eb64079321d28951cac83a16f79`
-- 工作分支：`goal/g009-wp-0104-operations-task-page`
-- 合并提交：PR #9 merge `6b90bb1dba8aaf1925ef32c0c73bf1bc03dae856`；PR #12；PR #13 merge `148f8d903c5e052203ce670951e3e5509287af6e`；当前分支补充真实后端旅程测试，PR 待创建；最终 CI 待验证
-- 已验证 Work Package：`6/45`
+- Goal 状态：`COMPLETE / MERGED`
+- Work Package 状态：`VERIFIED`
+- 固定基线：`main=cc55b1e9624c64247e1005d95dfb008108d4bb6d`
+- 工作分支：`goal/g009-wp-0104-real-backend-journey`
+- 合并提交：PR #9 merge `6b90bb1dba8aaf1925ef32c0c73bf1bc03dae856`；PR #13 merge `148f8d903c5e052203ce670951e3e5509287af6e`；PR #15 merge `9c03666740a1e7a90a616a2d774efc57ca5a0e6b`；最终 CI Run `33329710242` 的 Governance、Python、Web 三项阻断 Job 全部成功
+- 已验证 Work Package：`7/45`
 - 目标 Migration head：`0004_wp0103_durable_task_control_plane`（本 Goal 未新增 Migration）
 
 ## 2. 已实现
@@ -31,14 +31,14 @@
 - Web build：通过（`npm run build`，2026-08-30）；
 - Playwright：`npx playwright test e2e/operations-tasks.spec.ts --project=chromium --reporter=line`，`6 passed`；覆盖 SSE 断线/恢复、Retry 确认/重复提交保护、C-010 错误码/Request ID 展示和 Tab/筛选键盘操作；
 - 平台测试：`.venv\Scripts\python.exe -m pytest tests/platform -q`，`260 passed, 5 skipped`；
-- 真实 PostgreSQL 集成：当前环境未提供可用隔离实例，相关测试保持 skipped；
+- 真实 PostgreSQL 集成：本地临时 PostgreSQL 16 Docker 实例上目标测试 `1 passed`、集成目录 `31 passed`；清理临时实例后默认集成命令为 `31 skipped`。
 - 页面 E2E 使用本地临时 fixture 与 route mock，不写真实 `/data`；新增真实认证后端 Playwright 旅程，使用临时 PostgreSQL 与临时凭据文件。
 
 ## 4. 未完成与风险
 
-- PR #9、PR #12、PR #13、PR #14 已合并；本轮真实后端旅程补充 PR 待创建，最终 CI 待验证；
+- PR #9、PR #12、PR #13、PR #14、PR #15 已合并；最终 Run `33329710242` 的 Governance、Python、Web 三项阻断 Job 全部成功；
 - 真实认证后端 HTTP/ASGI 与浏览器 Playwright 旅程已覆盖登录 Cookie、平台 API 保护和 Operations 页面访问；真实服务端 SSE replay 已覆盖首次连接、取消后增量事件、`Last-Event-ID` / `after_event_id` 补读、无重复无丢失和连接池清理；错误展示仍以受控 C-010 Envelope 为主；
-- 真实 PostgreSQL 列表/SSE 集成已在本地临时 PostgreSQL 16 容器执行；GitHub Actions 仍待验证。
+- 真实 PostgreSQL 列表/SSE 集成已在本地临时 PostgreSQL 16 容器执行；GitHub Actions Run `33329710242` 已重复通过 Python 确定性门禁。
 - SSE 当前发送已存在事件后以 heartbeat 结束，生产长连接策略留待后续 Operations/部署工作；
 - Legacy Task Queue 保持不变；无 Artifact 下载、任意路径访问或 `/data` 写入。
 
