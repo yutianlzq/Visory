@@ -1,3 +1,12 @@
+from .artifact import (
+    ArtifactManifest,
+    ArtifactPublishRequest,
+    ArtifactPublishResult,
+    ArtifactRecord,
+    ArtifactRecoveryResult,
+    OrphanCandidate,
+    OrphanDryRunResult,
+)
 from .api import (
     PLATFORM_API_SCHEMA_VERSION,
     REQUEST_ID_PATTERN,
@@ -20,10 +29,14 @@ from .asset_identity import (
 from .base import PlatformContractModel
 from .enums import (
     AliasType,
+    ArtifactIntegrityState,
+    ArtifactPublicationState,
+    ArtifactVisibility,
     AliasVerificationStatus,
     AssetType,
     AvailabilityBasis,
     IdentityStatus,
+    OrphanAction,
     PublicationStatus,
     QualityStatus,
     QuarantineStatus,
@@ -47,6 +60,17 @@ from .versioning import PublicationMetadata, RevisionMetadata, TaskStateMetadata
 __all__ = [
     "AliasType",
     "AliasVerificationStatus",
+    "ArtifactIntegrityState",
+    "ArtifactManifest",
+    "ArtifactPublicationState",
+    "ArtifactPublishRequest",
+    "ArtifactPublishResult",
+    "ArtifactRecord",
+    "ArtifactRecoveryResult",
+    "ArtifactVisibility",
+    "OrphanAction",
+    "OrphanCandidate",
+    "OrphanDryRunResult",
     "AssetAlias",
     "AssetIdentityRecord",
     "AssetResolutionCandidate",

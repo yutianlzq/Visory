@@ -1,0 +1,87 @@
+{
+  "$defs": {
+    "OrphanAction": {
+      "enum": [
+        "RECOVER_REGISTRATION"
+      ],
+      "title": "OrphanAction",
+      "type": "string"
+    },
+    "OrphanCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "estimated_size_bytes": {
+          "minimum": 0,
+          "title": "Estimated Size Bytes",
+          "type": "integer"
+        },
+        "manifest_relative_path": {
+          "title": "Manifest Relative Path",
+          "type": "string"
+        },
+        "reason_code": {
+          "title": "Reason Code",
+          "type": "string"
+        },
+        "recoverable_actions": {
+          "items": {
+            "$ref": "#/$defs/OrphanAction"
+          },
+          "title": "Recoverable Actions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "manifest_relative_path",
+        "reason_code",
+        "estimated_size_bytes",
+        "recoverable_actions"
+      ],
+      "title": "OrphanCandidate",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "candidates": {
+      "items": {
+        "$ref": "#/$defs/OrphanCandidate"
+      },
+      "title": "Candidates",
+      "type": "array"
+    },
+    "deletion_performed": {
+      "title": "Deletion Performed",
+      "type": "boolean"
+    },
+    "estimated_recoverable_bytes": {
+      "minimum": 0,
+      "title": "Estimated Recoverable Bytes",
+      "type": "integer"
+    },
+    "scanned_known_directories": {
+      "minimum": 0,
+      "title": "Scanned Known Directories",
+      "type": "integer"
+    },
+    "skipped_invalid_manifests": {
+      "minimum": 0,
+      "title": "Skipped Invalid Manifests",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "scanned_known_directories",
+    "candidates",
+    "skipped_invalid_manifests",
+    "estimated_recoverable_bytes",
+    "deletion_performed"
+  ],
+  "title": "OrphanDryRunResult",
+  "type": "object"
+}

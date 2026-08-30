@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] Visory-G007 / WP-0102 建立 C-003 Storage Namespace、Artifact Registry/Publisher 与 Orphan 恢复：新增 `0003_wp0102_artifact_registry`、安全 POSIX 路径与 Symlink 防逃逸、同 Namespace Staging/fsync/原子 rename、确定性 Manifest Hash、完整性消费门禁、只读 Dry-run 与幂等恢复注册，并纳入 JSON Schema/OpenAPI/前端类型确定性生成链；不新增文件下载 API、不执行 Orphan 删除。
+
 - [新功能] Visory-G006 / WP-0101 建立 C-002 Asset Identity、Alias、Identity Quarantine 与 Resolver：新增 PostgreSQL 三表和 `0002_wp0101_asset_identity` Migration、命名空间与有效期约束、冲突隔离、Resolver Service/API、单一 Legacy 只读适配接缝，以及确定性 JSON Schema/OpenAPI/前端类型导出；未配置 PostgreSQL 时 Legacy API 与 SQLite 行为保持不变。
 
 - [新功能] Visory-G005 / WP-0003 建立 C-010 成功/错误 Envelope、平台 Request ID 与稳定异常映射、`/api/platform/v1` 渐进边界，以及由公共 Schema 确定性生成 OpenAPI 和前端 TypeScript 类型的 drift 门禁；Legacy `/api/v1`、健康检查、认证与 SSE body 保持兼容。

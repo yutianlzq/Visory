@@ -1,0 +1,9 @@
+{
+  "contract_id": "C-003/ArtifactRecoveryResult",
+  "payload": {
+    "artifact_id": "artifact_019dbd74-2a00-7000-8000-000000000001",
+    "recovered": true,
+    "already_registered": false,
+    "publication_state": "PUBLISHED"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "$defs": {
+    "ArtifactPublicationState": {
+      "enum": [
+        "PUBLISHED"
+      ],
+      "title": "ArtifactPublicationState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "already_registered": {
+      "title": "Already Registered",
+      "type": "boolean"
+    },
+    "artifact_id": {
+      "title": "Artifact Id",
+      "type": "string"
+    },
+    "publication_state": {
+      "$ref": "#/$defs/ArtifactPublicationState"
+    },
+    "recovered": {
+      "title": "Recovered",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "artifact_id",
+    "recovered",
+    "already_registered",
+    "publication_state"
+  ],
+  "title": "ArtifactRecoveryResult",
+  "type": "object"
+}

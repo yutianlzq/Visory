@@ -475,6 +475,209 @@
       ]
     },
     {
+      "business_key": "artifact_id + manifest_hash",
+      "compatibility": "manifest hashes exclude only manifest_hash and never contain runtime absolute paths",
+      "consumers": [
+        "Orphan Sweeper",
+        "integrity gate",
+        "backup"
+      ],
+      "contract_id": "C-003/ArtifactManifest",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/artifact-manifest.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-003.ArtifactManifest.schema.json",
+      "lineage_fields": [
+        "owner_resource_ref",
+        "attempt_id",
+        "storage_ref",
+        "artifact_hash"
+      ],
+      "owner_module": "src.schemas.platform.artifact",
+      "producer": "Artifact Publisher",
+      "quality_semantics": [
+        "integrity_state",
+        "manifest_hash"
+      ],
+      "resource_id_field": "artifact_id",
+      "retention_class": "same as ArtifactRecord",
+      "schema_version": "1.0.0",
+      "storage_profile": "deterministic manifest.json adjacent to the immutable payload",
+      "time_semantics": [
+        "created_at",
+        "published_at",
+        "integrity_checked_at"
+      ],
+      "version_semantics": [
+        "schema_version"
+      ]
+    },
+    {
+      "business_key": "artifact_id",
+      "compatibility": "success is returned only after atomic rename and registry transaction commit",
+      "consumers": [
+        "workers",
+        "future task control plane"
+      ],
+      "contract_id": "C-003/ArtifactPublishResult",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/artifact-publish-result.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-003.ArtifactPublishResult.schema.json",
+      "lineage_fields": [
+        "storage_ref",
+        "artifact_hash",
+        "manifest_hash"
+      ],
+      "owner_module": "src.schemas.platform.artifact",
+      "producer": "Artifact Publisher Application Service",
+      "quality_semantics": [
+        "publication_state",
+        "integrity_state"
+      ],
+      "resource_id_field": "artifact_id",
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "service result; no runtime absolute path",
+      "time_semantics": [
+        "published_at"
+      ],
+      "version_semantics": []
+    },
+    {
+      "business_key": "artifact_id",
+      "compatibility": "published records are immutable except explicit integrity degradation",
+      "consumers": [
+        "platform services",
+        "future authenticated artifact API",
+        "backup"
+      ],
+      "contract_id": "C-003/ArtifactRecord",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/artifact-record.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-003.ArtifactRecord.schema.json",
+      "lineage_fields": [
+        "owner_resource_ref",
+        "attempt_id",
+        "storage_ref",
+        "artifact_hash",
+        "manifest_hash"
+      ],
+      "owner_module": "src.schemas.platform.artifact",
+      "producer": "Artifact Publisher and Orphan Recovery",
+      "quality_semantics": [
+        "publication_state",
+        "integrity_state",
+        "integrity_failure_code"
+      ],
+      "resource_id_field": "artifact_id",
+      "retention_class": "record.retention_class",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL artifact_registry plus logical StorageRef",
+      "time_semantics": [
+        "created_at",
+        "published_at",
+        "integrity_checked_at"
+      ],
+      "version_semantics": [
+        "schema_version"
+      ]
+    },
+    {
+      "business_key": "artifact_id",
+      "compatibility": "recovery is idempotent and never exposes deletion",
+      "consumers": [
+        "operations",
+        "future task control plane"
+      ],
+      "contract_id": "C-003/ArtifactRecoveryResult",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/artifact-recovery-result.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-003.ArtifactRecoveryResult.schema.json",
+      "lineage_fields": [
+        "artifact_id"
+      ],
+      "owner_module": "src.schemas.platform.artifact",
+      "producer": "Artifact Orphan Sweeper",
+      "quality_semantics": [
+        "recovered",
+        "already_registered",
+        "publication_state"
+      ],
+      "resource_id_field": "artifact_id",
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "service result; no physical path",
+      "time_semantics": [],
+      "version_semantics": []
+    },
+    {
+      "business_key": "one dry-run invocation",
+      "compatibility": "WP-0102 never exposes a delete action",
+      "consumers": [
+        "operations"
+      ],
+      "contract_id": "C-003/OrphanDryRunResult",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/orphan-dry-run-result.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-003.OrphanDryRunResult.schema.json",
+      "lineage_fields": [
+        "manifest_relative_path",
+        "artifact_id"
+      ],
+      "owner_module": "src.schemas.platform.artifact",
+      "producer": "Artifact Orphan Sweeper",
+      "quality_semantics": [
+        "reason_code",
+        "recoverable_actions",
+        "deletion_performed=false"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "ephemeral dry-run result; known manifest directories only",
+      "time_semantics": [],
+      "version_semantics": []
+    },
+    {
       "business_key": "storage_backend + storage_namespace + relative_path",
       "compatibility": "namespace roots may be rebound without changing stored references",
       "consumers": [
