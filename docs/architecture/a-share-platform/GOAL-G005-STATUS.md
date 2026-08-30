@@ -6,14 +6,14 @@
 
 - Goal：`Visory-G005`
 - Work Package：`WP-0003 API Envelope、Error 与生成类型`
-- Goal 状态：`READY_TO_MERGE`
+- Goal 状态：`COMPLETE / MERGED`
 - Work Package 状态：`VERIFIED`
 - 固定基线：`main=75132082544239b011682d37cd626a29bca15b49`
 - 工作分支：`goal/g005-wp-0003-api-envelope-types`
 - 已验证 Work Package：`3/45`
 - Alembic head：`0001_wp0002_baseline`（本 Goal 不新增 Migration）
 
-本分支已核验本地 HEAD、`origin/main` 与 GitHub `main` 均为固定基线 `7513208`，且开始时工作区干净。C-010 实现、本地定向验收和 PR #4 首轮 GitHub 三项阻断 CI 已全部通过，因此 WP-0003 标记为 `VERIFIED`，implemented work packages 更新为 `3/45`。owner 已批准在本状态提交触发的第二轮 CI 全绿后以普通 merge commit 合入。
+本分支已核验本地 HEAD、`origin/main` 与 GitHub `main` 均为固定基线 `7513208`，且开始时工作区干净。C-010 实现、本地定向验收和 PR #4 两轮 GitHub 三项阻断 CI 全部通过，WP-0003 标记为 `VERIFIED`，implemented work packages 更新为 `3/45`。PR #4 已于 2026-08-30 以普通 merge commit `98ab97e9bd3cc9c24a8e16081c7ae8d89279253d` 合入 `main`。
 
 ## 2. 目标范围
 
@@ -42,19 +42,17 @@
 
 ## 5. GitHub 验收与合入状态
 
-PR #4 首轮 GitHub Actions Run `33265028192`：
+PR #4 GitHub Actions：
 
-- Governance and repository boundaries：通过；
-- Python deterministic gate：通过，`6522 passed, 4 deselected, 49 warnings, 572 subtests passed`；
-- Web lint and build：通过；
+- 首轮 Run `33265028192`：Governance、Python deterministic、Web lint/build 三项通过；Python `6522 passed, 4 deselected, 49 warnings, 572 subtests passed`；
+- 最终状态提交 Run `33265537543`：Governance、Python deterministic、Web lint/build 三项通过；Python `6522 passed, 4 deselected, 49 warnings, 572 subtests passed`，Web `3236 modules transformed`；
 - Python Job 使用 Ubuntu 24.04、Python 3.11.16 与一次性 PostgreSQL `16.15` service，服务容器、临时网络和测试数据库均由 CI 清理；
 - `scripts/ci_gate.sh` 完整通过，包含 deterministic export drift、Legacy 完整离线回归与 WP-0002 PostgreSQL 集成基线。
 
-当前结论：WP-0003 已达到 `VERIFIED`，M0 三个 Work Package 全部验证完成。owner 已批准后续普通合并；本状态提交 push 后仍须等待第二轮 Governance、Python、Web 三项 CI 全绿，随后才可合并 PR #4。不得 force push、改写历史、部署或启动 WP-0101。
+最终结论：WP-0003 已达到 `VERIFIED`，M0 三个 Work Package 和 M0 Exit Gate 全部验证完成。PR #4 已以普通 merge commit `98ab97e` 合入 `main`；未 force push、改写历史或部署。
 
 ## 6. 回滚
 
-- 合并前：关闭 PR #4；
-- 合并后：普通 revert PR #4 的 merge commit；
+- 合并已完成；如需回滚，在新分支执行 `git revert -m 1 98ab97e9bd3cc9c24a8e16081c7ae8d89279253d` 并通过新 PR 合入；
 - 本 Goal 无数据库 revision、业务表或数据写入，不需要 Alembic downgrade；
 - 生成文件必须通过 `python scripts/export_platform_contracts.py` 恢复，不手工编辑。

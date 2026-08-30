@@ -10,7 +10,7 @@
 
 目标架构状态：implemented work packages 为 `3/45`；`WP-0001`、`WP-0002`、`WP-0003` 均为 `VERIFIED`，其余 42 个 WP 为 `NOT_STARTED`。
 
-最近完成的 Work Package：`WP-0003 API Envelope、Error 与生成类型`。`Visory-G005` 从固定基线 `7513208` 完成 C-010、平台路由边界、Request ID、稳定错误映射和确定性前端类型生成；PR #4 首轮 GitHub Actions Run `33265028192` 的 Governance、Python、Web 三项阻断 Job 全绿，因此 WP-0003 为 `VERIFIED`，implemented work packages 为 `3/45`。
+最近完成的 Work Package：`WP-0003 API Envelope、Error 与生成类型`。`Visory-G005` 已通过 PR #4 以 merge commit `98ab97e9bd3cc9c24a8e16081c7ae8d89279253d` 合入 `main`；两轮 GitHub Actions 的 Governance、Python、Web 三项阻断 Job 全绿。M0 Exit Gate 已满足。`Visory-G006 / WP-0101` 已从该固定基线开始，验收完成前 implemented work packages 保持 `3/45`。
 
 交付阶段：MVP 一期为本地核心功能版（M0—M6 + WP-0701—0703）；MVP 二期为本地生产预演与服务器发布版（WP-0704 + M8）。未过 Local Release Gate 不得将 WP 标记为 `RELEASED`。
 
@@ -22,7 +22,8 @@
 | Visory-G002 | COMPLETE | [G002 进度与验收记录](GOAL-G002-STATUS.md) |
 | Visory-G003 | COMPLETE | [G003 / WP-0001 进度与验收记录](GOAL-G003-STATUS.md) |
 | Visory-G004 | COMPLETE / MERGED | [G004 / WP-0002 进度与验收记录](GOAL-G004-STATUS.md)；PR #3 merge commit `7513208` |
-| Visory-G005 | READY_TO_MERGE | [G005 / WP-0003 进度与验收记录](GOAL-G005-STATUS.md)；PR #4 首轮 Run `33265028192` 全绿 |
+| Visory-G005 | COMPLETE / MERGED | [G005 / WP-0003 进度与验收记录](GOAL-G005-STATUS.md)；PR #4 merge commit `98ab97e`；Runs `33265028192`、`33265537543` 全绿 |
+| Visory-G006 | IN_PROGRESS | [G006 / WP-0101 进度与验收记录](GOAL-G006-STATUS.md)；固定基线 `98ab97e` |
 | DSA Baseline | IMPORTED / VERIFIED | 1126/1126 blob 验签；Python/Web 双基线；`baseline_regression_delta=0`；`web_lint_build_regression_delta=0` |
 | Implemented Work Packages | 3/45 | `WP-0001`、`WP-0002`、`WP-0003` 为 `VERIFIED`；其余 42 项 `NOT_STARTED` |
 
@@ -45,7 +46,7 @@ RELEASED     已部署且通过运行观察和回滚/恢复要求
 | WP-0001 | Contract Registry与公共Schema | VERIFIED | Commit `5537569`；PR #2；GitHub Actions Run `33242596600` 的 Governance、Python、Web 三项阻断 Job 全绿；平台契约测试 93 passed |
 | WP-0002 | PostgreSQL与Alembic基础 | VERIFIED | 实现 head `32b318a`；PR #3；Migration `0001_wp0002_baseline`；GitHub Actions Run `33250185521` 三项阻断 Job 全绿；Python 6487 passed，含 PostgreSQL 16 真实集成验收 |
 | WP-0003 | API Envelope、Error与生成类型 | VERIFIED | PR #4；首轮 Actions Run `33265028192` 三项阻断 Job 全绿；Python 6522 passed；平台契约 35 passed；Legacy/API 定向回归 112 passed；无新增 Migration |
-| WP-0101 | Asset Identity与Alias Resolver | NOT_STARTED | — |
+| WP-0101 | Asset Identity与Alias Resolver | IN_PROGRESS | G006 固定基线 `98ab97e`；目标 Migration `0002_wp0101_asset_identity`；验收完成前不计入 3/45 |
 | WP-0102 | Storage Namespace与Artifact Publisher | NOT_STARTED | — |
 | WP-0103 | Durable Task Control Plane | NOT_STARTED | — |
 | WP-0104 | Operations最小页面 | NOT_STARTED | — |
