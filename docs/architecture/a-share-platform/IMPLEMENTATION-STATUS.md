@@ -10,7 +10,7 @@
 
 目标架构状态：implemented work packages 为 `5/45`；`WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102` 均为 `VERIFIED`，其余 40 个 WP 为 `NOT_STARTED`。
 
-最近完成的 Work Package：`WP-0102 Storage Namespace与Artifact Publisher`。`Visory-G007` 从固定基线 `01e1a986` 完成逻辑 StorageRef、路径与 Symlink 安全、Migration `0003_wp0102_artifact_registry`、Artifact Registry、原子 Publisher、完整性阻断、Orphan Dry-run/幂等恢复和 C-003 生成链；已验证实现 head `92ddde7`，PR #6 GitHub Actions Run `33299055144` 的 Governance、Python、Web 三项阻断 Job 全绿，状态为 `READY_TO_MERGE / VERIFIED / 5/45`，等待最终状态提交 CI 和 owner 批准。
+最近完成的 Work Package：`WP-0102 Storage Namespace与Artifact Publisher`。`Visory-G007` 从固定基线 `01e1a986` 完成逻辑 StorageRef、路径与 Symlink 安全、Migration `0003_wp0102_artifact_registry`、Artifact Registry、原子 Publisher、完整性阻断、Orphan Dry-run/幂等恢复和 C-003 生成链；PR #6 已通过普通 merge commit `a9a640b9c5910f839c036a94c85baec376ca7395` 合入 `main`，最终 Run `33299476674` 的 Governance、Python、Web 三项阻断 Job 全绿，状态为 `COMPLETE / MERGED / VERIFIED / 5/45`。
 
 交付阶段：MVP 一期为本地核心功能版（M0—M6 + WP-0701—0703）；MVP 二期为本地生产预演与服务器发布版（WP-0704 + M8）。未过 Local Release Gate 不得将 WP 标记为 `RELEASED`。
 
@@ -24,7 +24,7 @@
 | Visory-G004 | COMPLETE / MERGED | [G004 / WP-0002 进度与验收记录](GOAL-G004-STATUS.md)；PR #3 merge commit `7513208` |
 | Visory-G005 | COMPLETE / MERGED | [G005 / WP-0003 进度与验收记录](GOAL-G005-STATUS.md)；PR #4 merge commit `98ab97e`；Runs `33265028192`、`33265537543` 全绿 |
 | Visory-G006 | COMPLETE / MERGED | [G006 / WP-0101 进度与验收记录](GOAL-G006-STATUS.md)；PR #5 merge commit `01e1a986`；最终 Run `33288412520` 全绿 |
-| Visory-G007 | READY_TO_MERGE | [G007 / WP-0102 进度与验收记录](GOAL-G007-STATUS.md)；PR #6；实现 head `92ddde7`；Run `33299055144` 三项全绿；等待最终状态提交 CI 和 owner 批准 |
+| Visory-G007 | COMPLETE / MERGED | [G007 / WP-0102 进度与验收记录](GOAL-G007-STATUS.md)；PR #6；merge commit `a9a640b`；最终 Run `33299476674` 三项全绿 |
 | DSA Baseline | IMPORTED / VERIFIED | 1126/1126 blob 验签；Python/Web 双基线；`baseline_regression_delta=0`；`web_lint_build_regression_delta=0` |
 | Implemented Work Packages | 5/45 | `WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102` 为 `VERIFIED`；其余 40 项 `NOT_STARTED` |
 
