@@ -23,9 +23,14 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
 
     assert spec["openapi"] == "3.1.0"
     assert spec["info"]["version"] == "1.0.0"
-    assert spec["paths"] == {}
+    assert set(spec["paths"]) == {"/api/platform/v1/asset-resolutions"}
     schemas = spec["components"]["schemas"]
     assert set(schemas) == {
+        "AliasType",
+        "AssetResolutionCandidate",
+        "AssetResolutionRequest",
+        "AssetResolutionResult",
+        "AssetType",
         "PlatformAPIError",
         "PlatformErrorEnvelope",
         "PlatformListEnvelope",

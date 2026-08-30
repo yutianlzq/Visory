@@ -1,0 +1,19 @@
+{
+  "contract_id": "C-002/AssetIdentityRecord",
+  "payload": {
+    "entity_key": "stock:sh600519",
+    "asset_type": "stock",
+    "canonical_id": "sh600519",
+    "exchange": "SH",
+    "market": "CN",
+    "currency": "CNY",
+    "country": "CN",
+    "valid_from": "2001-08-27",
+    "valid_to": null,
+    "list_date": "2001-08-27",
+    "delist_date": null,
+    "identity_status": "ACTIVE",
+    "schema_version": "1.0.0",
+    "created_at": "2026-08-27T12:00:00+08:00"
+  }
+}

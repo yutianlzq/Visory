@@ -17,7 +17,7 @@ from src.repositories.platform import (
 )
 
 
-BASELINE_REVISION = "0001_wp0002_baseline"
+HEAD_REVISION = "0002_wp0101_asset_identity"
 
 
 def _table_names(database: PostgresDatabase) -> tuple[str, ...]:
@@ -36,7 +36,7 @@ def test_empty_database_upgrade_is_idempotent_and_reversible(isolated_postgres_d
 
     initial = get_migration_status(database.engine)
     assert initial.current_revision is None
-    assert initial.head_revision == BASELINE_REVISION
+    assert initial.head_revision == HEAD_REVISION
     assert initial.is_at_head is False
 
     existing_logger = logging.getLogger("visory.wp0002.migration-probe")
@@ -46,10 +46,10 @@ def test_empty_database_upgrade_is_idempotent_and_reversible(isolated_postgres_d
     assert existing_logger.disabled is False
     upgraded = get_migration_status(database.engine)
     first_tables = _table_names(database)
-    assert upgraded.current_revision == BASELINE_REVISION
-    assert upgraded.head_revision == BASELINE_REVISION
+    assert upgraded.current_revision == HEAD_REVISION
+    assert upgraded.head_revision == HEAD_REVISION
     assert upgraded.is_at_head is True
-    assert first_tables == ("alembic_version",)
+    assert first_tables == ("alembic_version", "asset_alias", "asset_identity", "identity_quarantine")
 
     upgrade_database(database.engine)
     repeated = get_migration_status(database.engine)
@@ -59,12 +59,12 @@ def test_empty_database_upgrade_is_idempotent_and_reversible(isolated_postgres_d
     downgrade_database(database.engine, "base")
     downgraded = get_migration_status(database.engine)
     assert downgraded.current_revision is None
-    assert downgraded.head_revision == BASELINE_REVISION
+    assert downgraded.head_revision == HEAD_REVISION
     assert downgraded.is_at_head is False
 
     upgrade_database(database.engine)
     restored = get_migration_status(database.engine)
-    assert restored.current_revision == BASELINE_REVISION
+    assert restored.current_revision == HEAD_REVISION
     assert restored.is_at_head is True
     assert _table_names(database) == first_tables
 

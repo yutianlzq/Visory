@@ -1,0 +1,13 @@
+{
+  "contract_id": "C-002/AssetResolutionResult",
+  "payload": {
+    "asset_type": "stock",
+    "canonical_id": "sh600519",
+    "entity_key": "stock:sh600519",
+    "resolution_status": "RESOLVED",
+    "candidates": [],
+    "reason_codes": [],
+    "resolver_version": "1.0.0",
+    "resolved_at": "2026-08-27T12:00:00+08:00"
+  }
+}
