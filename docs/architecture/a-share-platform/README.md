@@ -1,10 +1,10 @@
 # Visory 架构索引
 
-状态：DSA Engineering Baseline Imported / Verified（目标架构 Work Package 3/45；M0 Exit Gate满足；G006/WP-0101 IN_PROGRESS）
+状态：DSA Engineering Baseline Imported / Verified（目标架构 Work Package 4/45；M0 Exit Gate满足；G006/WP-0101 READY_TO_MERGE）
 最后更新：2026-08-30
 
 本文是 **Visory** 个人A股研究平台的架构索引。面向Claude Code和Codex的需求、契约、页面、编码、实施和部署总入口见[Visory开发总指引](CLAUDE-CODE-GUIDE.md)。当前文档集已经形成可编码基线，但不代表相应能力已经完成开发；实现状态只能由代码、Migration、测试和运行证据证明。
-> 当前工作区状态：G002 已将 `daily_stock_analysis` 固定提交 `fb4735a1055caefa2396982af3b09121feb9ff30` 导入项目，形成可安装、可测试、可构建的迁移底座；历史快照仍只读保存在 `upstream/daily_stock_analysis/`，其他外部项目保存在 `references/repos/`。G003/WP-0001、G004/WP-0002、G005/WP-0003 均已完成并通过本地验收及 GitHub 三项阻断 CI；G005 已由 PR #4 以 merge commit `98ab97e` 合入 `main`，M0 Exit Gate 已满足。G006 已从该固定基线开始实现 `WP-0101 Asset Identity与Alias Resolver`，验收完成前已验证 Work Package 仍为 `3/45`。
+> 当前工作区状态：G002 已将 `daily_stock_analysis` 固定提交 `fb4735a1055caefa2396982af3b09121feb9ff30` 导入项目，形成可安装、可测试、可构建的迁移底座；历史快照仍只读保存在 `upstream/daily_stock_analysis/`，其他外部项目保存在 `references/repos/`。G003/WP-0001、G004/WP-0002、G005/WP-0003 均已完成并通过本地验收及 GitHub 三项阻断 CI；G005 已由 PR #4 以 merge commit `98ab97e` 合入 `main`，M0 Exit Gate 已满足。G006/WP-0101 已完成 C-002 Identity/Alias/Resolver、Migration 与 PostgreSQL 真实集成验收，PR #5 Run `33288021328` 三项阻断 Job 全绿，状态为 `READY_TO_MERGE`，已验证 Work Package 为 `4/45`。
 
 ## 项目标识
 
@@ -121,7 +121,7 @@ Fleur 不作为运行时依赖。平台只吸收其数据契约、分层建模�
 | 页面与交互 | 信息架构、路由、线框图、页面状态、Evidence与响应式 | React/Vite统一前端 | MVP UX基线已形成 | [页面信息架构与低保真原型 v1](page-prototypes-and-information-architecture-v1.md) |
 | 工程与实施 | 代码规范、Migration、测试、Work Package、回填和Exit Gate | 当前仓库及目标平台 | M0—M9执行基线已形成 | [工程与编码规范 v1](engineering-and-coding-standards-v1.md)；[实施路线与验收方案 v1](implementation-roadmap-and-acceptance-v1.md) |
 | 仓库与参考治理 | 文档、基础上游、外部参考快照、只读边界和后续代码目录规划 | daily_stock_analysis及九类参考项目 | 目录治理基线已形成 | [仓库布局与目录责任](repository-layout.md)；[参考项目采用矩阵](reference-adoption-matrix.md) |
-| 实现状态 | Goal、底座、Work Package真实代码、验证和发布状态 | 全部平台模块 | G001—G005完成；M0 Exit Gate满足；G006/WP-0101 IN_PROGRESS；已验证目标WP 3/45 | [Visory实现状态](IMPLEMENTATION-STATUS.md)；[G005进度](GOAL-G005-STATUS.md)；[G006进度](GOAL-G006-STATUS.md) |
+| 实现状态 | Goal、底座、Work Package真实代码、验证和发布状态 | 全部平台模块 | G001—G005完成；M0 Exit Gate满足；G006/WP-0101 READY_TO_MERGE；已验证目标WP 4/45 | [Visory实现状态](IMPLEMENTATION-STATUS.md)；[G005进度](GOAL-G005-STATUS.md)；[G006进度](GOAL-G006-STATUS.md) |
 
 ## 仓库与参考项目治理
 
@@ -150,4 +150,4 @@ G002 已按固定提交完成 DSA 底座导入与验证：1126/1126 blob 验签�
 5. M8：认证、Cloudflare/NPM、备份恢复和MVP发布；
 6. M9：样本外自动权重、MVO、AI Overlay等MVP后能力。
 
-`WP-0001 Contract Registry与公共Schema`、`WP-0002 PostgreSQL与Alembic基础`、`WP-0003 API Envelope、Error与生成类型` 均为 `VERIFIED`，M0 Exit Gate 已满足。`WP-0101 Asset Identity与Alias Resolver` 正在 G006 中实现；验收完成前状态为 `IN_PROGRESS`，进度保持 `3/45`。每个Package必须补齐目标、边界、输入/输出契约、时序、存储、失败语义、追溯、测试、迁移、回滚和运行证据。
+`WP-0001 Contract Registry与公共Schema`、`WP-0002 PostgreSQL与Alembic基础`、`WP-0003 API Envelope、Error与生成类型` 和 `WP-0101 Asset Identity与Alias Resolver` 均为 `VERIFIED`，M0 Exit Gate 已满足，进度为 `4/45`。G006/PR #5 已达到合入条件；每个后续 Package 仍必须补齐目标、边界、输入/输出契约、时序、存储、失败语义、追溯、测试、迁移、回滚和运行证据。
