@@ -6,7 +6,7 @@
 
 - Goal：`Visory-G006`
 - Work Package：`WP-0101 Asset Identity与Alias Resolver`
-- Goal 状态：`READY_TO_MERGE`
+- Goal 状态：`COMPLETE / MERGED`
 - Work Package 状态：`VERIFIED`
 - 固定基线：`main=98ab97e9bd3cc9c24a8e16081c7ae8d89279253d`
 - 工作分支：`goal/g006-wp-0101-asset-identity-resolver`
@@ -14,7 +14,7 @@
 - 实现 Alembic head：`0002_wp0101_asset_identity`
 - parent：`0001_wp0002_baseline`
 
-本 Goal 开始时，本地、`origin/main` 与 GitHub `main` 均已核验为固定基线 `98ab97e`，工作区干净。实现提交 `a272b25`、CI 隔离修复提交 `0a300f6`、本地验收和 PR #5 GitHub Actions Run `33288021328` 的三项阻断 Job 均已通过，因此 WP-0101 标记为 `VERIFIED`，implemented work packages 更新为 `4/45`。owner 已批准在本状态提交触发的最终 CI 全绿后以普通 merge commit 合入。
+本 Goal 开始时，本地、`origin/main` 与 GitHub `main` 均已核验为固定基线 `98ab97e`，工作区干净。实现提交 `a272b25`、CI 隔离修复提交 `0a300f6`、本地验收和 PR #5 GitHub Actions 均已通过，因此 WP-0101 标记为 `VERIFIED`，implemented work packages 更新为 `4/45`。PR #5 已于 2026-08-30 以普通 merge commit `01e1a986418b2bdae71fed5e3176ff87a337f279` 合入 `main`；最终 Actions Run `33288412520` 的 Governance、Python、Web 三项阻断 Job 全绿。
 
 ## 2. 实现结果
 
@@ -61,12 +61,11 @@
   - 连接池关闭及 function-scope 隔离测试数据库清理；
 - Runtime 的 POSIX Secret 文件权限与连接池 ownership/close 测试通过；日志和公开错误未暴露密码、DSN 或 Secret 值。
 
-最终结论：WP-0101 已达到 `VERIFIED`，进度更新为 `4/45`。PR #5 已达到合入条件；按 owner 授权，在本状态提交触发的最终三项 CI 全绿后使用普通 merge commit 合入。
+最终结论：WP-0101 已达到 `VERIFIED`，进度更新为 `4/45`。PR #5 已以普通 merge commit `01e1a986418b2bdae71fed5e3176ff87a337f279` 合入 `main`；最终 Actions Run `33288412520` 的 Governance、Python、Web 三项阻断 Job 全绿。
 
 ## 6. 回滚
 
-- 合并前关闭 PR #5；
-- 合并后在新分支普通 revert PR #5 的 merge commit，并通过新 PR 合入；
+- 合并已完成；如需回滚，在新分支执行 `git revert -m 1 01e1a986418b2bdae71fed5e3176ff87a337f279` 并通过新 PR 合入；
 - 数据库回滚使用 Alembic downgrade 至 `0001_wp0002_baseline`，只删除 WP-0101 三张新表，不触碰 Legacy SQLite；
 - 移除 `VISORY_POSTGRES_*` 后 Identity runtime 保持关闭；
 - 生成文件必须通过 `python scripts/export_platform_contracts.py` 恢复，不手工编辑。
