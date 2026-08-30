@@ -6,18 +6,18 @@
 
 - Goal：`Visory-G007`
 - Work Package：`WP-0102 Storage Namespace与Artifact Publisher`
-- Goal 状态：`IN_PROGRESS`
-- Work Package 状态：`IN_PROGRESS`
+- Goal 状态：`READY_TO_MERGE`
+- Work Package 状态：`VERIFIED`
 - 固定基线：`main=01e1a986418b2bdae71fed5e3176ff87a337f279`
 - 工作分支：`goal/g007-wp-0102-storage-artifact-publisher`
-- 已验证 Work Package：`4/45`
-- 当前实现提交：`a5712077ad3113b43655cab22aadb96ba4f17af2`
+- 已验证 Work Package：`5/45`
+- 已验证实现 head：`92ddde7ee287a24a183590b1ee05a658e7f4c6bc`
 - Alembic head：`0003_wp0102_artifact_registry`
 - parent：`0002_wp0101_asset_identity`
 
 开始前已核验本地 `HEAD`、`origin/main` 与 GitHub `main` 均为固定基线 `01e1a986418b2bdae71fed5e3176ff87a337f279`，工作区干净。G006 已登记为 `COMPLETE / MERGED`：PR #5 于 2026-08-30 合入，merge commit 为固定基线，最终 Actions Run `33288412520` 的 Governance、Python、Web 三项阻断 Job 全绿。
 
-WP-0102 实现、本地定向验收和 PostgreSQL 16 真实集成已完成；PR 与 GitHub 三项阻断 CI 尚未建立，因此本 Goal 仍保持 `IN_PROGRESS / 4/45`。只有 clean Ubuntu GitHub CI 提供完整生成链、POSIX Symlink、文件权限、PostgreSQL 和 Legacy 回归证据后，才可标记为 `VERIFIED / 5/45`。
+WP-0102 实现、本地定向验收、PostgreSQL 16 真实集成和 PR #6 GitHub Actions Run `33299055144` 的三项阻断 Job 均已通过，因此 WP-0102 标记为 `VERIFIED`，implemented work packages 更新为 `5/45`。Goal 状态为 `READY_TO_MERGE`，等待本状态提交触发的最终 CI 全绿和 owner 批准；不得由本 Goal 自动合并。
 
 ## 2. 实现结果
 
@@ -105,14 +105,21 @@ Windows 全量 `pytest -m "not network"` 结果为：
 
 失败集中于既有 native Windows 与 clean Ubuntu CI 的平台差异：POSIX process group/pipe/shell、Codex App Server fail-closed 环境、Windows 打开 SQLite 句柄无法删除临时数据库，以及 5ms Screening deadline 递减断言受本机约 15.6ms 单调时钟粒度影响。相关实现和测试文件均不在本 Goal diff 中。本地 WSL 运行 `ci_gate.sh` 还会扫描仅本机存在、被 Git 忽略的 `references/repos/` 外部源码，因此不能替代 clean checkout CI，也不据此宣称 Python Gate 通过。
 
-## 4. 待完成 Exit Gate
+## 4. GitHub 验收证据
 
-- 普通 push 工作分支并创建 PR；
-- GitHub `Governance and repository boundaries` 全绿；
-- GitHub `Python deterministic gate` 全绿，并确认 PostgreSQL 15 项集成、Linux Symlink/权限测试和完整 Legacy 回归实际执行而非 skip；
-- GitHub `Web lint and build` 全绿；
-- 更新最终实现 head、PR、Actions Run/Jobs 和测试总数；
-- 三项阻断 Job 全绿后才更新为 `COMPLETE / VERIFIED / 5/45`，并再次等待状态提交触发的最终 CI。
+PR #6 首轮 GitHub Actions Run `33299055144`：
+
+- `Governance and repository boundaries`：`SUCCESS`，Job `99223639816`；
+- `Python deterministic gate`：`SUCCESS`，Job `99223639821`；
+- `Web lint and build`：`SUCCESS`，Job `99223639778`；
+- Python：`6591 passed, 4 deselected, 50 warnings, 572 subtests passed`，`scripts/ci_gate.sh` 完整通过；
+- CI 使用 clean Ubuntu、Python 3.11 和一次性 PostgreSQL 16 service；Secret 通过 runner 临时文件引用，值为 `***`；
+- 15 项 `tests/integration/platform` 均实际执行并通过，包括 `0003` upgrade/重复 upgrade/downgrade/re-upgrade、文件不随 downgrade 删除、事务、连接池、Artifact Registry、Publisher 与 Orphan 恢复；
+- Linux 实际执行并通过 Runtime Root、Namespace、中间目录、目标和 Orphan 枚举的 Symlink 拒绝测试；
+- POSIX Secret 文件 group/other 权限拒绝测试实际执行并通过；
+- Legacy 完整离线回归、生成契约 drift 检查、critical flake8 和 Web lint/build 均通过。
+
+最终结论：WP-0102 已达到 `VERIFIED`，进度更新为 `5/45`。PR #6 已达到合入条件；本状态提交触发的最终三项 CI 全绿后保持等待 owner 批准，不自动合并。
 
 ## 5. 明确未实现
 
@@ -126,7 +133,7 @@ Windows 全量 `pytest -m "not network"` 结果为：
 ## 6. 风险与回滚
 
 - 文件系统原子性依赖 Staging 与正式目录位于同一 Namespace/文件系统；跨文件系统部署配置会被拒绝；
-- Windows 本机无法执行的 Symlink/权限用例必须由 Ubuntu CI 关闭风险；
+- Windows 本机无法执行的 Symlink/权限用例已由 Ubuntu CI 实际执行并通过；跨平台风险已关闭；
 - rename 成功而数据库失败会留下设计内不可见 Orphan，当前只提供 Dry-run 与恢复，不自动删除；
 - Alembic downgrade 只删除 `artifact_registry` Schema，不删除已发布文件或 Orphan；
 - 合并前可关闭 G007 PR；合并后如需回滚，在新分支普通 revert 对应 merge commit，并通过新 PR 合入；数据库 downgrade 至 `0002_wp0101_asset_identity`，业务文件需按运维清单独立处置；
