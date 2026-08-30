@@ -4,6 +4,8 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
+import pytest
+
 from src.artifacts.orphan import ArtifactOrphanSweeper
 from src.repositories.platform.artifact import InMemoryArtifactRepository
 from src.schemas.platform import ArtifactPublishRequest, ResourceRef, ResourceType, generate_resource_id
@@ -72,3 +74,27 @@ def test_sweeper_ignores_unknown_directories_and_invalid_manifests(tmp_path: Pat
     assert result.candidates == ()
     assert result.scanned_known_directories == 1
     assert result.skipped_invalid_manifests == 1
+
+
+def test_sweeper_does_not_descend_into_symlinked_known_directory(tmp_path: Path) -> None:
+    namespace_root = tmp_path / "storage" / "app"
+    artifact_root = namespace_root / "artifacts"
+    artifact_root.mkdir(parents=True)
+    outside_type = tmp_path / "outside-type"
+    manifest_directory = (
+        outside_type / "year=2026" / "month=08" / f"artifact_id={ARTIFACT_ID}"
+    )
+    manifest_directory.mkdir(parents=True)
+    (manifest_directory / "manifest.json").write_text("{}", encoding="utf-8")
+    try:
+        (artifact_root / "type=report").symlink_to(outside_type, target_is_directory=True)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"symlink unavailable: {exc}")
+
+    result = ArtifactOrphanSweeper(
+        tmp_path, InMemoryArtifactRepository(), _session_scope
+    ).dry_run()
+
+    assert result.scanned_known_directories == 0
+    assert result.skipped_invalid_manifests == 0
+    assert result.candidates == ()

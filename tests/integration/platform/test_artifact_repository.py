@@ -70,6 +70,15 @@ def test_migration_0003_is_reversible_and_does_not_touch_files(
     assert get_migration_status(isolated_postgres_database.engine).current_revision == HEAD_REVISION
     with isolated_postgres_database.engine.connect() as connection:
         assert connection.execute(text("SELECT to_regclass('public.artifact_registry')")).scalar_one() == "artifact_registry"
+        columns = set(
+            connection.execute(
+                text(
+                    "SELECT column_name FROM information_schema.columns "
+                    "WHERE table_schema = 'public' AND table_name = 'artifact_registry'"
+                )
+            ).scalars()
+        )
+    assert {"runtime_root", "absolute_path", "host_path"}.isdisjoint(columns)
 
     downgrade_database(isolated_postgres_database.engine, "0002_wp0101_asset_identity")
     with isolated_postgres_database.engine.connect() as connection:

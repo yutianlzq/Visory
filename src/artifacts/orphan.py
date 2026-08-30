@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from collections.abc import Callable
 from contextlib import AbstractContextManager
@@ -32,15 +33,53 @@ class ArtifactOrphanSweeper:
         self.repository = repository
         self.transaction_context = transaction_context
 
+    @staticmethod
+    def _safe_child_directories(parent: Path, pattern: re.Pattern[str]) -> tuple[Path, ...]:
+        try:
+            with os.scandir(parent) as entries:
+                children = [
+                    Path(entry.path)
+                    for entry in entries
+                    if pattern.fullmatch(entry.name) and entry.is_dir(follow_symlinks=False)
+                ]
+        except OSError:
+            return ()
+        return tuple(sorted(children, key=lambda path: path.name))
+
+    @staticmethod
+    def _safe_manifest(directory: Path) -> Path | None:
+        try:
+            with os.scandir(directory) as entries:
+                for entry in entries:
+                    if entry.name == "manifest.json" and entry.is_file(follow_symlinks=False):
+                        return Path(entry.path)
+        except OSError:
+            return None
+        return None
+
     def _known_manifests(self) -> tuple[Path, ...]:
         artifact_root = self.resolver.ensure_namespace() / "artifacts"
         if not artifact_root.is_dir() or artifact_root.is_symlink():
             return ()
+        type_pattern = re.compile(r"^type=[a-z][a-z0-9._-]{0,63}$")
+        year_pattern = re.compile(r"^year=[0-9]{4}$")
+        month_pattern = re.compile(r"^month=(0[1-9]|1[0-2])$")
+        artifact_pattern = re.compile(r"^artifact_id=artifact_[0-9a-f-]{36}$")
         paths: list[Path] = []
-        for manifest_path in artifact_root.glob("type=*/year=*/month=*/artifact_id=*/manifest.json"):
-            relative_directory = manifest_path.parent.relative_to(self.resolver.namespace_root()).as_posix()
-            if _KNOWN_DIRECTORY_PATTERN.fullmatch(relative_directory):
-                paths.append(manifest_path)
+        for type_directory in self._safe_child_directories(artifact_root, type_pattern):
+            for year_directory in self._safe_child_directories(type_directory, year_pattern):
+                for month_directory in self._safe_child_directories(year_directory, month_pattern):
+                    for artifact_directory in self._safe_child_directories(
+                        month_directory, artifact_pattern
+                    ):
+                        manifest_path = self._safe_manifest(artifact_directory)
+                        if manifest_path is None:
+                            continue
+                        relative_directory = artifact_directory.relative_to(
+                            self.resolver.namespace_root()
+                        ).as_posix()
+                        if _KNOWN_DIRECTORY_PATTERN.fullmatch(relative_directory):
+                            paths.append(manifest_path)
         return tuple(sorted(paths, key=lambda path: path.as_posix()))
 
     def _load_valid_manifest(self, manifest_path: Path) -> ArtifactManifest:

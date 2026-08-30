@@ -62,10 +62,17 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
 
 
 def test_openapi_and_frontend_types_are_byte_deterministic() -> None:
-    assert render_platform_openapi_json() == render_platform_openapi_json()
-    assert render_frontend_types() == render_frontend_types()
-    assert render_platform_openapi_json().endswith("\n")
-    assert render_frontend_types().endswith("\n")
+    openapi_json = render_platform_openapi_json()
+    frontend_types = render_frontend_types()
+
+    assert openapi_json == render_platform_openapi_json()
+    assert frontend_types == render_frontend_types()
+    assert openapi_json.endswith("\n")
+    assert frontend_types.endswith("\n")
+    assert "VISORY_RUNTIME_ROOT" not in openapi_json
+    assert "runtime_root" not in openapi_json
+    assert "VISORY_RUNTIME_ROOT" not in frontend_types
+    assert "runtime_root" not in frontend_types
 
 
 def test_checked_in_c010_openapi_and_frontend_types_match_source_models() -> None:
