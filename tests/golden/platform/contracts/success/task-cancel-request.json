@@ -1,0 +1,6 @@
+{
+  "contract_id": "C-010/TaskCancelRequest",
+  "payload": {
+    "reason_code": "TASK_CANCEL_REQUESTED"
+  }
+}

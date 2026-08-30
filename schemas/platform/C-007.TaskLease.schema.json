@@ -1,0 +1,508 @@
+{
+  "$defs": {
+    "AttemptOutcome": {
+      "enum": [
+        "SUCCEEDED",
+        "DEGRADED",
+        "FAILED",
+        "CANCELLED",
+        "BLOCKED",
+        "LEASE_LOST"
+      ],
+      "title": "AttemptOutcome",
+      "type": "string"
+    },
+    "PriorityClass": {
+      "enum": [
+        "P0_DATA_CERTIFICATION",
+        "P1_FORMAL_SIGNAL",
+        "P2_MARKET_REVIEW",
+        "P3_USER_INTERACTIVE",
+        "P4_RESEARCH",
+        "P5_PREVIEW_AND_MAINTENANCE"
+      ],
+      "title": "PriorityClass",
+      "type": "string"
+    },
+    "ResourceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "resource_id": {
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "resource_type": {
+          "$ref": "#/$defs/ResourceType"
+        }
+      },
+      "required": [
+        "resource_type",
+        "resource_id"
+      ],
+      "title": "ResourceRef",
+      "type": "object"
+    },
+    "ResourceType": {
+      "enum": [
+        "task",
+        "attempt",
+        "data_snapshot",
+        "feature_snapshot",
+        "observation_snapshot",
+        "fact_pack",
+        "research",
+        "review",
+        "strategy",
+        "backtest_run",
+        "prediction",
+        "artifact",
+        "report",
+        "provider_run",
+        "sector",
+        "taxonomy",
+        "indicator",
+        "raw_object",
+        "canonical_partition",
+        "feature_partition",
+        "fact_block",
+        "claim",
+        "watch_condition",
+        "quality_report",
+        "request",
+        "checkpoint",
+        "backup",
+        "deployment"
+      ],
+      "title": "ResourceType",
+      "type": "string"
+    },
+    "TaskAttemptRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt_id": {
+          "title": "Attempt Id",
+          "type": "string"
+        },
+        "attempt_number": {
+          "minimum": 1,
+          "title": "Attempt Number",
+          "type": "integer"
+        },
+        "attempt_outcome": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AttemptOutcome"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "attempt_phase": {
+          "title": "Attempt Phase",
+          "type": "string"
+        },
+        "checkpoint_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checkpoint Ref"
+        },
+        "diagnostic_artifact_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Diagnostic Artifact Refs",
+          "type": "array"
+        },
+        "failure_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Failure Code"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finished At"
+        },
+        "heartbeat_at": {
+          "format": "date-time",
+          "title": "Heartbeat At",
+          "type": "string"
+        },
+        "lease_expires_at": {
+          "format": "date-time",
+          "title": "Lease Expires At",
+          "type": "string"
+        },
+        "lease_token_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Lease Token Hash",
+          "type": "string"
+        },
+        "leased_at": {
+          "format": "date-time",
+          "title": "Leased At",
+          "type": "string"
+        },
+        "phase_progress": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Phase Progress",
+          "type": "number"
+        },
+        "resource_usage": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Resource Usage",
+          "type": "object"
+        },
+        "retryable": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Retryable"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Started At"
+        },
+        "task_id": {
+          "title": "Task Id",
+          "type": "string"
+        },
+        "worker_capabilities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Worker Capabilities",
+          "type": "array"
+        },
+        "worker_id": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Worker Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "attempt_id",
+        "task_id",
+        "attempt_number",
+        "attempt_phase",
+        "phase_progress",
+        "worker_id",
+        "worker_capabilities",
+        "lease_token_hash",
+        "leased_at",
+        "lease_expires_at",
+        "heartbeat_at",
+        "resource_usage",
+        "diagnostic_artifact_refs"
+      ],
+      "title": "TaskAttemptRecord",
+      "type": "object"
+    },
+    "TaskRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "active_attempt_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Active Attempt Id"
+        },
+        "blocked_reason_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Blocked Reason Code"
+        },
+        "cancel_requested_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cancel Requested At"
+        },
+        "canonical_request_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Canonical Request Hash",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "created_from_task_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created From Task Id"
+        },
+        "failure_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Failure Code"
+        },
+        "force_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Force Reason"
+        },
+        "idempotency_key": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Idempotency Key",
+          "type": "string"
+        },
+        "input_refs": {
+          "items": {
+            "$ref": "#/$defs/ResourceRef"
+          },
+          "title": "Input Refs",
+          "type": "array"
+        },
+        "max_attempts": {
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Max Attempts",
+          "type": "integer"
+        },
+        "priority_class": {
+          "$ref": "#/$defs/PriorityClass"
+        },
+        "priority_value": {
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Priority Value",
+          "type": "integer"
+        },
+        "queued_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Queued At"
+        },
+        "request_source": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Request Source",
+          "type": "string"
+        },
+        "requested_by": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Requested By",
+          "type": "string"
+        },
+        "requirements": {
+          "additionalProperties": true,
+          "title": "Requirements",
+          "type": "object"
+        },
+        "result_artifact_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Result Artifact Id"
+        },
+        "task_id": {
+          "title": "Task Id",
+          "type": "string"
+        },
+        "task_key": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Task Key",
+          "type": "string"
+        },
+        "task_schema_version": {
+          "maxLength": 32,
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "title": "Task Schema Version",
+          "type": "string"
+        },
+        "task_state": {
+          "$ref": "#/$defs/TaskState"
+        },
+        "task_type": {
+          "title": "Task Type",
+          "type": "string"
+        },
+        "terminal_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Terminal At"
+        },
+        "unblock_condition": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unblock Condition"
+        }
+      },
+      "required": [
+        "task_id",
+        "task_type",
+        "task_schema_version",
+        "task_state",
+        "priority_class",
+        "priority_value",
+        "idempotency_key",
+        "task_key",
+        "canonical_request_hash",
+        "requested_by",
+        "request_source",
+        "input_refs",
+        "requirements",
+        "max_attempts",
+        "created_at",
+        "queued_at"
+      ],
+      "title": "TaskRecord",
+      "type": "object"
+    },
+    "TaskState": {
+      "enum": [
+        "ACCEPTED",
+        "QUEUED",
+        "BLOCKED",
+        "LEASED",
+        "RUNNING",
+        "RETRY_WAIT",
+        "SUCCEEDED",
+        "DEGRADED",
+        "FAILED",
+        "CANCELLED"
+      ],
+      "title": "TaskState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "attempt": {
+      "$ref": "#/$defs/TaskAttemptRecord"
+    },
+    "lease_token": {
+      "maxLength": 512,
+      "minLength": 32,
+      "title": "Lease Token",
+      "type": "string"
+    },
+    "task": {
+      "$ref": "#/$defs/TaskRecord"
+    }
+  },
+  "required": [
+    "task",
+    "attempt",
+    "lease_token"
+  ],
+  "title": "TaskLease",
+  "type": "object"
+}

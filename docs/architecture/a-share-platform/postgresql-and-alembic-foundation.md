@@ -80,6 +80,8 @@ Alembic 配置：
 - `0002` 创建 `asset_identity`、`asset_alias`、`identity_quarantine`，并启用 `btree_gist` 以实施正式 Alias 排他约束；
 - 同一 `namespace + normalized_value` 的重叠有效期只有在指向不同 `entity_key` 时冲突；同一实体可保留重叠 Revision；
 - `0003` 创建 `artifact_registry`，展开保存逻辑 `StorageRef`、owner `ResourceRef`、Artifact/Manifest Hash、发布与完整性语义；`attempt_id` 只做格式约束，不建立 WP-0103 外键；
+- `0004` 创建 `platform_task`、`task_attempt`、`task_state_event`、`task_checkpoint` 与 `task_command_idempotency`；使用行锁和 `SKIP LOCKED` 完成固定顺序的单 Worker 领取，原始 Lease/Resume Token 只返回调用方，数据库只保存 SHA-256 Hash；
+- `0004` 因 revision 名称超过 Alembic 默认 `alembic_version.version_num VARCHAR(32)`，在 upgrade 时安全扩为 `VARCHAR(64)`；
 - `WP-0003` 不新增数据库对象或 Migration。
 
 必须在 PostgreSQL 在线连接上运行；离线 SQL 生成不属于本 WP 支持范围。
@@ -120,13 +122,14 @@ downgrade_database(engine, "base")
 
 ## 6. 验收与回滚
 
-PostgreSQL 集成测试覆盖：空库 upgrade、重复 upgrade、downgrade base 后重新 upgrade、Migration 状态、`timestamptz` Instant 往返、事务提交/回滚、不可连接错误、连接池关闭和测试数据库清理。WP-0101 继续覆盖三张 Identity 表的真实 DDL、联表投影、同实体 Revision、跨实体冲突 Quarantine 和并发排他约束。WP-0102 继续覆盖 `artifact_registry` DDL、Repository 不隐式 commit、完整性降级、原子 rename 后事务回滚留下 Orphan、恢复注册幂等与连接归还。
+PostgreSQL 集成测试覆盖：空库 upgrade、重复 upgrade、downgrade base 后重新 upgrade、Migration 状态、`timestamptz` Instant 往返、事务提交/回滚、不可连接错误、连接池关闭和测试数据库清理。WP-0101 继续覆盖三张 Identity 表的真实 DDL、联表投影、同实体 Revision、跨实体冲突 Quarantine 和并发排他约束。WP-0102 继续覆盖 `artifact_registry` DDL、Repository 不隐式 commit、完整性降级、原子 rename 后事务回滚留下 Orphan、恢复注册幂等与连接归还。WP-0103 覆盖 Task/Attempt/Event/Checkpoint/幂等 DDL、并发 Command 与 Worker 领取、Lease Lost/重启恢复、Retry/Cancel/Blocked、Checkpoint 完整性，以及 Task 与 Artifact Registry 的同事务终态登记。
 
 最小回滚：
 
+- 仅回滚 WP-0103 Schema：在隔离数据库运行 `python -m alembic downgrade 0003_wp0102_artifact_registry`，删除 Task Control 五张表；不会删除 Checkpoint 或 Result Artifact 文件，Orphan 仍由 G007 Dry-run/恢复流程处理；
 - 仅回滚 WP-0102 Schema：在隔离数据库运行 `python -m alembic downgrade 0002_wp0101_asset_identity`，只删除 `artifact_registry`；不会删除已发布文件、Staging、Quarantine 或 Orphan；
 - 仅回滚 WP-0101：继续 downgrade 至 `0001_wp0002_baseline`，删除 Identity 三表；
 - 回滚全部目标 PostgreSQL 基线：运行 `python -m alembic downgrade base`；
-- 代码：按需 revert G007 / WP-0102 或 G006 / WP-0101 commits；
+- 代码：按需 revert G008 / WP-0103、G007 / WP-0102 或 G006 / WP-0101 commits；
 - 配置：移除 `VISORY_POSTGRES_*`，Legacy `DATABASE_PATH` 与现有 API 行为不受影响；
 - 测试环境：删除一次性 Secret 文件和测试数据库。不得用本 Migration 操作 Legacy SQLite 文件。

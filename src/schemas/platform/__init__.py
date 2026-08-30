@@ -29,6 +29,7 @@ from .asset_identity import (
 from .base import PlatformContractModel
 from .enums import (
     AliasType,
+    AttemptOutcome,
     ArtifactIntegrityState,
     ArtifactPublicationState,
     ArtifactVisibility,
@@ -37,6 +38,7 @@ from .enums import (
     AvailabilityBasis,
     IdentityStatus,
     OrphanAction,
+    PriorityClass,
     PublicationStatus,
     QualityStatus,
     QuarantineStatus,
@@ -55,10 +57,22 @@ from .registry import PLATFORM_CONTRACTS, ContractRegistration, ContractRegistry
 from .resources import ResourceRef, generate_resource_id, generate_uuid7, parse_resource_id
 from .storage import StorageRef
 from .temporal import AvailabilityMetadata, PointInTimeWindow
+from .task import (
+    TaskAttemptRecord,
+    TaskCancelRequest,
+    TaskCheckpointRecord,
+    TaskCreateRequest,
+    TaskDetails,
+    TaskLease,
+    TaskRecord,
+    TaskRetryRequest,
+    TaskStateEventRecord,
+)
 from .versioning import PublicationMetadata, RevisionMetadata, TaskStateMetadata
 
 __all__ = [
     "AliasType",
+    "AttemptOutcome",
     "AliasVerificationStatus",
     "ArtifactIntegrityState",
     "ArtifactManifest",
@@ -97,6 +111,7 @@ __all__ = [
     "PlatformResponseMeta",
     "PlatformSuccessEnvelope",
     "PointInTimeWindow",
+    "PriorityClass",
     "PublicationMetadata",
     "PublicationStatus",
     "QualityStatus",
@@ -112,7 +127,16 @@ __all__ = [
     "StorageBackend",
     "StorageNamespace",
     "StorageRef",
+    "TaskAttemptRecord",
+    "TaskCancelRequest",
+    "TaskCheckpointRecord",
+    "TaskCreateRequest",
+    "TaskDetails",
+    "TaskLease",
+    "TaskRecord",
+    "TaskRetryRequest",
     "TaskState",
+    "TaskStateEventRecord",
     "TaskStateMetadata",
     "build_entity_key",
     "canonical_json_bytes",

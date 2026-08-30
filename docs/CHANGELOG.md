@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] Visory-G008 / WP-0103 建立 PostgreSQL Durable Task Control Plane：新增 `0004_wp0103_durable_task_control_plane`、Task/Attempt/StateEvent/Checkpoint/幂等记录、严格状态机、单 Worker Lease/心跳/Lease Lost/Retry/Cancel/Blocked、`artifact_orphan_dry_run` 纵向任务与最小 C-010 Task API，并纳入 JSON Schema/OpenAPI/前端类型确定性生成链；不替换 Legacy Task Queue、不实现 SSE/下载/删除或生产调度。
+
 - [新功能] Visory-G007 / WP-0102 建立 C-003 Storage Namespace、Artifact Registry/Publisher 与 Orphan 恢复：新增 `0003_wp0102_artifact_registry`、安全 POSIX 路径与 Symlink 防逃逸、同 Namespace Staging/fsync/原子 rename、确定性 Manifest Hash、完整性消费门禁、只读 Dry-run 与幂等恢复注册，并纳入 JSON Schema/OpenAPI/前端类型确定性生成链；不新增文件下载 API、不执行 Orphan 删除。
 
 - [新功能] Visory-G006 / WP-0101 建立 C-002 Asset Identity、Alias、Identity Quarantine 与 Resolver：新增 PostgreSQL 三表和 `0002_wp0101_asset_identity` Migration、命名空间与有效期约束、冲突隔离、Resolver Service/API、单一 Legacy 只读适配接缝，以及确定性 JSON Schema/OpenAPI/前端类型导出；未配置 PostgreSQL 时 Legacy API 与 SQLite 行为保持不变。

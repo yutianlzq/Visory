@@ -1,0 +1,179 @@
+{
+  "$defs": {
+    "AttemptOutcome": {
+      "enum": [
+        "SUCCEEDED",
+        "DEGRADED",
+        "FAILED",
+        "CANCELLED",
+        "BLOCKED",
+        "LEASE_LOST"
+      ],
+      "title": "AttemptOutcome",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "attempt_id": {
+      "title": "Attempt Id",
+      "type": "string"
+    },
+    "attempt_number": {
+      "minimum": 1,
+      "title": "Attempt Number",
+      "type": "integer"
+    },
+    "attempt_outcome": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AttemptOutcome"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "attempt_phase": {
+      "title": "Attempt Phase",
+      "type": "string"
+    },
+    "checkpoint_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Checkpoint Ref"
+    },
+    "diagnostic_artifact_refs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Diagnostic Artifact Refs",
+      "type": "array"
+    },
+    "failure_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Failure Code"
+    },
+    "finished_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Finished At"
+    },
+    "heartbeat_at": {
+      "format": "date-time",
+      "title": "Heartbeat At",
+      "type": "string"
+    },
+    "lease_expires_at": {
+      "format": "date-time",
+      "title": "Lease Expires At",
+      "type": "string"
+    },
+    "lease_token_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Lease Token Hash",
+      "type": "string"
+    },
+    "leased_at": {
+      "format": "date-time",
+      "title": "Leased At",
+      "type": "string"
+    },
+    "phase_progress": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Phase Progress",
+      "type": "number"
+    },
+    "resource_usage": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Resource Usage",
+      "type": "object"
+    },
+    "retryable": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Retryable"
+    },
+    "started_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Started At"
+    },
+    "task_id": {
+      "title": "Task Id",
+      "type": "string"
+    },
+    "worker_capabilities": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Worker Capabilities",
+      "type": "array"
+    },
+    "worker_id": {
+      "maxLength": 255,
+      "minLength": 1,
+      "title": "Worker Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "attempt_id",
+    "task_id",
+    "attempt_number",
+    "attempt_phase",
+    "phase_progress",
+    "worker_id",
+    "worker_capabilities",
+    "lease_token_hash",
+    "leased_at",
+    "lease_expires_at",
+    "heartbeat_at",
+    "resource_usage",
+    "diagnostic_artifact_refs"
+  ],
+  "title": "TaskAttemptRecord",
+  "type": "object"
+}

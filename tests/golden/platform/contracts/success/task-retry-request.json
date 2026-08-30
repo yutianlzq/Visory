@@ -1,0 +1,6 @@
+{
+  "contract_id": "C-010/TaskRetryRequest",
+  "payload": {
+    "reason_code": "TASK_RETRY_REQUESTED"
+  }
+}

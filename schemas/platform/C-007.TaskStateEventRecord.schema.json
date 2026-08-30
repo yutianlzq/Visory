@@ -1,0 +1,83 @@
+{
+  "$defs": {
+    "TaskState": {
+      "enum": [
+        "ACCEPTED",
+        "QUEUED",
+        "BLOCKED",
+        "LEASED",
+        "RUNNING",
+        "RETRY_WAIT",
+        "SUCCEEDED",
+        "DEGRADED",
+        "FAILED",
+        "CANCELLED"
+      ],
+      "title": "TaskState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actor_ref": {
+      "maxLength": 255,
+      "minLength": 1,
+      "title": "Actor Ref",
+      "type": "string"
+    },
+    "attempt_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Attempt Id"
+    },
+    "event_at": {
+      "format": "date-time",
+      "title": "Event At",
+      "type": "string"
+    },
+    "event_sequence": {
+      "minimum": 1,
+      "title": "Event Sequence",
+      "type": "integer"
+    },
+    "next_task_state": {
+      "$ref": "#/$defs/TaskState"
+    },
+    "previous_task_state": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TaskState"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "reason_code": {
+      "title": "Reason Code",
+      "type": "string"
+    },
+    "task_id": {
+      "title": "Task Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "task_id",
+    "event_sequence",
+    "previous_task_state",
+    "next_task_state",
+    "reason_code",
+    "actor_ref",
+    "event_at"
+  ],
+  "title": "TaskStateEventRecord",
+  "type": "object"
+}

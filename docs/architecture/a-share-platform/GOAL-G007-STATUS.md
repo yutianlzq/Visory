@@ -6,7 +6,7 @@
 
 - Goal：`Visory-G007`
 - Work Package：`WP-0102 Storage Namespace与Artifact Publisher`
-- Goal 状态：`READY_TO_MERGE`
+- Goal 状态：`COMPLETE / MERGED`
 - Work Package 状态：`VERIFIED`
 - 固定基线：`main=01e1a986418b2bdae71fed5e3176ff87a337f279`
 - 工作分支：`goal/g007-wp-0102-storage-artifact-publisher`
@@ -17,7 +17,7 @@
 
 开始前已核验本地 `HEAD`、`origin/main` 与 GitHub `main` 均为固定基线 `01e1a986418b2bdae71fed5e3176ff87a337f279`，工作区干净。G006 已登记为 `COMPLETE / MERGED`：PR #5 于 2026-08-30 合入，merge commit 为固定基线，最终 Actions Run `33288412520` 的 Governance、Python、Web 三项阻断 Job 全绿。
 
-WP-0102 实现、本地定向验收、PostgreSQL 16 真实集成和 PR #6 GitHub Actions Run `33299055144` 的三项阻断 Job 均已通过，因此 WP-0102 标记为 `VERIFIED`，implemented work packages 更新为 `5/45`。Goal 状态为 `READY_TO_MERGE`，等待本状态提交触发的最终 CI 全绿和 owner 批准；不得由本 Goal 自动合并。
+WP-0102 实现、本地定向验收、PostgreSQL 16 真实集成和 PR #6 GitHub Actions Run `33299055144` 的三项阻断 Job 均已通过，因此 WP-0102 标记为 `VERIFIED`，implemented work packages 更新为 `5/45`。PR #6 已于 2026-08-30 通过普通 merge commit 合入 `main`；merge commit 为 `a9a640b9c5910f839c036a94c85baec376ca7395`，最终 GitHub Actions Run `33299476674` 的 Governance、Python、Web 三项阻断 Job 全绿。Goal 状态更新为 `COMPLETE / MERGED`。
 
 ## 2. 实现结果
 
@@ -119,7 +119,7 @@ PR #6 首轮 GitHub Actions Run `33299055144`：
 - POSIX Secret 文件 group/other 权限拒绝测试实际执行并通过；
 - Legacy 完整离线回归、生成契约 drift 检查、critical flake8 和 Web lint/build 均通过。
 
-最终结论：WP-0102 已达到 `VERIFIED`，进度更新为 `5/45`。PR #6 已达到合入条件；本状态提交触发的最终三项 CI 全绿后保持等待 owner 批准，不自动合并。
+最终结论：WP-0102 已达到 `VERIFIED`，进度保持 `5/45`。PR #6 已通过普通 merge commit `a9a640b9c5910f839c036a94c85baec376ca7395` 合入 `main`；最终 Run `33299476674` 三项阻断 Job 全绿。
 
 ## 5. 明确未实现
 

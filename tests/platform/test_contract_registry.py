@@ -6,13 +6,11 @@ from src.schemas.platform import PLATFORM_CONTRACTS, PlatformContractModel
 from src.schemas.platform.registry import validate_contract_registry
 
 
-def test_registry_contains_only_wp_0001_contracts_and_required_metadata() -> None:
+def test_registry_contains_supported_contracts_and_required_metadata() -> None:
     registrations = PLATFORM_CONTRACTS.list()
     assert registrations
     assert {item.contract_id.split("/", 1)[0] for item in registrations} <= {
-        "C-001",
-        "C-002",
-        "C-003",
+        "C-001", "C-002", "C-003", "C-007", "C-010", "C-011",
     }
 
     for item in registrations:
