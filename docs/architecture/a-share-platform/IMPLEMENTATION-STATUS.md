@@ -52,7 +52,7 @@ RELEASED     已部署且通过运行观察和回滚/恢复要求
 | WP-0101 | Asset Identity与Alias Resolver | VERIFIED | 实现提交 `a272b25`；PR #5；Migration `0002_wp0101_asset_identity`；GitHub Actions Run `33288021328` 三项阻断 Job 全绿；Python 6549 passed，含 PostgreSQL 16 Migration、排他约束、Quarantine、并发、事务与连接清理验收 |
 | WP-0102 | Storage Namespace与Artifact Publisher | VERIFIED | [G007 / WP-0102 进度与验收记录](GOAL-G007-STATUS.md)；实现 head `92ddde7`；PR #6；Migration `0003_wp0102_artifact_registry`；平台 218 passed、本地 PostgreSQL 16 集成 15 passed；Run `33299055144` 三项全绿，Python 6591 passed |
 | WP-0103 | Durable Task Control Plane | VERIFIED | [G008 / WP-0103 进度与验收记录](GOAL-G008-STATUS.md)；实现 head `826aacfa2965c98efff8a8795a46dc9f72edec5f`；PR #7；Migration `0004_wp0103_durable_task_control_plane`；平台 257 passed、5 skipped，本地 PostgreSQL 16 集成 30 passed，Legacy 定向回归 106 passed；Run `33314470672` 三项全绿 |
-| WP-0104 | Operations最小页面 | IN_PROGRESS | [G009 / WP-0104 进度与验收记录](GOAL-G009-STATUS.md)；PR #9；补充测试 PR #12；merge commit `6b90bb1`；Run `33324179055` 三项阻断 Job 全绿；Web lint/build 通过；Playwright 4 passed；平台 260 passed、5 skipped；仍待真实后端认证旅程 |
+| WP-0104 | Operations最小页面 | IN_PROGRESS | [G009 / WP-0104 进度与验收记录](GOAL-G009-STATUS.md)；PR #9；补充测试 PR #12；当前错误展示/键盘回归待新 PR；merge commit `6b90bb1`；Run `33324179055` 三项阻断 Job 全绿；Web lint/build 通过；Playwright 6 passed；平台 260 passed、5 skipped；仍待真实后端认证旅程 |
 | WP-0201 | Dataset/Provider Registry | NOT_STARTED | — |
 | WP-0202 | Raw Ingestion | NOT_STARTED | — |
 | WP-0203 | Canonical Normalization | NOT_STARTED | — |

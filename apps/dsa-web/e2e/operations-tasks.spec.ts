@@ -138,7 +138,7 @@ async function serve(rootDir: string) {
   return { url: `http://127.0.0.1:${address.port}/`, close: () => new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve())) };
 }
 
-type MockApiOptions = { taskState?: string; commandDelayMs?: number };
+type MockApiOptions = { taskState?: string; commandDelayMs?: number; commandError?: { status: number; code: string; requestId: string } };
 type MockApiState = { commands: string[]; listRequests: number };
 
 type E2EWindow = Window & {
@@ -188,6 +188,13 @@ async function mockApis(page: Page, options: MockApiOptions = {}): Promise<MockA
     if (request.method() === 'POST') {
       state.commands.push(url.pathname);
       if (options.commandDelayMs) await new Promise((resolve) => setTimeout(resolve, options.commandDelayMs));
+      if (options.commandError) {
+        return route.fulfill({
+          status: options.commandError.status,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: { code: options.commandError.code, message: '任务当前不可重试', details: {}, retryable: false, request_id: options.commandError.requestId } }),
+        });
+      }
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: taskPayload, meta: { generated_at: task.created_at, request_id: 'req-e2e', schema_version: '1.0.0', data_snapshot_id: null, warnings: [] } }) });
     }
     state.listRequests += 1;
@@ -251,6 +258,33 @@ test.describe('Operations task page', () => {
     await expect(page.getByRole('button', { name: '重试中…' })).toBeDisabled();
     await expect.poll(() => state.commands.filter((path) => path.endsWith('/retries')).length).toBe(1);
     await expect(page.getByRole('button', { name: '请求重试' })).toBeVisible();
+    await page.close();
+  });
+
+  test('shows stable C-010 code and request ID for command conflicts', async () => {
+    const page = await browser.newPage({ baseURL, viewport: { width: 1280, height: 900 }, locale: 'zh-CN' });
+    const state = await mockApis(page, { taskState: 'RETRY_WAIT', commandError: { status: 409, code: 'TASK_RETRY_CONFLICT', requestId: 'req-task-conflict' } });
+    await page.goto(`/operations/tasks/${taskId}?tab=failed`);
+    page.on('dialog', (dialog) => void dialog.accept());
+    await page.getByRole('button', { name: '请求重试' }).click();
+    await expect(page.getByRole('alert')).toContainText('TASK_RETRY_CONFLICT');
+    await expect(page.getByRole('alert')).toContainText('Request ID: req-task-conflict');
+    await expect.poll(() => state.commands.filter((path) => path.endsWith('/retries')).length).toBe(1);
+    await page.close();
+  });
+
+  test('supports keyboard navigation for tabs and filters', async () => {
+    const page = await browser.newPage({ baseURL, viewport: { width: 1280, height: 900 }, locale: 'zh-CN' });
+    await mockApis(page);
+    await page.goto('/operations/tasks?tab=active');
+    const historyTab = page.getByRole('tab', { name: /历史/ });
+    await historyTab.focus();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(/tab=history/);
+    const taskType = page.getByLabel('任务类型');
+    await taskType.focus();
+    await page.keyboard.insertText('artifact_orphan_dry_run');
+    await expect(page).toHaveURL(/task_type=artifact_orphan_dry_run/);
     await page.close();
   });
 
