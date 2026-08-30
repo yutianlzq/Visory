@@ -10,7 +10,7 @@
 
 目标架构状态：implemented work packages 为 `4/45`；`WP-0001`、`WP-0002`、`WP-0003`、`WP-0101` 均为 `VERIFIED`，其余 41 个 WP 为 `NOT_STARTED`。
 
-最近完成的 Work Package：`WP-0101 Asset Identity与Alias Resolver`。`Visory-G006` 从固定基线 `98ab97e` 完成 C-002、三张 PostgreSQL 表、Migration `0002_wp0101_asset_identity`、Repository、Resolver、API 和单一 Legacy Adapter 接缝；PR #5 已以 merge commit `01e1a986` 合入，最终 GitHub Actions Run `33288412520` 的 Governance、Python、Web 三项阻断 Job 全绿。当前 `Visory-G007 / WP-0102 Storage Namespace与Artifact Publisher` 已从固定基线 `01e1a986` 启动，状态为 `IN_PROGRESS`；在 Exit Gate 完成前 implemented work packages 仍为 `4/45`。
+最近完成的 Work Package：`WP-0101 Asset Identity与Alias Resolver`。`Visory-G006` 从固定基线 `98ab97e` 完成 C-002、三张 PostgreSQL 表、Migration `0002_wp0101_asset_identity`、Repository、Resolver、API 和单一 Legacy Adapter 接缝；PR #5 已以 merge commit `01e1a986` 合入，最终 GitHub Actions Run `33288412520` 的 Governance、Python、Web 三项阻断 Job 全绿。当前 `Visory-G007 / WP-0102 Storage Namespace与Artifact Publisher` 已从固定基线 `01e1a986` 完成当前实现和本地定向/PostgreSQL 16 验收，Alembic head 为 `0003_wp0102_artifact_registry`，实现提交截至 `a571207`；PR 与 clean Ubuntu GitHub 三项阻断 CI 尚待完成，状态仍为 `IN_PROGRESS / 4/45`。
 
 交付阶段：MVP 一期为本地核心功能版（M0—M6 + WP-0701—0703）；MVP 二期为本地生产预演与服务器发布版（WP-0704 + M8）。未过 Local Release Gate 不得将 WP 标记为 `RELEASED`。
 
@@ -48,7 +48,7 @@ RELEASED     已部署且通过运行观察和回滚/恢复要求
 | WP-0002 | PostgreSQL与Alembic基础 | VERIFIED | 实现 head `32b318a`；PR #3；Migration `0001_wp0002_baseline`；GitHub Actions Run `33250185521` 三项阻断 Job 全绿；Python 6487 passed，含 PostgreSQL 16 真实集成验收 |
 | WP-0003 | API Envelope、Error与生成类型 | VERIFIED | PR #4；首轮 Actions Run `33265028192` 三项阻断 Job 全绿；Python 6522 passed；平台契约 35 passed；Legacy/API 定向回归 112 passed；无新增 Migration |
 | WP-0101 | Asset Identity与Alias Resolver | VERIFIED | 实现提交 `a272b25`；PR #5；Migration `0002_wp0101_asset_identity`；GitHub Actions Run `33288021328` 三项阻断 Job 全绿；Python 6549 passed，含 PostgreSQL 16 Migration、排他约束、Quarantine、并发、事务与连接清理验收 |
-| WP-0102 | Storage Namespace与Artifact Publisher | IN_PROGRESS | [G007 / WP-0102 进度与验收记录](GOAL-G007-STATUS.md)；固定基线 `01e1a986`；实现与验收进行中 |
+| WP-0102 | Storage Namespace与Artifact Publisher | IN_PROGRESS | [G007 / WP-0102 进度与验收记录](GOAL-G007-STATUS.md)；实现截至 `a571207`；Migration `0003_wp0102_artifact_registry`；平台 218 passed、本地 PostgreSQL 16 集成 15 passed；PR/Ubuntu 三项阻断 CI 待完成 |
 | WP-0103 | Durable Task Control Plane | NOT_STARTED | — |
 | WP-0104 | Operations最小页面 | NOT_STARTED | — |
 | WP-0201 | Dataset/Provider Registry | NOT_STARTED | — |
