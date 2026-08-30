@@ -6,17 +6,17 @@
 
 - Goal：`Visory-G008`
 - Work Package：`WP-0103 Durable Task Control Plane`
-- Goal 状态：`IN_PROGRESS`
-- Work Package 状态：`IN_PROGRESS`
+- Goal 状态：`COMPLETE / PR OPEN`
+- Work Package 状态：`VERIFIED`
 - 固定基线：`main=a9a640b9c5910f839c036a94c85baec376ca7395`
 - 工作分支：`goal/g008-wp-0103-durable-task-control-plane`
-- 已验证 Work Package：`5/45`
+- 已验证 Work Package：`6/45`
 - 目标 Alembic head：`0004_wp0103_durable_task_control_plane`
 - parent：`0003_wp0102_artifact_registry`
 
 开始前已核验本地 `HEAD`、本地 `origin/main` 与 GitHub `main` 均为固定基线 `a9a640b9c5910f839c036a94c85baec376ca7395`，工作区干净。G007 已登记为 `COMPLETE / MERGED`：PR #6 通过普通 merge commit `a9a640b9c5910f839c036a94c85baec376ca7395` 合入，最终 GitHub Actions Run `33299476674` 的 Governance、Python、Web 三项阻断 Job 全绿。
 
-WP-0103 开始时进度保持 `5/45`。只有 Migration、真实 PostgreSQL 并发/故障测试、纵向 Artifact 闭环、契约生成、Legacy 回归和 GitHub 三项阻断 Job 的证据全部齐全后，才可将 WP-0103 标记为 `VERIFIED` 并更新为 `6/45`。
+WP-0103 开始时进度保持 `5/45`。Migration、真实 PostgreSQL 并发/故障测试、纵向 Artifact 闭环、契约生成、Legacy 回归和 GitHub 三项阻断 Job 的证据现已齐全，WP-0103 标记为 `VERIFIED`，已验证进度更新为 `6/45`。
 
 ## 2. 实现结果
 
@@ -97,12 +97,13 @@ Task、Attempt、StateEvent、Checkpoint、Lease、创建/取消/重试请求和
 - `npm run lint`：通过；
 - `npm run build`：通过。
 
-## 4. 尚待验收
+## 4. 验收结论
 
-- 提交并普通 push 工作分支；
-- 创建 PR；
-- GitHub Actions Governance、Python、Web 三项阻断 Job 全绿；
-- 三项 CI 全绿后更新为 `VERIFIED / 6/45`，记录实现 commit、PR、Run 和最终 head；
+- 契约提交：`77e5ca6`（`test: define durable task control contracts`）；
+- 实现 head：`826aacfa2965c98efff8a8795a46dc9f72edec5f`（`feat: add durable task control plane`）；
+- PR：[#7](https://github.com/yutianlzq/Visory/pull/7)，当前保持 open、未合并；
+- GitHub Actions Run：[`33314470672`](https://github.com/yutianlzq/Visory/actions/runs/33314470672)，Governance、Python、Web 三项阻断 Job 全部成功；
+- WP-0103 状态为 `VERIFIED`，已验证 Work Package 进度为 `6/45`；
 - 未经 owner 明确批准不得合并，且本 Goal 不启动 WP-0104。
 
 ## 5. 环境、风险与回滚
@@ -112,6 +113,6 @@ Task、Attempt、StateEvent、Checkpoint、Lease、创建/取消/重试请求和
 - Secret：测试密码仅存在于一次性临时文件，所有报告统一显示为 `***`；未使用生产 Secret；
 - Storage：所有 Artifact/Checkpoint 测试使用每用例临时目录；未创建或写入真实 `/data`；
 - 部署：未部署、未写服务器、未修改 `upstream/` 或 `references/`；
-- 已知风险：本地全量 pytest 的 83 个环境性失败需由 clean GitHub Python Job 给出最终阻断结论；Checkpoint 物理文件不由 Alembic downgrade 删除，符合 Storage/DB 分离契约；
+- 已知风险：本地全量 pytest 的 83 个环境性失败已由 clean GitHub Python Job 的成功结果完成阻断核验；Checkpoint 物理文件不由 Alembic downgrade 删除，符合 Storage/DB 分离契约；
 - Schema 回滚：在隔离数据库 downgrade 至 `0003_wp0102_artifact_registry`，删除 WP-0103 五张表；不会自动删除 Artifact、Checkpoint 或 Orphan 文件；
 - 代码回滚：revert G008 实现 commits；移除 `VISORY_POSTGRES_*` 后 Legacy SQLite、Legacy Task Queue 和现有 API 继续按原行为运行。
