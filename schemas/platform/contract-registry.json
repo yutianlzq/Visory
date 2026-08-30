@@ -1010,6 +1010,85 @@
       ]
     },
     {
+      "business_key": "event_id",
+      "compatibility": "Last-Event-ID and after_event_id resume without exposing secrets or paths",
+      "consumers": [
+        "operations API",
+        "Operations web client"
+      ],
+      "contract_id": "C-010/TaskEventRecord",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/task-event-record.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.TaskEventRecord.schema.json",
+      "lineage_fields": [
+        "task_id",
+        "attempt_id",
+        "resource_ref"
+      ],
+      "owner_module": "src.schemas.platform.task",
+      "producer": "Task State Event Stream",
+      "quality_semantics": [
+        "event_type"
+      ],
+      "resource_id_field": "task_id",
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "SSE projection over append-only task_state_event",
+      "time_semantics": [
+        "occurred_at"
+      ],
+      "version_semantics": [
+        "sequence",
+        "payload_schema_version"
+      ]
+    },
+    {
+      "business_key": "filters + opaque cursor",
+      "compatibility": "stable ordering and cursor pagination preserve refreshable task views",
+      "consumers": [
+        "Task Control Application Service"
+      ],
+      "contract_id": "C-010/TaskListQuery",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/task-list-query.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.TaskListQuery.schema.json",
+      "lineage_fields": [
+        "resource_id"
+      ],
+      "owner_module": "src.schemas.platform.task",
+      "producer": "Operations API client",
+      "quality_semantics": [
+        "tab",
+        "task_state",
+        "limit"
+      ],
+      "resource_id_field": null,
+      "retention_class": "TEMP",
+      "schema_version": "1.0.0",
+      "storage_profile": "C-010 query parameters; cursor is opaque",
+      "time_semantics": [
+        "created_from",
+        "created_to"
+      ],
+      "version_semantics": []
+    },
+    {
       "business_key": "task_id + retry command",
       "compatibility": "retry queues a new attempt without mutating prior attempts",
       "consumers": [

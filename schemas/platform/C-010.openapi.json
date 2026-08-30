@@ -1375,6 +1375,22 @@
             "title": "Attempts",
             "type": "array"
           },
+          "checkpoints": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/TaskCheckpointRecord"
+            },
+            "title": "Checkpoints",
+            "type": "array"
+          },
+          "diagnostic_artifact_refs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Diagnostic Artifact Refs",
+            "type": "array"
+          },
           "state_events": {
             "items": {
               "$ref": "#/components/schemas/TaskStateEventRecord"
@@ -1392,6 +1408,71 @@
           "state_events"
         ],
         "title": "TaskDetails",
+        "type": "object"
+      },
+      "TaskEventRecord": {
+        "additionalProperties": false,
+        "description": "C-010 event projection for resumable task notifications.",
+        "properties": {
+          "attempt_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attempt Id"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_type": {
+            "const": "task_state_changed",
+            "title": "Event Type",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/TaskStateEventRecord"
+          },
+          "payload_schema_version": {
+            "default": "1.0.0",
+            "maxLength": 32,
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "title": "Payload Schema Version",
+            "type": "string"
+          },
+          "resource_ref": {
+            "$ref": "#/components/schemas/ResourceRef"
+          },
+          "sequence": {
+            "minimum": 1,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "task_id": {
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_type",
+          "resource_ref",
+          "task_id",
+          "sequence",
+          "occurred_at",
+          "payload"
+        ],
+        "title": "TaskEventRecord",
         "type": "object"
       },
       "TaskLease": {
@@ -1416,6 +1497,135 @@
           "lease_token"
         ],
         "title": "TaskLease",
+        "type": "object"
+      },
+      "TaskListQuery": {
+        "additionalProperties": false,
+        "description": "Stable, bounded task list query used by Operations.",
+        "properties": {
+          "created_from": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created From"
+          },
+          "created_to": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created To"
+          },
+          "cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cursor"
+          },
+          "limit": {
+            "default": 50,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "priority_class": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriorityClass"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "requested_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Requested By"
+          },
+          "resource_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Resource Id"
+          },
+          "tab": {
+            "anyOf": [
+              {
+                "enum": [
+                  "active",
+                  "blocked",
+                  "failed",
+                  "history"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Tab"
+          },
+          "task_state": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TaskState"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "task_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Task Type"
+          }
+        },
+        "title": "TaskListQuery",
         "type": "object"
       },
       "TaskRecord": {
@@ -1794,6 +2004,105 @@
       }
     },
     "/api/platform/v1/tasks": {
+      "get": {
+        "operationId": "listTasks",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "tab",
+            "schema": {
+              "enum": [
+                "active",
+                "blocked",
+                "failed",
+                "history"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "task_state",
+            "schema": {
+              "$ref": "#/components/schemas/TaskState"
+            }
+          },
+          {
+            "in": "query",
+            "name": "task_type",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "priority_class",
+            "schema": {
+              "$ref": "#/components/schemas/PriorityClass"
+            }
+          },
+          {
+            "in": "query",
+            "name": "requested_by",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "created_from",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "created_to",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resource_id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformListEnvelope"
+                }
+              }
+            },
+            "description": "Task list"
+          }
+        },
+        "summary": "List durable platform tasks"
+      },
       "post": {
         "operationId": "createTask",
         "parameters": [
@@ -1849,6 +2158,40 @@
           }
         },
         "summary": "Create a durable platform task"
+      }
+    },
+    "/api/platform/v1/tasks/events": {
+      "get": {
+        "operationId": "streamTaskEvents",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after_event_id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Last-Event-ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Resumable task event stream"
+          }
+        },
+        "summary": "Stream task state events"
       }
     },
     "/api/platform/v1/tasks/{task_id}": {
@@ -1935,6 +2278,48 @@
           }
         },
         "summary": "Request task cancellation"
+      }
+    },
+    "/api/platform/v1/tasks/{task_id}/events": {
+      "get": {
+        "operationId": "streamTaskEventsForTask",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after_event_id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Last-Event-ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Resumable task event stream"
+          }
+        },
+        "summary": "Stream state events for one task"
       }
     },
     "/api/platform/v1/tasks/{task_id}/retries": {

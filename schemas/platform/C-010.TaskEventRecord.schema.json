@@ -1,0 +1,200 @@
+{
+  "$defs": {
+    "ResourceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "resource_id": {
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "resource_type": {
+          "$ref": "#/$defs/ResourceType"
+        }
+      },
+      "required": [
+        "resource_type",
+        "resource_id"
+      ],
+      "title": "ResourceRef",
+      "type": "object"
+    },
+    "ResourceType": {
+      "enum": [
+        "task",
+        "attempt",
+        "data_snapshot",
+        "feature_snapshot",
+        "observation_snapshot",
+        "fact_pack",
+        "research",
+        "review",
+        "strategy",
+        "backtest_run",
+        "prediction",
+        "artifact",
+        "report",
+        "provider_run",
+        "sector",
+        "taxonomy",
+        "indicator",
+        "raw_object",
+        "canonical_partition",
+        "feature_partition",
+        "fact_block",
+        "claim",
+        "watch_condition",
+        "quality_report",
+        "request",
+        "checkpoint",
+        "backup",
+        "deployment"
+      ],
+      "title": "ResourceType",
+      "type": "string"
+    },
+    "TaskState": {
+      "enum": [
+        "ACCEPTED",
+        "QUEUED",
+        "BLOCKED",
+        "LEASED",
+        "RUNNING",
+        "RETRY_WAIT",
+        "SUCCEEDED",
+        "DEGRADED",
+        "FAILED",
+        "CANCELLED"
+      ],
+      "title": "TaskState",
+      "type": "string"
+    },
+    "TaskStateEventRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "actor_ref": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Actor Ref",
+          "type": "string"
+        },
+        "attempt_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Attempt Id"
+        },
+        "event_at": {
+          "format": "date-time",
+          "title": "Event At",
+          "type": "string"
+        },
+        "event_sequence": {
+          "minimum": 1,
+          "title": "Event Sequence",
+          "type": "integer"
+        },
+        "next_task_state": {
+          "$ref": "#/$defs/TaskState"
+        },
+        "previous_task_state": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TaskState"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason_code": {
+          "title": "Reason Code",
+          "type": "string"
+        },
+        "task_id": {
+          "title": "Task Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "task_id",
+        "event_sequence",
+        "previous_task_state",
+        "next_task_state",
+        "reason_code",
+        "actor_ref",
+        "event_at"
+      ],
+      "title": "TaskStateEventRecord",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "C-010 event projection for resumable task notifications.",
+  "properties": {
+    "attempt_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Attempt Id"
+    },
+    "event_id": {
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_type": {
+      "const": "task_state_changed",
+      "title": "Event Type",
+      "type": "string"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "title": "Occurred At",
+      "type": "string"
+    },
+    "payload": {
+      "$ref": "#/$defs/TaskStateEventRecord"
+    },
+    "payload_schema_version": {
+      "default": "1.0.0",
+      "maxLength": 32,
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Payload Schema Version",
+      "type": "string"
+    },
+    "resource_ref": {
+      "$ref": "#/$defs/ResourceRef"
+    },
+    "sequence": {
+      "minimum": 1,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "task_id": {
+      "title": "Task Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "resource_ref",
+    "task_id",
+    "sequence",
+    "occurred_at",
+    "payload"
+  ],
+  "title": "TaskEventRecord",
+  "type": "object"
+}

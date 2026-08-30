@@ -1,0 +1,15 @@
+{
+  "contract_id": "C-010/TaskListQuery",
+  "payload": {
+    "tab": "active",
+    "task_state": null,
+    "task_type": "artifact_orphan_dry_run",
+    "priority_class": "P5_PREVIEW_AND_MAINTENANCE",
+    "requested_by": "owner:ops",
+    "created_from": null,
+    "created_to": null,
+    "resource_id": null,
+    "cursor": null,
+    "limit": 50
+  }
+}
