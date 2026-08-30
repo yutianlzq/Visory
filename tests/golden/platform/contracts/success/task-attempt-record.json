@@ -1,0 +1,26 @@
+{
+  "contract_id": "C-007/TaskAttemptRecord",
+  "payload": {
+    "attempt_id": "attempt_019a7f6d-5c00-7000-8000-000000000002",
+    "task_id": "task_019a7f6d-5c00-7000-8000-000000000001",
+    "attempt_number": 1,
+    "attempt_phase": "CLAIMED",
+    "phase_progress": 0.0,
+    "worker_id": "worker-golden",
+    "worker_capabilities": [
+      "artifact_orphan_dry_run"
+    ],
+    "lease_token_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "leased_at": "2026-08-30T08:01:00Z",
+    "lease_expires_at": "2026-08-30T08:06:00Z",
+    "heartbeat_at": "2026-08-30T08:01:00Z",
+    "started_at": null,
+    "finished_at": null,
+    "checkpoint_ref": null,
+    "resource_usage": {},
+    "attempt_outcome": null,
+    "failure_code": null,
+    "retryable": null,
+    "diagnostic_artifact_refs": []
+  }
+}

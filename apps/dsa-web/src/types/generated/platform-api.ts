@@ -98,6 +98,8 @@ export interface AssetResolutionResult {
 
 export type AssetType = "stock" | "index" | "etf" | "convertible_bond" | "fund" | "future" | "fx" | "commodity";
 
+export type AttemptOutcome = "SUCCEEDED" | "DEGRADED" | "FAILED" | "CANCELLED" | "BLOCKED" | "LEASE_LOST";
+
 export type IdentityStatus = "ACTIVE" | "INACTIVE" | "DELISTED" | "QUARANTINED";
 
 export type OrphanAction = "RECOVER_REGISTRATION";
@@ -162,6 +164,8 @@ export interface PlatformSuccessEnvelope {
   readonly meta: PlatformResponseMeta;
 }
 
+export type PriorityClass = "P0_DATA_CERTIFICATION" | "P1_FORMAL_SIGNAL" | "P2_MARKET_REVIEW" | "P3_USER_INTERACTIVE" | "P4_RESEARCH" | "P5_PREVIEW_AND_MAINTENANCE";
+
 export type ResolutionStatus = "RESOLVED" | "AMBIGUOUS" | "NOT_FOUND" | "UNSUPPORTED" | "CONFLICT" | "INACTIVE";
 
 export interface ResourceRef {
@@ -184,4 +188,117 @@ export interface StorageRef {
   readonly size_bytes: number;
   readonly storage_backend: StorageBackend;
   readonly storage_namespace: StorageNamespace;
+}
+
+export interface TaskAttemptRecord {
+  readonly attempt_id: string;
+  readonly attempt_number: number;
+  readonly attempt_outcome?: AttemptOutcome | null;
+  readonly attempt_phase: string;
+  readonly checkpoint_ref?: string | null;
+  readonly diagnostic_artifact_refs: ReadonlyArray<string>;
+  readonly failure_code?: string | null;
+  readonly finished_at?: string | null;
+  readonly heartbeat_at: string;
+  readonly lease_expires_at: string;
+  readonly lease_token_hash: string;
+  readonly leased_at: string;
+  readonly phase_progress: number;
+  readonly resource_usage: Readonly<Record<string, number>>;
+  readonly retryable?: boolean | null;
+  readonly started_at?: string | null;
+  readonly task_id: string;
+  readonly worker_capabilities: ReadonlyArray<string>;
+  readonly worker_id: string;
+}
+
+export interface TaskCancelRequest {
+  readonly reason_code?: string;
+}
+
+export interface TaskCheckpointRecord {
+  readonly attempt_id: string;
+  readonly checkpoint_hash: string;
+  readonly checkpoint_id: string;
+  readonly created_at: string;
+  readonly expires_at: string;
+  readonly handler_version: string;
+  readonly input_hash: string;
+  readonly phase: string;
+  readonly resume_token_hash: string;
+  readonly sequence: number;
+  readonly storage_ref: StorageRef;
+  readonly task_id: string;
+}
+
+export interface TaskCreateRequest {
+  readonly created_from_task_id?: string | null;
+  readonly force?: boolean;
+  readonly force_reason?: string | null;
+  readonly input_refs?: ReadonlyArray<ResourceRef>;
+  readonly max_attempts?: number;
+  readonly priority_class?: PriorityClass;
+  readonly priority_value?: number;
+  readonly request_source?: string;
+  readonly requested_by: string;
+  readonly requirements?: Readonly<Record<string, unknown>>;
+  readonly task_schema_version?: string;
+  readonly task_type: "artifact_orphan_dry_run";
+}
+
+export interface TaskDetails {
+  readonly attempts: ReadonlyArray<TaskAttemptRecord>;
+  readonly state_events: ReadonlyArray<TaskStateEventRecord>;
+  readonly task: TaskRecord;
+}
+
+export interface TaskLease {
+  readonly attempt: TaskAttemptRecord;
+  readonly lease_token: string;
+  readonly task: TaskRecord;
+}
+
+export interface TaskRecord {
+  readonly active_attempt_id?: string | null;
+  readonly blocked_reason_code?: string | null;
+  readonly cancel_requested_at?: string | null;
+  readonly canonical_request_hash: string;
+  readonly created_at: string;
+  readonly created_from_task_id?: string | null;
+  readonly failure_code?: string | null;
+  readonly force_reason?: string | null;
+  readonly idempotency_key: string;
+  readonly input_refs: ReadonlyArray<ResourceRef>;
+  readonly max_attempts: number;
+  readonly priority_class: PriorityClass;
+  readonly priority_value: number;
+  readonly queued_at: string | null;
+  readonly request_source: string;
+  readonly requested_by: string;
+  readonly requirements: Readonly<Record<string, unknown>>;
+  readonly result_artifact_id?: string | null;
+  readonly task_id: string;
+  readonly task_key: string;
+  readonly task_schema_version: string;
+  readonly task_state: TaskState;
+  readonly task_type: string;
+  readonly terminal_at?: string | null;
+  readonly unblock_condition?: string | null;
+}
+
+export interface TaskRetryRequest {
+  readonly reason_code?: string;
+}
+
+export type TaskState = "ACCEPTED" | "QUEUED" | "BLOCKED" | "LEASED" | "RUNNING" | "RETRY_WAIT" | "SUCCEEDED" | "DEGRADED" | "FAILED" | "CANCELLED";
+
+export interface TaskStateEventRecord {
+  readonly actor_ref: string;
+  readonly attempt_id?: string | null;
+  readonly event_at: string;
+  readonly event_sequence: number;
+  readonly next_task_state: TaskState;
+  readonly previous_task_state: TaskState | null;
+  readonly reason_code: string;
+  readonly task_id: string;
 }

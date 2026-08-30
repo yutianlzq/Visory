@@ -1,0 +1,13 @@
+{
+  "contract_id": "C-007/TaskStateEventRecord",
+  "payload": {
+    "task_id": "task_019a7f6d-5c00-7000-8000-000000000001",
+    "event_sequence": 1,
+    "previous_task_state": "ACCEPTED",
+    "next_task_state": "QUEUED",
+    "reason_code": "TASK_QUEUED",
+    "actor_ref": "task_control",
+    "event_at": "2026-08-30T08:00:01Z",
+    "attempt_id": null
+  }
+}

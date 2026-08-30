@@ -85,6 +85,9 @@ def add_error_handlers(app) -> None:
         return platform_error_response(
             request,
             status_code=exc.status_code,
+            code=exc.code,
+            message=exc.message,
+            retryable=exc.retryable,
             details=exc.details,
         )
 

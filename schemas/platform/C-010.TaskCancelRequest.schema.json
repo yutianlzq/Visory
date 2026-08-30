@@ -1,0 +1,12 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "reason_code": {
+      "default": "TASK_CANCEL_REQUESTED",
+      "title": "Reason Code",
+      "type": "string"
+    }
+  },
+  "title": "TaskCancelRequest",
+  "type": "object"
+}

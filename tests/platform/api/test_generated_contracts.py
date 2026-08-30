@@ -23,7 +23,13 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
 
     assert spec["openapi"] == "3.1.0"
     assert spec["info"]["version"] == "1.0.0"
-    assert set(spec["paths"]) == {"/api/platform/v1/asset-resolutions"}
+    assert set(spec["paths"]) == {
+        "/api/platform/v1/asset-resolutions",
+        "/api/platform/v1/tasks",
+        "/api/platform/v1/tasks/{task_id}",
+        "/api/platform/v1/tasks/{task_id}/cancellations",
+        "/api/platform/v1/tasks/{task_id}/retries",
+    }
     schemas = spec["components"]["schemas"]
     assert set(schemas) == {
         "AliasType",
@@ -35,6 +41,7 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "ArtifactRecoveryResult",
         "ArtifactVisibility",
         "AssetResolutionCandidate",
+        "AttemptOutcome",
         "AssetResolutionRequest",
         "AssetResolutionResult",
         "AssetType",
@@ -55,6 +62,17 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "StorageBackend",
         "StorageNamespace",
         "StorageRef",
+        "PriorityClass",
+        "TaskAttemptRecord",
+        "TaskCancelRequest",
+        "TaskCheckpointRecord",
+        "TaskCreateRequest",
+        "TaskDetails",
+        "TaskLease",
+        "TaskRecord",
+        "TaskRetryRequest",
+        "TaskState",
+        "TaskStateEventRecord",
     }
     assert schemas["PlatformSuccessEnvelope"]["examples"]
     assert schemas["PlatformErrorEnvelope"]["examples"]
@@ -107,6 +125,9 @@ def test_generated_frontend_types_are_strict_and_cover_c010_fields() -> None:
     assert "export interface ArtifactPublishResult" in generated
     assert "export interface ArtifactRecoveryResult" in generated
     assert "export interface OrphanDryRunResult" in generated
+    assert "export interface TaskRecord" in generated
+    assert "export interface TaskAttemptRecord" in generated
+    assert "export interface TaskCheckpointRecord" in generated
     assert ": any" not in generated
     assert "<any>" not in generated
 

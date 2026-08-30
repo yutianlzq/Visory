@@ -66,7 +66,7 @@ def test_migration_0003_is_reversible_and_does_not_touch_files(
 ) -> None:
     marker = tmp_path / "published-artifact"
     marker.write_text("keep", encoding="utf-8")
-    upgrade_database(isolated_postgres_database.engine)
+    upgrade_database(isolated_postgres_database.engine, HEAD_REVISION)
     assert get_migration_status(isolated_postgres_database.engine).current_revision == HEAD_REVISION
     with isolated_postgres_database.engine.connect() as connection:
         assert connection.execute(text("SELECT to_regclass('public.artifact_registry')")).scalar_one() == "artifact_registry"
@@ -85,7 +85,7 @@ def test_migration_0003_is_reversible_and_does_not_touch_files(
         assert connection.execute(text("SELECT to_regclass('public.artifact_registry')")).scalar_one() is None
     assert marker.read_text(encoding="utf-8") == "keep"
 
-    upgrade_database(isolated_postgres_database.engine)
+    upgrade_database(isolated_postgres_database.engine, HEAD_REVISION)
     assert get_migration_status(isolated_postgres_database.engine).current_revision == HEAD_REVISION
 
 

@@ -37,16 +37,41 @@ ERROR_SPECS: dict[int, ErrorSpec] = {
 class PlatformAPIException(Exception):
     """Typed public platform error; messages always come from the stable map."""
 
-    def __init__(self, status_code: int, *, details: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        status_code: int,
+        *,
+        details: dict[str, Any] | None = None,
+        code: str | None = None,
+        message: str | None = None,
+        retryable: bool | None = None,
+    ) -> None:
         if status_code not in ERROR_SPECS:
             raise ValueError(f"unsupported platform error status: {status_code}")
         self.status_code = status_code
+        spec = ERROR_SPECS[status_code]
+        self.code = code or spec.code
+        self.message = message or spec.message
+        self.retryable = spec.retryable if retryable is None else retryable
         self.details = details or {}
-        super().__init__(ERROR_SPECS[status_code].code)
+        super().__init__(self.code)
 
 
-def platform_error(status_code: int, *, details: dict[str, Any] | None = None) -> PlatformAPIException:
-    return PlatformAPIException(status_code, details=details)
+def platform_error(
+    status_code: int,
+    *,
+    details: dict[str, Any] | None = None,
+    code: str | None = None,
+    message: str | None = None,
+    retryable: bool | None = None,
+) -> PlatformAPIException:
+    return PlatformAPIException(
+        status_code,
+        details=details,
+        code=code,
+        message=message,
+        retryable=retryable,
+    )
 
 
 def platform_error_response(
@@ -54,16 +79,19 @@ def platform_error_response(
     *,
     status_code: int,
     details: dict[str, Any] | None = None,
+    code: str | None = None,
+    message: str | None = None,
+    retryable: bool | None = None,
 ) -> JSONResponse:
     spec = ERROR_SPECS.get(status_code, ERROR_SPECS[500])
     effective_status = status_code if status_code in ERROR_SPECS else 500
     request_id = get_transport_request_id(request)
     envelope = PlatformErrorEnvelope(
         error=PlatformAPIError(
-            code=spec.code,
-            message=spec.message,
+            code=code or spec.code,
+            message=message or spec.message,
             details=details or {},
-            retryable=spec.retryable,
+            retryable=spec.retryable if retryable is None else retryable,
             request_id=request_id,
         )
     )

@@ -50,6 +50,7 @@ class ArtifactRepositoryPort(Protocol):
 
 TransactionContext = Callable[[], AbstractContextManager[object]]
 RenameFunction = Callable[[Path, Path], None]
+RegistrationCallback = Callable[[object, ArtifactRecord], None]
 
 
 def _utc_now() -> datetime:
@@ -108,7 +109,13 @@ class ArtifactPublisherService:
             details={"component": "artifact_content"},
         )
 
-    def publish(self, request: ArtifactPublishRequest, content: bytes) -> ArtifactPublishResult:
+    def publish(
+        self,
+        request: ArtifactPublishRequest,
+        content: bytes,
+        *,
+        after_register: RegistrationCallback | None = None,
+    ) -> ArtifactPublishResult:
         if not isinstance(content, bytes):
             raise self._validation_error(request, "ARTIFACT_CONTENT_INVALID")
         now = self.clock()
@@ -226,6 +233,8 @@ class ArtifactPublisherService:
         try:
             with self.transaction_context() as session:
                 self.repository.add_published_artifact(session, record)
+                if after_register is not None:
+                    after_register(session, record)
         except Exception as exc:
             if isinstance(exc, (KeyboardInterrupt, SystemExit)):
                 raise

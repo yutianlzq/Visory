@@ -1,0 +1,58 @@
+{
+  "contract_id": "C-007/TaskLease",
+  "payload": {
+    "task": {
+      "task_id": "task_019a7f6d-5c00-7000-8000-000000000001",
+      "task_type": "artifact_orphan_dry_run",
+      "task_schema_version": "1.0.0",
+      "task_state": "LEASED",
+      "priority_class": "P5_PREVIEW_AND_MAINTENANCE",
+      "priority_value": 100,
+      "idempotency_key": "golden-command-001",
+      "task_key": "artifact_orphan_dry_run:golden-001",
+      "canonical_request_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "requested_by": "owner:golden",
+      "request_source": "platform_api",
+      "input_refs": [],
+      "requirements": {
+        "worker_kind": "maintenance"
+      },
+      "active_attempt_id": "attempt_019a7f6d-5c00-7000-8000-000000000002",
+      "blocked_reason_code": null,
+      "unblock_condition": null,
+      "max_attempts": 3,
+      "cancel_requested_at": null,
+      "result_artifact_id": null,
+      "created_from_task_id": null,
+      "force_reason": null,
+      "created_at": "2026-08-30T08:00:00Z",
+      "queued_at": "2026-08-30T08:00:01Z",
+      "terminal_at": null,
+      "failure_code": null
+    },
+    "attempt": {
+      "attempt_id": "attempt_019a7f6d-5c00-7000-8000-000000000002",
+      "task_id": "task_019a7f6d-5c00-7000-8000-000000000001",
+      "attempt_number": 1,
+      "attempt_phase": "CLAIMED",
+      "phase_progress": 0.0,
+      "worker_id": "worker-golden",
+      "worker_capabilities": [
+        "artifact_orphan_dry_run"
+      ],
+      "lease_token_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "leased_at": "2026-08-30T08:01:00Z",
+      "lease_expires_at": "2026-08-30T08:06:00Z",
+      "heartbeat_at": "2026-08-30T08:01:00Z",
+      "started_at": null,
+      "finished_at": null,
+      "checkpoint_ref": null,
+      "resource_usage": {},
+      "attempt_outcome": null,
+      "failure_code": null,
+      "retryable": null,
+      "diagnostic_artifact_refs": []
+    },
+    "lease_token": "golden-lease-token-0123456789abcdef"
+  }
+}

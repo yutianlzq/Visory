@@ -15,6 +15,7 @@ from src.schemas.platform import (
     StorageRef,
     TaskAttemptRecord,
     TaskCheckpointRecord,
+    TaskCreateRequest,
     TaskRecord,
     TaskState,
     TaskStateEventRecord,
@@ -165,3 +166,16 @@ def test_state_event_uses_task_and_attempt_resource_ids() -> None:
     wrong = ResourceRef(resource_type=ResourceType.ARTIFACT, resource_id=ARTIFACT_ID)
     with pytest.raises(ValidationError):
         _task(input_refs=(wrong,), created_from_task_id=ARTIFACT_ID)
+
+
+def test_task_create_request_rejects_values_that_exceed_database_contract_limits() -> None:
+    base = {
+        "task_type": "artifact_orphan_dry_run",
+        "requested_by": "owner:test",
+    }
+    with pytest.raises(ValidationError, match="requested_by"):
+        TaskCreateRequest.model_validate({**base, "requested_by": "x" * 256})
+    with pytest.raises(ValidationError, match="request_source"):
+        TaskCreateRequest.model_validate({**base, "request_source": "x" * 65})
+    with pytest.raises(ValidationError, match="task_schema_version"):
+        TaskCreateRequest.model_validate({**base, "task_schema_version": "1" * 33})

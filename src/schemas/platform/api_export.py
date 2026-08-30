@@ -14,6 +14,17 @@ from .artifact import (
     OrphanDryRunResult,
 )
 from .asset_identity import AssetResolutionCandidate, AssetResolutionRequest, AssetResolutionResult
+from .task import (
+    TaskAttemptRecord,
+    TaskCancelRequest,
+    TaskCheckpointRecord,
+    TaskCreateRequest,
+    TaskDetails,
+    TaskLease,
+    TaskRecord,
+    TaskRetryRequest,
+    TaskStateEventRecord,
+)
 from .api import (
     PLATFORM_API_SCHEMA_VERSION,
     PlatformAPIError,
@@ -36,6 +47,15 @@ _API_MODELS = (
     AssetResolutionCandidate,
     AssetResolutionRequest,
     AssetResolutionResult,
+    TaskAttemptRecord,
+    TaskCancelRequest,
+    TaskCheckpointRecord,
+    TaskCreateRequest,
+    TaskDetails,
+    TaskLease,
+    TaskRecord,
+    TaskRetryRequest,
+    TaskStateEventRecord,
     PlatformAPIError,
     PlatformErrorEnvelope,
     PlatformListEnvelope,
@@ -61,7 +81,7 @@ def render_platform_openapi() -> dict[str, Any]:
         "components": {"schemas": dict(sorted(schemas.items()))},
         "info": {
             "description": (
-                "C-002/C-003/C-010 public platform components. Only explicitly implemented "
+                "C-002/C-003/C-007/C-010/C-011 public platform components. Only explicitly implemented "
                 "runtime resources appear under /api/platform/v1; Legacy /api/v1 responses are not wrapped."
             ),
             "title": "Visory Platform API Contracts",
@@ -108,7 +128,46 @@ def render_platform_openapi() -> dict[str, Any]:
                     },
                     "summary": "Resolve an asset identity without guessing",
                 }
-            }
+            },
+            "/api/platform/v1/tasks": {
+                "post": {
+                    "operationId": "createTask",
+                    "requestBody": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/TaskCreateRequest"}}}, "required": True},
+                    "parameters": [{"name": "Idempotency-Key", "in": "header", "required": True, "schema": {"type": "string"}}],
+                    "responses": {
+                        "200": {"description": "Task created or idempotently replayed", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}},
+                        "400": {"description": "Missing or invalid idempotency key", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformErrorEnvelope"}}}},
+                        "409": {"description": "Idempotency conflict", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformErrorEnvelope"}}}},
+                    },
+                    "summary": "Create a durable platform task",
+                }
+            },
+            "/api/platform/v1/tasks/{task_id}": {
+                "get": {
+                    "operationId": "getTask",
+                    "parameters": [{"name": "task_id", "in": "path", "required": True, "schema": {"type": "string"}}],
+                    "responses": {"200": {"description": "Task details", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}, "404": {"description": "Task not found", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformErrorEnvelope"}}}}},
+                    "summary": "Get a durable platform task",
+                }
+            },
+            "/api/platform/v1/tasks/{task_id}/cancellations": {
+                "post": {
+                    "operationId": "requestTaskCancellation",
+                    "parameters": [{"name": "task_id", "in": "path", "required": True, "schema": {"type": "string"}}],
+                    "requestBody": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/TaskCancelRequest"}}}, "required": True},
+                    "responses": {"200": {"description": "Cancellation requested", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}, "409": {"description": "Cancellation rejected", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformErrorEnvelope"}}}}},
+                    "summary": "Request task cancellation",
+                }
+            },
+            "/api/platform/v1/tasks/{task_id}/retries": {
+                "post": {
+                    "operationId": "requestTaskRetry",
+                    "parameters": [{"name": "task_id", "in": "path", "required": True, "schema": {"type": "string"}}],
+                    "requestBody": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/TaskRetryRequest"}}}, "required": True},
+                    "responses": {"200": {"description": "Retry requested", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}, "409": {"description": "Retry rejected", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformErrorEnvelope"}}}}},
+                    "summary": "Request task retry",
+                }
+            },
         },
     }
 

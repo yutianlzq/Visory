@@ -22,6 +22,7 @@ def test_runtime_is_opt_in_and_preserves_legacy_app_without_postgres(monkeypatch
     close_asset_identity_runtime(app)
 
     assert not hasattr(app.state, "asset_resolver_service")
+    assert not hasattr(app.state, "task_control_service")
     assert not hasattr(app.state, "platform_postgres_database")
 
 
@@ -58,6 +59,7 @@ def test_runtime_owns_and_closes_its_pool(monkeypatch, tmp_path: Path) -> None:
 
     assert app.state.platform_identity_runtime_owned is True
     assert hasattr(app.state, "asset_resolver_service")
+    assert hasattr(app.state, "task_control_service")
     assert database.is_closed is False
 
     close_asset_identity_runtime(app)

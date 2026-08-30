@@ -722,6 +722,367 @@
       "version_semantics": [
         "storage namespace binding policy"
       ]
+    },
+    {
+      "business_key": "attempt_id",
+      "compatibility": "retries create new immutable attempts and never overwrite earlier attempt evidence",
+      "consumers": [
+        "worker",
+        "task control",
+        "operations API"
+      ],
+      "contract_id": "C-007/TaskAttemptRecord",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/task-attempt-record.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-007.TaskAttemptRecord.schema.json",
+      "lineage_fields": [
+        "task_id",
+        "checkpoint_ref",
+        "diagnostic_artifact_refs"
+      ],
+      "owner_module": "src.schemas.platform.task",
+      "producer": "Task Worker Lease Service",
+      "quality_semantics": [
+        "attempt_phase",
+        "attempt_outcome",
+        "retryable",
+        "failure_code"
+      ],
+      "resource_id_field": "attempt_id",
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL task_attempt; only a lease token hash is persisted",
+      "time_semantics": [
+        "leased_at",
+        "lease_expires_at",
+        "heartbeat_at",
+        "started_at",
+        "finished_at"
+      ],
+      "version_semantics": [
+        "attempt_number"
+      ]
+    },
+    {
+      "business_key": "attempt_id + lease token",
+      "compatibility": "all worker writes validate attempt, token hash, and unexpired lease",
+      "consumers": [
+        "single-node worker"
+      ],
+      "contract_id": "C-007/TaskLease",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/task-lease.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-007.TaskLease.schema.json",
+      "lineage_fields": [
+        "task.task_id",
+        "attempt.attempt_id"
+      ],
+      "owner_module": "src.schemas.platform.task",
+      "producer": "Task Worker Lease Service",
+      "quality_semantics": [
+        "lease token is returned once and only its hash is persisted"
+      ],
+      "resource_id_field": null,
+      "retention_class": "TEMP",
+      "schema_version": "1.0.0",
+      "storage_profile": "ephemeral worker response; raw lease token is never persisted",
+      "time_semantics": [
+        "attempt.lease_expires_at"
+      ],
+      "version_semantics": [
+        "attempt.attempt_number"
+      ]
+    },
+    {
+      "business_key": "task_id",
+      "compatibility": "tasks are immutable in identity and history; state changes append TaskStateEvent records",
+      "consumers": [
+        "scheduler",
+        "worker",
+        "operations API"
+      ],
+      "contract_id": "C-007/TaskRecord",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/task-record.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-007.TaskRecord.schema.json",
+      "lineage_fields": [
+        "input_refs",
+        "active_attempt_id",
+        "result_artifact_id",
+        "created_from_task_id"
+      ],
+      "owner_module": "src.schemas.platform.task",
+      "producer": "Task Control Application Service",
+      "quality_semantics": [
+        "task_state",
+        "blocked_reason_code",
+        "failure_code"
+      ],
+      "resource_id_field": "task_id",
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL platform_task; references contain no physical paths",
+      "time_semantics": [
+        "created_at",
+        "queued_at",
+        "cancel_requested_at",
+        "terminal_at"
+      ],
+      "version_semantics": [
+        "task_schema_version"
+      ]
+    },
+    {
+      "business_key": "task_id + event_sequence",
+      "compatibility": "state history is append-only and sequence ordered per task",
+      "consumers": [
+        "operations API",
+        "audit",
+        "scheduler"
+      ],
+      "contract_id": "C-007/TaskStateEventRecord",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/task-state-event-record.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-007.TaskStateEventRecord.schema.json",
+      "lineage_fields": [
+        "task_id",
+        "attempt_id",
+        "actor_ref"
+      ],
+      "owner_module": "src.schemas.platform.task",
+      "producer": "Task Control Application Service",
+      "quality_semantics": [
+        "previous_task_state",
+        "next_task_state",
+        "reason_code"
+      ],
+      "resource_id_field": "task_id",
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "append-only PostgreSQL task_state_event",
+      "time_semantics": [
+        "event_at"
+      ],
+      "version_semantics": [
+        "event_sequence"
+      ]
+    },
+    {
+      "business_key": "task_id + cancel command",
+      "compatibility": "cancellation is cooperative for running tasks",
+      "consumers": [
+        "Task Control Application Service"
+      ],
+      "contract_id": "C-010/TaskCancelRequest",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/task-cancel-request.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.TaskCancelRequest.schema.json",
+      "lineage_fields": [],
+      "owner_module": "src.schemas.platform.task",
+      "producer": "Platform API client",
+      "quality_semantics": [
+        "reason_code"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "C-010 request body",
+      "time_semantics": [],
+      "version_semantics": []
+    },
+    {
+      "business_key": "owner + endpoint + Idempotency-Key + canonical payload",
+      "compatibility": "same idempotency key and canonical payload returns the original task",
+      "consumers": [
+        "Task Control Application Service"
+      ],
+      "contract_id": "C-010/TaskCreateRequest",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/task-create-request.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.TaskCreateRequest.schema.json",
+      "lineage_fields": [
+        "input_refs",
+        "created_from_task_id"
+      ],
+      "owner_module": "src.schemas.platform.task",
+      "producer": "Platform API client",
+      "quality_semantics": [
+        "force",
+        "force_reason"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "C-010 request body; Idempotency-Key remains an HTTP header",
+      "time_semantics": [],
+      "version_semantics": [
+        "task_schema_version"
+      ]
+    },
+    {
+      "business_key": "task.task_id",
+      "compatibility": "new response fields must be additive and optional",
+      "consumers": [
+        "Platform API client",
+        "operations"
+      ],
+      "contract_id": "C-010/TaskDetails",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/task-details.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.TaskDetails.schema.json",
+      "lineage_fields": [
+        "task",
+        "attempts",
+        "state_events"
+      ],
+      "owner_module": "src.schemas.platform.task",
+      "producer": "Task Control Application Service",
+      "quality_semantics": [
+        "task.task_state",
+        "attempts.attempt_outcome"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "C-010 response payload without arbitrary filesystem paths",
+      "time_semantics": [
+        "task.created_at",
+        "state_events.event_at"
+      ],
+      "version_semantics": [
+        "task.task_schema_version"
+      ]
+    },
+    {
+      "business_key": "task_id + retry command",
+      "compatibility": "retry queues a new attempt without mutating prior attempts",
+      "consumers": [
+        "Task Control Application Service"
+      ],
+      "contract_id": "C-010/TaskRetryRequest",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/task-retry-request.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.TaskRetryRequest.schema.json",
+      "lineage_fields": [],
+      "owner_module": "src.schemas.platform.task",
+      "producer": "Platform API client",
+      "quality_semantics": [
+        "reason_code"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "C-010 request body",
+      "time_semantics": [],
+      "version_semantics": []
+    },
+    {
+      "business_key": "checkpoint_id",
+      "compatibility": "resume requires matching input, handler version, content hash, and StorageRef",
+      "consumers": [
+        "worker recovery",
+        "task control"
+      ],
+      "contract_id": "C-011/TaskCheckpointRecord",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/task-checkpoint-record.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-011.TaskCheckpointRecord.schema.json",
+      "lineage_fields": [
+        "task_id",
+        "attempt_id",
+        "storage_ref"
+      ],
+      "owner_module": "src.schemas.platform.task",
+      "producer": "Durable Task Worker",
+      "quality_semantics": [
+        "input_hash",
+        "checkpoint_hash",
+        "resume_token_hash"
+      ],
+      "resource_id_field": "checkpoint_id",
+      "retention_class": "TEMP",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL checkpoint index plus logical StorageRef",
+      "time_semantics": [
+        "created_at",
+        "expires_at"
+      ],
+      "version_semantics": [
+        "sequence",
+        "handler_version"
+      ]
     }
   ]
 }
