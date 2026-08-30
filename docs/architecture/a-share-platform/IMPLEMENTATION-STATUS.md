@@ -26,7 +26,7 @@
 | Visory-G006 | COMPLETE / MERGED | [G006 / WP-0101 进度与验收记录](GOAL-G006-STATUS.md)；PR #5 merge commit `01e1a986`；最终 Run `33288412520` 全绿 |
 | Visory-G007 | COMPLETE / MERGED | [G007 / WP-0102 进度与验收记录](GOAL-G007-STATUS.md)；PR #6；merge commit `a9a640b`；最终 Run `33299476674` 三项全绿 |
 | Visory-G008 | COMPLETE / MERGED | [G008 / WP-0103 进度与验收记录](GOAL-G008-STATUS.md)；merge commit `ea4f8b1`；PR #7；Run `33315054696` 三项全绿 |
-| Visory-G009 | IN_PROGRESS | [G009 / WP-0104 进度与验收记录](GOAL-G009-STATUS.md)；PR #9 已合并，merge commit `6b90bb1`，Run `33324179055` 三项阻断 Job 全绿；仍待真实后端认证旅程与 SSE 断线恢复证据 |
+| Visory-G009 | IN_PROGRESS | [G009 / WP-0104 进度与验收记录](GOAL-G009-STATUS.md)；PR #9 已合并，补充测试 PR #12，merge commit `6b90bb1`，Run `33324179055` 三项阻断 Job 全绿；SSE 受控恢复已覆盖，仍待真实后端认证旅程 |
 | DSA Baseline | IMPORTED / VERIFIED | 1126/1126 blob 验签；Python/Web 双基线；`baseline_regression_delta=0`；`web_lint_build_regression_delta=0` |
 | Implemented Work Packages | 6/45 | `WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103` 为 `VERIFIED`；其余 39 项 `NOT_STARTED` |
 
@@ -52,7 +52,7 @@ RELEASED     已部署且通过运行观察和回滚/恢复要求
 | WP-0101 | Asset Identity与Alias Resolver | VERIFIED | 实现提交 `a272b25`；PR #5；Migration `0002_wp0101_asset_identity`；GitHub Actions Run `33288021328` 三项阻断 Job 全绿；Python 6549 passed，含 PostgreSQL 16 Migration、排他约束、Quarantine、并发、事务与连接清理验收 |
 | WP-0102 | Storage Namespace与Artifact Publisher | VERIFIED | [G007 / WP-0102 进度与验收记录](GOAL-G007-STATUS.md)；实现 head `92ddde7`；PR #6；Migration `0003_wp0102_artifact_registry`；平台 218 passed、本地 PostgreSQL 16 集成 15 passed；Run `33299055144` 三项全绿，Python 6591 passed |
 | WP-0103 | Durable Task Control Plane | VERIFIED | [G008 / WP-0103 进度与验收记录](GOAL-G008-STATUS.md)；实现 head `826aacfa2965c98efff8a8795a46dc9f72edec5f`；PR #7；Migration `0004_wp0103_durable_task_control_plane`；平台 257 passed、5 skipped，本地 PostgreSQL 16 集成 30 passed，Legacy 定向回归 106 passed；Run `33314470672` 三项全绿 |
-| WP-0104 | Operations最小页面 | IN_PROGRESS | [G009 / WP-0104 进度与验收记录](GOAL-G009-STATUS.md)；PR #9；merge commit `6b90bb1`；Run `33324179055` 三项阻断 Job 全绿；Web lint/build 通过；Playwright 2 passed；平台 260 passed、5 skipped；仍待真实后端认证旅程与 SSE 断线恢复证据 |
+| WP-0104 | Operations最小页面 | IN_PROGRESS | [G009 / WP-0104 进度与验收记录](GOAL-G009-STATUS.md)；PR #9；补充测试 PR #12；merge commit `6b90bb1`；Run `33324179055` 三项阻断 Job 全绿；Web lint/build 通过；Playwright 4 passed；平台 260 passed、5 skipped；仍待真实后端认证旅程 |
 | WP-0201 | Dataset/Provider Registry | NOT_STARTED | — |
 | WP-0202 | Raw Ingestion | NOT_STARTED | — |
 | WP-0203 | Canonical Normalization | NOT_STARTED | — |
