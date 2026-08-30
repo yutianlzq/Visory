@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - [新功能] Visory-G009 / WP-0104 增加 Operations 任务运维页面、Task 列表筛选与稳定 Cursor、Task 详情 Checkpoint 投影、可恢复 Task State SSE 及断线轮询降级；不新增下载端点、不替换 Legacy Task Queue。
 - [测试] Visory-G009 / WP-0104 补充 Operations 页面 C-010 错误码/Request ID 脱敏展示、SSE 恢复与 Retry 防重复、Tab/筛选键盘旅程覆盖。
+- [测试] Visory-G009 / WP-0104 新增真实 FastAPI 认证旅程与 PostgreSQL Task SSE replay 集成覆盖，验证登录 Cookie、平台 API 保护、Last-Event-ID/after_event_id 断线补读和连接池清理。
 - [新功能] Visory-G008 / WP-0103 建立 PostgreSQL Durable Task Control Plane：新增 `0004_wp0103_durable_task_control_plane`、Task/Attempt/StateEvent/Checkpoint/幂等记录、严格状态机、单 Worker Lease/心跳/Lease Lost/Retry/Cancel/Blocked、`artifact_orphan_dry_run` 纵向任务与最小 C-010 Task API，并纳入 JSON Schema/OpenAPI/前端类型确定性生成链；不替换 Legacy Task Queue、不实现 SSE/下载/删除或生产调度。
 
 - [新功能] Visory-G007 / WP-0102 建立 C-003 Storage Namespace、Artifact Registry/Publisher 与 Orphan 恢复：新增 `0003_wp0102_artifact_registry`、安全 POSIX 路径与 Symlink 防逃逸、同 Namespace Staging/fsync/原子 rename、确定性 Manifest Hash、完整性消费门禁、只读 Dry-run 与幂等恢复注册，并纳入 JSON Schema/OpenAPI/前端类型确定性生成链；不新增文件下载 API、不执行 Orphan 删除。
