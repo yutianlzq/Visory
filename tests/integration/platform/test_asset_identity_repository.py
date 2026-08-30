@@ -132,7 +132,12 @@ def test_validity_is_right_open_and_non_overlapping_revisions_are_allowed(isolat
     with database.transaction() as session:
         repository.add_identity(session, _identity("sh600519"))
         first = repository.register_alias(session, _alias("alias_pg_1", "stock:sh600519", valid_to=boundary))
-        second = repository.register_alias(session, _alias("alias_pg_2", "stock:sh600519", valid_from=boundary))
+        second_alias = _alias(
+            "alias_pg_2",
+            "stock:sh600519",
+            valid_from=boundary,
+        ).model_copy(update={"revision": 2})
+        second = repository.register_alias(session, second_alias)
 
     assert first.inserted is True
     assert second.inserted is True

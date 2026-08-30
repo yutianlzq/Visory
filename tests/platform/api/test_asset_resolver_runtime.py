@@ -49,6 +49,7 @@ def test_runtime_owns_and_closes_its_pool(monkeypatch, tmp_path: Path) -> None:
     _clear_postgres_environment(monkeypatch)
     secret_file = (tmp_path / "postgres-password").resolve()
     secret_file.write_text("placeholder-not-production-secret\n", encoding="utf-8")
+    secret_file.chmod(0o600)
     monkeypatch.setenv("VISORY_POSTGRES_PASSWORD_FILE", str(secret_file))
     app = FastAPI()
 
