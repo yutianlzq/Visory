@@ -1,0 +1,134 @@
+{
+  "$defs": {
+    "AssetType": {
+      "enum": [
+        "stock",
+        "index",
+        "etf",
+        "convertible_bond",
+        "fund",
+        "future",
+        "fx",
+        "commodity"
+      ],
+      "title": "AssetType",
+      "type": "string"
+    },
+    "IdentityStatus": {
+      "enum": [
+        "ACTIVE",
+        "INACTIVE",
+        "DELISTED",
+        "QUARANTINED"
+      ],
+      "title": "IdentityStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "asset_type": {
+      "$ref": "#/$defs/AssetType"
+    },
+    "canonical_id": {
+      "title": "Canonical Id",
+      "type": "string"
+    },
+    "country": {
+      "pattern": "^[A-Z]{2}$",
+      "title": "Country",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "currency": {
+      "pattern": "^[A-Z]{3}$",
+      "title": "Currency",
+      "type": "string"
+    },
+    "delist_date": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Delist Date"
+    },
+    "entity_key": {
+      "title": "Entity Key",
+      "type": "string"
+    },
+    "exchange": {
+      "pattern": "^[A-Z][A-Z0-9_]{1,15}$",
+      "title": "Exchange",
+      "type": "string"
+    },
+    "identity_status": {
+      "$ref": "#/$defs/IdentityStatus"
+    },
+    "list_date": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "List Date"
+    },
+    "market": {
+      "pattern": "^[A-Z][A-Z0-9_]{1,15}$",
+      "title": "Market",
+      "type": "string"
+    },
+    "schema_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "valid_from": {
+      "format": "date",
+      "title": "Valid From",
+      "type": "string"
+    },
+    "valid_to": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Valid To"
+    }
+  },
+  "required": [
+    "asset_type",
+    "canonical_id",
+    "entity_key",
+    "exchange",
+    "market",
+    "currency",
+    "country",
+    "valid_from",
+    "identity_status",
+    "schema_version",
+    "created_at"
+  ],
+  "title": "AssetIdentityRecord",
+  "type": "object"
+}

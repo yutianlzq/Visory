@@ -8,13 +8,27 @@ from .api import (
     PlatformResponseMeta,
     PlatformSuccessEnvelope,
 )
+from .asset_identity import (
+    AssetAlias,
+    AssetIdentityRecord,
+    AssetResolutionCandidate,
+    AssetResolutionRequest,
+    AssetResolutionResult,
+    IdentityQuarantineRecord,
+    normalize_alias_value,
+)
 from .base import PlatformContractModel
 from .enums import (
+    AliasType,
+    AliasVerificationStatus,
     AssetType,
     AvailabilityBasis,
+    IdentityStatus,
     PublicationStatus,
     QualityStatus,
+    QuarantineStatus,
     ResearchQualityStatus,
+    ResolutionStatus,
     ResourceType,
     RetentionClass,
     RevisionKind,
@@ -22,13 +36,7 @@ from .enums import (
     StorageNamespace,
     TaskState,
 )
-from .hashing import (
-    ContentHashValue,
-    DEFAULT_HASH_PROFILE,
-    HashProfile,
-    canonical_json_bytes,
-    compute_content_hash,
-)
+from .hashing import ContentHashValue, DEFAULT_HASH_PROFILE, HashProfile, canonical_json_bytes, compute_content_hash
 from .identity import EntityIdentity, build_entity_key, parse_entity_key
 from .registry import PLATFORM_CONTRACTS, ContractRegistration, ContractRegistry
 from .resources import ResourceRef, generate_resource_id, generate_uuid7, parse_resource_id
@@ -37,6 +45,13 @@ from .temporal import AvailabilityMetadata, PointInTimeWindow
 from .versioning import PublicationMetadata, RevisionMetadata, TaskStateMetadata
 
 __all__ = [
+    "AliasType",
+    "AliasVerificationStatus",
+    "AssetAlias",
+    "AssetIdentityRecord",
+    "AssetResolutionCandidate",
+    "AssetResolutionRequest",
+    "AssetResolutionResult",
     "AssetType",
     "AvailabilityBasis",
     "AvailabilityMetadata",
@@ -46,21 +61,25 @@ __all__ = [
     "DEFAULT_HASH_PROFILE",
     "EntityIdentity",
     "HashProfile",
-    "PLATFORM_CONTRACTS",
-    "PlatformContractModel",
+    "IdentityQuarantineRecord",
+    "IdentityStatus",
     "PLATFORM_API_SCHEMA_VERSION",
+    "PLATFORM_CONTRACTS",
     "PlatformAPIError",
+    "PlatformContractModel",
     "PlatformErrorEnvelope",
     "PlatformListEnvelope",
     "PlatformPage",
     "PlatformResponseMeta",
     "PlatformSuccessEnvelope",
     "PointInTimeWindow",
-    "REQUEST_ID_PATTERN",
     "PublicationMetadata",
     "PublicationStatus",
     "QualityStatus",
+    "QuarantineStatus",
+    "REQUEST_ID_PATTERN",
     "ResearchQualityStatus",
+    "ResolutionStatus",
     "ResourceRef",
     "ResourceType",
     "RetentionClass",
@@ -76,6 +95,7 @@ __all__ = [
     "compute_content_hash",
     "generate_resource_id",
     "generate_uuid7",
+    "normalize_alias_value",
     "parse_entity_key",
     "parse_resource_id",
 ]

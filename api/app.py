@@ -168,6 +168,7 @@ from api.middlewares.auth import add_auth_middleware
 from api.middlewares.error_handler import add_error_handlers
 from api.platform.request_id import add_request_id_middleware
 from api.platform.router import router as platform_router
+from api.platform.runtime import close_asset_identity_runtime, initialize_asset_identity_runtime
 from api.v1.schemas.common import HealthResponse
 from src.auth import is_auth_enabled
 from src.data.stock_index_loader import find_existing_stock_index_path
@@ -296,9 +297,11 @@ async def app_lifespan(app: FastAPI):
     from src.services.name_to_code_resolver import warmup_akshare_cache
 
     warmup_akshare_cache()
+    initialize_asset_identity_runtime(app)
     try:
         yield
     finally:
+        close_asset_identity_runtime(app)
         refresh_task = getattr(app.state, "stock_index_refresh_task", None)
         if refresh_task is not None and not refresh_task.done():
             refresh_task.cancel()

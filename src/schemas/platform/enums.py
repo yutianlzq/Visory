@@ -18,6 +18,45 @@ class AssetType(PlatformStringEnum):
     COMMODITY = "commodity"
 
 
+class IdentityStatus(PlatformStringEnum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    DELISTED = "DELISTED"
+    QUARANTINED = "QUARANTINED"
+
+
+class AliasType(PlatformStringEnum):
+    PROVIDER_SYMBOL = "PROVIDER_SYMBOL"
+    BARE_CODE = "BARE_CODE"
+    EXCHANGE_CODE = "EXCHANGE_CODE"
+    ISIN = "ISIN"
+    CURRENT_NAME = "CURRENT_NAME"
+    HISTORICAL_NAME = "HISTORICAL_NAME"
+    PINYIN = "PINYIN"
+    USER_ALIAS = "USER_ALIAS"
+
+
+class AliasVerificationStatus(PlatformStringEnum):
+    VERIFIED = "VERIFIED"
+    CANDIDATE = "CANDIDATE"
+    REJECTED = "REJECTED"
+
+
+class ResolutionStatus(PlatformStringEnum):
+    RESOLVED = "RESOLVED"
+    AMBIGUOUS = "AMBIGUOUS"
+    NOT_FOUND = "NOT_FOUND"
+    UNSUPPORTED = "UNSUPPORTED"
+    CONFLICT = "CONFLICT"
+    INACTIVE = "INACTIVE"
+
+
+class QuarantineStatus(PlatformStringEnum):
+    OPEN = "OPEN"
+    RESOLVED = "RESOLVED"
+    REJECTED = "REJECTED"
+
+
 class PublicationStatus(PlatformStringEnum):
     DRAFT = "DRAFT"
     PROVISIONAL = "PROVISIONAL"

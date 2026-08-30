@@ -537,9 +537,10 @@ def _converge_registered_csi_identity(raw: str) -> Optional[str]:
     if not is_csi_form:
         return None
 
-    from src.services.stock_list_parser import parse_analysis_target
+    from src.schemas.platform import AssetType
+    from src.services.platform.legacy_asset_adapter import LegacyAssetResolverAdapter
 
-    target = parse_analysis_target(text)
-    if target.asset_type == "index" and target.canonical_id:
-        return target.canonical_id
+    result = LegacyAssetResolverAdapter().resolve_analysis_target(text)
+    if result.asset_type is AssetType.INDEX and result.canonical_id:
+        return result.canonical_id
     return None

@@ -47,7 +47,7 @@ def _integration_settings() -> PostgresSettings:
     )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def isolated_postgres_database() -> PostgresDatabase:
     admin_settings = _integration_settings()
     database_name = f"visory_test_{uuid.uuid4().hex[:20]}"
