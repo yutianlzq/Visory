@@ -1,0 +1,16 @@
+{
+  "contract_id": "C-002/IdentityQuarantineRecord",
+  "payload": {
+    "quarantine_id": "identity_quarantine_0123456789abcdef",
+    "namespace": "financial_api:cn_stock",
+    "normalized_value": "600519.sh",
+    "candidate_entity_key": "stock:sz000001",
+    "conflicting_entity_keys": ["stock:sh600519"],
+    "reason_code": "ALIAS_VALIDITY_CONFLICT",
+    "source_provider": "financial_api",
+    "actual_upstream": "eastmoney",
+    "quarantine_status": "OPEN",
+    "revision": 1,
+    "created_at": "2026-08-27T12:00:00+08:00"
+  }
+}

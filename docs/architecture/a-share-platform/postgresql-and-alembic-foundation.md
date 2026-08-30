@@ -75,9 +75,11 @@ Alembic 配置：
 
 - 配置文件：`alembic.ini`；
 - Migration 根：`migrations/`；
-- 当前唯一 revision：`0001_wp0002_baseline`；
-- parent：`<base>`；
-- baseline revision 不创建任何业务表，只建立 `alembic_version` 状态；`WP-0003` 不新增数据库对象或 Migration，当前 head 仍为 `0001_wp0002_baseline`。
+- baseline revision：`0001_wp0002_baseline`，parent 为 `<base>`，不创建业务表；
+- 当前 head：`0002_wp0101_asset_identity`，parent 为 `0001_wp0002_baseline`；
+- `0002` 创建 `asset_identity`、`asset_alias`、`identity_quarantine`，并启用 `btree_gist` 以实施正式 Alias 排他约束；
+- 同一 `namespace + normalized_value` 的重叠有效期只有在指向不同 `entity_key` 时冲突；同一实体可保留重叠 Revision；
+- `WP-0003` 不新增数据库对象或 Migration。
 
 必须在 PostgreSQL 在线连接上运行；离线 SQL 生成不属于本 WP 支持范围。
 
@@ -117,11 +119,12 @@ downgrade_database(engine, "base")
 
 ## 6. 验收与回滚
 
-WP-0002 的 PostgreSQL 集成测试覆盖：空库 upgrade、重复 upgrade、downgrade base 后重新 upgrade、Migration 状态、`timestamptz` Instant 往返、事务提交/回滚、不可连接错误、连接池关闭和测试数据库清理。
+PostgreSQL 集成测试覆盖：空库 upgrade、重复 upgrade、downgrade base 后重新 upgrade、Migration 状态、`timestamptz` Instant 往返、事务提交/回滚、不可连接错误、连接池关闭和测试数据库清理。WP-0101 继续覆盖三张 Identity 表的真实 DDL、联表投影、同实体 Revision、跨实体冲突 Quarantine 和并发排他约束。
 
 最小回滚：
 
-- Schema：在隔离数据库运行 `python -m alembic downgrade base`；
-- 代码：revert WP-0002 commits；
+- 仅回滚 WP-0101：在隔离数据库运行 `python -m alembic downgrade 0001_wp0002_baseline`，删除 Identity 三表；
+- 回滚全部目标 PostgreSQL 基线：运行 `python -m alembic downgrade base`；
+- 代码：revert G006 / WP-0101 commits；
 - 配置：移除 `VISORY_POSTGRES_*`，Legacy `DATABASE_PATH` 与现有 API 行为不受影响；
 - 测试环境：删除一次性 Secret 文件和测试数据库。不得用本 Migration 操作 Legacy SQLite 文件。

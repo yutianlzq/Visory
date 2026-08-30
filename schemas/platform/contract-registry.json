@@ -269,6 +269,173 @@
       "version_semantics": []
     },
     {
+      "business_key": "namespace + normalized_value + validity + revision",
+      "compatibility": "provider namespaces and right-open validity remain mandatory",
+      "consumers": [
+        "provider adapters",
+        "search",
+        "stock routes"
+      ],
+      "contract_id": "C-002/AssetAlias",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/asset-alias.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-002.AssetAlias.schema.json",
+      "lineage_fields": [
+        "source_provider",
+        "actual_upstream"
+      ],
+      "owner_module": "src.schemas.platform.asset_identity",
+      "producer": "Identity Import and Resolver",
+      "quality_semantics": [
+        "verification_status",
+        "overlapping verified aliases are quarantined"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL asset_alias",
+      "time_semantics": [
+        "valid_from",
+        "valid_to",
+        "available_at",
+        "created_at"
+      ],
+      "version_semantics": [
+        "revision"
+      ]
+    },
+    {
+      "business_key": "entity_key",
+      "compatibility": "renames, ST and suspension never replace entity_key; delisted identities remain addressable",
+      "consumers": [
+        "all asset modules"
+      ],
+      "contract_id": "C-002/AssetIdentityRecord",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/asset-identity-record.json",
+        "tests/golden/platform/contracts/rejected/asset-identity-mismatch.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-002.AssetIdentityRecord.schema.json",
+      "lineage_fields": [
+        "entity_key"
+      ],
+      "owner_module": "src.schemas.platform.asset_identity",
+      "producer": "Identity Registry",
+      "quality_semantics": [
+        "identity_status",
+        "identity conflicts enter quarantine"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL asset_identity",
+      "time_semantics": [
+        "valid_from",
+        "valid_to",
+        "list_date",
+        "delist_date",
+        "created_at"
+      ],
+      "version_semantics": [
+        "schema_version"
+      ]
+    },
+    {
+      "business_key": "input namespace + normalized input + resolver version",
+      "compatibility": "resolution statuses are closed and machine-readable",
+      "consumers": [
+        "platform API",
+        "legacy adapters",
+        "provider adapters"
+      ],
+      "contract_id": "C-002/AssetResolutionResult",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/asset-resolution-result.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-002.AssetResolutionResult.schema.json",
+      "lineage_fields": [
+        "candidates"
+      ],
+      "owner_module": "src.schemas.platform.asset_identity",
+      "producer": "Asset Resolver",
+      "quality_semantics": [
+        "resolution_status",
+        "reason_codes"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "response object; not persisted as a second identity source",
+      "time_semantics": [
+        "resolved_at"
+      ],
+      "version_semantics": [
+        "resolver_version"
+      ]
+    },
+    {
+      "business_key": "quarantine_id",
+      "compatibility": "conflict records are append-only evidence",
+      "consumers": [
+        "identity operations"
+      ],
+      "contract_id": "C-002/IdentityQuarantineRecord",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/identity-quarantine-record.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-002.IdentityQuarantineRecord.schema.json",
+      "lineage_fields": [
+        "source_provider",
+        "actual_upstream",
+        "conflicting_entity_keys"
+      ],
+      "owner_module": "src.schemas.platform.asset_identity",
+      "producer": "Identity Registry",
+      "quality_semantics": [
+        "quarantine_status",
+        "reason_code"
+      ],
+      "resource_id_field": null,
+      "retention_class": "QUARANTINE",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL identity_quarantine",
+      "time_semantics": [
+        "created_at"
+      ],
+      "version_semantics": [
+        "revision"
+      ]
+    },
+    {
       "business_key": "resource_type + resource_id",
       "compatibility": "new resource prefixes are additive only after shared registry and parser tests",
       "consumers": [

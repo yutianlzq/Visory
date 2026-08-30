@@ -31,12 +31,14 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "AssetResolutionRequest",
         "AssetResolutionResult",
         "AssetType",
+        "IdentityStatus",
         "PlatformAPIError",
         "PlatformErrorEnvelope",
         "PlatformListEnvelope",
         "PlatformPage",
         "PlatformResponseMeta",
         "PlatformSuccessEnvelope",
+        "ResolutionStatus",
     }
     assert schemas["PlatformSuccessEnvelope"]["examples"]
     assert schemas["PlatformErrorEnvelope"]["examples"]

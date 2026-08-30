@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import threading
 import time
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 from sqlalchemy import text
@@ -67,6 +67,35 @@ def test_repository_persists_identity_without_implicit_commit(isolated_postgres_
         assert repository.get_identity(session, "stock:sh600519") is not None
 
 
+def test_candidate_projection_preserves_distinct_identity_and_alias_timestamps(
+    isolated_postgres_database: PostgresDatabase,
+) -> None:
+    database = isolated_postgres_database
+    _reset_identity_tables(database)
+    repository = AssetIdentityRepository()
+    identity_created_at = NOW - timedelta(days=1)
+    identity = _identity("sh600519").model_copy(update={"created_at": identity_created_at})
+    alias = _alias("alias_projection_1", identity.entity_key)
+
+    with database.transaction() as session:
+        repository.add_identity(session, identity)
+        repository.register_alias(session, alias)
+
+    with database.transaction() as session:
+        rows = repository.find_candidates_in_session(
+            session,
+            namespace=alias.namespace,
+            normalized_value=alias.normalized_value,
+            asset_type=identity.asset_type,
+            valid_on=NOW.date(),
+            available_at=NOW,
+        )
+
+    assert len(rows) == 1
+    assert rows[0].identity.created_at == identity_created_at
+    assert rows[0].alias.created_at == NOW
+
+
 def test_overlapping_alias_conflict_enters_quarantine_and_preserves_original(isolated_postgres_database: PostgresDatabase) -> None:
     database = isolated_postgres_database
     _reset_identity_tables(database)
@@ -109,6 +138,29 @@ def test_validity_is_right_open_and_non_overlapping_revisions_are_allowed(isolat
     assert second.inserted is True
 
 
+def test_overlapping_revisions_for_the_same_entity_are_allowed(
+    isolated_postgres_database: PostgresDatabase,
+) -> None:
+    database = isolated_postgres_database
+    _reset_identity_tables(database)
+    repository = AssetIdentityRepository()
+    identity = _identity("sh600519")
+
+    with database.transaction() as session:
+        repository.add_identity(session, identity)
+        first = repository.register_alias(session, _alias("alias_same_entity_1", identity.entity_key))
+        second = repository.register_alias(
+            session,
+            _alias("alias_same_entity_2", identity.entity_key).model_copy(update={"revision": 2}),
+        )
+
+    assert first.inserted is True
+    assert second.inserted is True
+    with database.engine.connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM asset_alias")).scalar_one() == 2
+        assert connection.execute(text("SELECT count(*) FROM identity_quarantine")).scalar_one() == 0
+
+
 def test_database_constraint_prevents_concurrent_overlapping_aliases(isolated_postgres_database: PostgresDatabase) -> None:
     database = isolated_postgres_database
     _reset_identity_tables(database)
@@ -148,11 +200,13 @@ def test_database_constraint_prevents_concurrent_overlapping_aliases(isolated_po
 
     first = threading.Thread(target=first_writer)
     second = threading.Thread(target=second_writer)
-    first.start(); second.start()
+    first.start()
+    second.start()
     assert first_inserted.wait(timeout=5)
     time.sleep(0.2)
     release_first.set()
-    first.join(timeout=5); second.join(timeout=5)
+    first.join(timeout=5)
+    second.join(timeout=5)
 
     assert sorted(outcomes) == ["first_committed", "second_conflict"]
     with database.engine.connect() as connection:

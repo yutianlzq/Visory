@@ -1,0 +1,170 @@
+{
+  "$defs": {
+    "AliasType": {
+      "enum": [
+        "PROVIDER_SYMBOL",
+        "BARE_CODE",
+        "EXCHANGE_CODE",
+        "ISIN",
+        "CURRENT_NAME",
+        "HISTORICAL_NAME",
+        "PINYIN",
+        "USER_ALIAS"
+      ],
+      "title": "AliasType",
+      "type": "string"
+    },
+    "AssetResolutionCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "alias_type": {
+          "$ref": "#/$defs/AliasType"
+        },
+        "asset_type": {
+          "$ref": "#/$defs/AssetType"
+        },
+        "canonical_id": {
+          "title": "Canonical Id",
+          "type": "string"
+        },
+        "entity_key": {
+          "title": "Entity Key",
+          "type": "string"
+        },
+        "identity_status": {
+          "$ref": "#/$defs/IdentityStatus"
+        },
+        "matched_value": {
+          "title": "Matched Value",
+          "type": "string"
+        },
+        "namespace": {
+          "maxLength": 128,
+          "title": "Namespace",
+          "type": "string"
+        }
+      },
+      "required": [
+        "asset_type",
+        "canonical_id",
+        "entity_key",
+        "alias_type",
+        "namespace",
+        "matched_value",
+        "identity_status"
+      ],
+      "title": "AssetResolutionCandidate",
+      "type": "object"
+    },
+    "AssetType": {
+      "enum": [
+        "stock",
+        "index",
+        "etf",
+        "convertible_bond",
+        "fund",
+        "future",
+        "fx",
+        "commodity"
+      ],
+      "title": "AssetType",
+      "type": "string"
+    },
+    "IdentityStatus": {
+      "enum": [
+        "ACTIVE",
+        "INACTIVE",
+        "DELISTED",
+        "QUARANTINED"
+      ],
+      "title": "IdentityStatus",
+      "type": "string"
+    },
+    "ResolutionStatus": {
+      "enum": [
+        "RESOLVED",
+        "AMBIGUOUS",
+        "NOT_FOUND",
+        "UNSUPPORTED",
+        "CONFLICT",
+        "INACTIVE"
+      ],
+      "title": "ResolutionStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "asset_type": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AssetType"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "candidates": {
+      "items": {
+        "$ref": "#/$defs/AssetResolutionCandidate"
+      },
+      "title": "Candidates",
+      "type": "array"
+    },
+    "canonical_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Canonical Id"
+    },
+    "entity_key": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Entity Key"
+    },
+    "reason_codes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Reason Codes",
+      "type": "array"
+    },
+    "resolution_status": {
+      "$ref": "#/$defs/ResolutionStatus"
+    },
+    "resolved_at": {
+      "format": "date-time",
+      "title": "Resolved At",
+      "type": "string"
+    },
+    "resolver_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Resolver Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "asset_type",
+    "canonical_id",
+    "entity_key",
+    "resolution_status",
+    "candidates",
+    "reason_codes",
+    "resolver_version",
+    "resolved_at"
+  ],
+  "title": "AssetResolutionResult",
+  "type": "object"
+}

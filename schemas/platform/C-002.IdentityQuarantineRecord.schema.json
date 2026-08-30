@@ -1,0 +1,80 @@
+{
+  "$defs": {
+    "QuarantineStatus": {
+      "enum": [
+        "OPEN",
+        "RESOLVED",
+        "REJECTED"
+      ],
+      "title": "QuarantineStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actual_upstream": {
+      "title": "Actual Upstream",
+      "type": "string"
+    },
+    "candidate_entity_key": {
+      "title": "Candidate Entity Key",
+      "type": "string"
+    },
+    "conflicting_entity_keys": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Conflicting Entity Keys",
+      "type": "array"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "namespace": {
+      "maxLength": 128,
+      "title": "Namespace",
+      "type": "string"
+    },
+    "normalized_value": {
+      "title": "Normalized Value",
+      "type": "string"
+    },
+    "quarantine_id": {
+      "title": "Quarantine Id",
+      "type": "string"
+    },
+    "quarantine_status": {
+      "$ref": "#/$defs/QuarantineStatus"
+    },
+    "reason_code": {
+      "title": "Reason Code",
+      "type": "string"
+    },
+    "revision": {
+      "minimum": 1,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "source_provider": {
+      "title": "Source Provider",
+      "type": "string"
+    }
+  },
+  "required": [
+    "quarantine_id",
+    "namespace",
+    "normalized_value",
+    "candidate_entity_key",
+    "conflicting_entity_keys",
+    "reason_code",
+    "source_provider",
+    "actual_upstream",
+    "quarantine_status",
+    "revision",
+    "created_at"
+  ],
+  "title": "IdentityQuarantineRecord",
+  "type": "object"
+}

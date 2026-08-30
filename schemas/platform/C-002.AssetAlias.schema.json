@@ -1,0 +1,119 @@
+{
+  "$defs": {
+    "AliasType": {
+      "enum": [
+        "PROVIDER_SYMBOL",
+        "BARE_CODE",
+        "EXCHANGE_CODE",
+        "ISIN",
+        "CURRENT_NAME",
+        "HISTORICAL_NAME",
+        "PINYIN",
+        "USER_ALIAS"
+      ],
+      "title": "AliasType",
+      "type": "string"
+    },
+    "AliasVerificationStatus": {
+      "enum": [
+        "VERIFIED",
+        "CANDIDATE",
+        "REJECTED"
+      ],
+      "title": "AliasVerificationStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actual_upstream": {
+      "title": "Actual Upstream",
+      "type": "string"
+    },
+    "alias_id": {
+      "title": "Alias Id",
+      "type": "string"
+    },
+    "alias_type": {
+      "$ref": "#/$defs/AliasType"
+    },
+    "alias_value": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Alias Value",
+      "type": "string"
+    },
+    "available_at": {
+      "format": "date-time",
+      "title": "Available At",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "entity_key": {
+      "title": "Entity Key",
+      "type": "string"
+    },
+    "namespace": {
+      "maxLength": 128,
+      "title": "Namespace",
+      "type": "string"
+    },
+    "normalized_value": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Normalized Value",
+      "type": "string"
+    },
+    "revision": {
+      "minimum": 1,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "source_provider": {
+      "title": "Source Provider",
+      "type": "string"
+    },
+    "valid_from": {
+      "format": "date",
+      "title": "Valid From",
+      "type": "string"
+    },
+    "valid_to": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Valid To"
+    },
+    "verification_status": {
+      "$ref": "#/$defs/AliasVerificationStatus"
+    }
+  },
+  "required": [
+    "alias_id",
+    "entity_key",
+    "alias_type",
+    "namespace",
+    "alias_value",
+    "normalized_value",
+    "valid_from",
+    "available_at",
+    "source_provider",
+    "actual_upstream",
+    "verification_status",
+    "revision",
+    "created_at"
+  ],
+  "title": "AssetAlias",
+  "type": "object"
+}

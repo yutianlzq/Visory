@@ -94,6 +94,12 @@ def test_resolution_schema_uses_only_contract_statuses_and_required_fields() -> 
     )
 
     assert request.input_value == "600519"
+    general_request = AssetResolutionRequest(
+        input_namespace="user:general_search",
+        input_value="贵州茅台",
+    )
+    assert general_request.asset_type is None
+    assert general_request.allow_inactive is False
     assert set(ResolutionStatus) == {
         ResolutionStatus.RESOLVED,
         ResolutionStatus.AMBIGUOUS,
