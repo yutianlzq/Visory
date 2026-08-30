@@ -81,7 +81,8 @@ def _sse_response(events: tuple[object, ...]) -> StreamingResponse:
     def generate():
         for event in events:
             data = event.model_dump(mode="json") if hasattr(event, "model_dump") else event
-            yield f"id: {data['event_id']}\nevent: {data['event_type']}\ndata: {json.dumps(data, ensure_ascii=False, separators=(",", ":"))}\n\n"
+            encoded = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+            yield f"id: {data['event_id']}\nevent: {data['event_type']}\ndata: {encoded}\n\n"
         yield ": heartbeat\n\n"
 
     return StreamingResponse(
