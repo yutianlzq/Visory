@@ -26,7 +26,9 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
     assert set(spec["paths"]) == {
         "/api/platform/v1/asset-resolutions",
         "/api/platform/v1/tasks",
+        "/api/platform/v1/tasks/events",
         "/api/platform/v1/tasks/{task_id}",
+        "/api/platform/v1/tasks/{task_id}/events",
         "/api/platform/v1/tasks/{task_id}/cancellations",
         "/api/platform/v1/tasks/{task_id}/retries",
     }
@@ -68,6 +70,8 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "TaskCheckpointRecord",
         "TaskCreateRequest",
         "TaskDetails",
+        "TaskEventRecord",
+        "TaskListQuery",
         "TaskLease",
         "TaskRecord",
         "TaskRetryRequest",

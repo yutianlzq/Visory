@@ -21,7 +21,9 @@ from src.schemas.platform import (
     TaskCheckpointRecord,
     TaskCreateRequest,
     TaskDetails,
+    TaskEventRecord,
     TaskLease,
+    TaskListQuery,
     TaskRecord,
     TaskState,
     TaskStateEventRecord,
@@ -284,10 +286,65 @@ class TaskControlService:
             task = self.repository.get_task(session, task_id)
             if task is None:
                 raise TaskControlError("TASK_NOT_FOUND", "Task was not found.", status_code=404)
+            attempts = self.repository.list_attempts(session, task_id)
             return TaskDetails(
                 task=task,
-                attempts=self.repository.list_attempts(session, task_id),
+                attempts=attempts,
                 state_events=self.repository.list_events(session, task_id),
+                checkpoints=self.repository.list_checkpoints(session, task_id),
+                diagnostic_artifact_refs=tuple(
+                    ref for attempt in attempts for ref in attempt.diagnostic_artifact_refs
+                ),
+            )
+
+    def list_tasks(self, query: TaskListQuery) -> tuple[tuple[TaskRecord, ...], str | None, bool]:
+        try:
+            with self.database.transaction() as session:
+                return self.repository.list_tasks(
+                    session,
+                    tab=query.tab,
+                    task_state=query.task_state,
+                    task_type=query.task_type,
+                    priority_class=query.priority_class,
+                    requested_by=query.requested_by,
+                    created_from=query.created_from,
+                    created_to=query.created_to,
+                    resource_id=query.resource_id,
+                    cursor=query.cursor,
+                    limit=query.limit,
+                )
+        except ValueError as exc:
+            raise TaskControlError("TASK_CURSOR_INVALID", "Task cursor is invalid.", status_code=400) from exc
+
+    def list_event_records(
+        self,
+        *,
+        task_id: str | None = None,
+        after_event_id: str | None = None,
+        limit: int = 100,
+    ) -> tuple[TaskEventRecord, ...]:
+        with self.database.transaction() as session:
+            if task_id is not None and self.repository.get_task(session, task_id) is None:
+                raise TaskControlError("TASK_NOT_FOUND", "Task was not found.", status_code=404)
+            events = self.repository.list_all_events(
+                session,
+                task_id=task_id,
+                after_event_id=after_event_id,
+                limit=limit,
+            )
+            return tuple(
+                TaskEventRecord(
+                    event_id=f"{event.task_id}:{event.event_sequence}",
+                    event_type="task_state_changed",
+                    resource_ref={"resource_id": event.task_id, "resource_type": ResourceType.TASK.value},
+                    task_id=event.task_id,
+                    attempt_id=event.attempt_id,
+                    sequence=event.event_sequence,
+                    occurred_at=event.event_at,
+                    payload_schema_version="1.0.0",
+                    payload=event,
+                )
+                for event in events
             )
 
     def _new_attempt(

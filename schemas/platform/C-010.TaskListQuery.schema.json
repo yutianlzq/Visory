@@ -1,0 +1,159 @@
+{
+  "$defs": {
+    "PriorityClass": {
+      "enum": [
+        "P0_DATA_CERTIFICATION",
+        "P1_FORMAL_SIGNAL",
+        "P2_MARKET_REVIEW",
+        "P3_USER_INTERACTIVE",
+        "P4_RESEARCH",
+        "P5_PREVIEW_AND_MAINTENANCE"
+      ],
+      "title": "PriorityClass",
+      "type": "string"
+    },
+    "TaskState": {
+      "enum": [
+        "ACCEPTED",
+        "QUEUED",
+        "BLOCKED",
+        "LEASED",
+        "RUNNING",
+        "RETRY_WAIT",
+        "SUCCEEDED",
+        "DEGRADED",
+        "FAILED",
+        "CANCELLED"
+      ],
+      "title": "TaskState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Stable, bounded task list query used by Operations.",
+  "properties": {
+    "created_from": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Created From"
+    },
+    "created_to": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Created To"
+    },
+    "cursor": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cursor"
+    },
+    "limit": {
+      "default": 50,
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Limit",
+      "type": "integer"
+    },
+    "priority_class": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PriorityClass"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "requested_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Requested By"
+    },
+    "resource_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Resource Id"
+    },
+    "tab": {
+      "anyOf": [
+        {
+          "enum": [
+            "active",
+            "blocked",
+            "failed",
+            "history"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tab"
+    },
+    "task_state": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TaskState"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "task_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Task Type"
+    }
+  },
+  "title": "TaskListQuery",
+  "type": "object"
+}

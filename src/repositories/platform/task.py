@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
+import base64
+import json
 from typing import Any
 
 from sqlalchemy import (
@@ -16,8 +18,10 @@ from sqlalchemy import (
     String,
     Table,
     Text,
+    and_,
     func,
     insert,
+    or_,
     select,
     update,
 )
@@ -407,6 +411,97 @@ class TaskControlRepository:
                 attempt_id=record.attempt_id,
             )
         )
+
+    @staticmethod
+    def list_tasks(
+        session: Session,
+        *,
+        tab: str | None = None,
+        task_state: TaskState | None = None,
+        task_type: str | None = None,
+        priority_class: PriorityClass | None = None,
+        requested_by: str | None = None,
+        created_from: datetime | None = None,
+        created_to: datetime | None = None,
+        resource_id: str | None = None,
+        cursor: str | None = None,
+        limit: int = 50,
+    ) -> tuple[tuple[TaskRecord, ...], str | None, bool]:
+        conditions = []
+        if tab == "active":
+            conditions.append(platform_task.c.task_state.in_([TaskState.ACCEPTED.value, TaskState.QUEUED.value, TaskState.LEASED.value, TaskState.RUNNING.value, TaskState.RETRY_WAIT.value]))
+        elif tab == "blocked":
+            conditions.append(platform_task.c.task_state == TaskState.BLOCKED.value)
+        elif tab == "failed":
+            conditions.append(platform_task.c.task_state == TaskState.FAILED.value)
+        elif tab == "history":
+            conditions.append(platform_task.c.task_state.in_([TaskState.SUCCEEDED.value, TaskState.DEGRADED.value, TaskState.FAILED.value, TaskState.CANCELLED.value]))
+        if task_state is not None:
+            conditions.append(platform_task.c.task_state == task_state.value)
+        if task_type is not None:
+            conditions.append(platform_task.c.task_type == task_type)
+        if priority_class is not None:
+            conditions.append(platform_task.c.priority_class == priority_class.value)
+        if requested_by is not None:
+            conditions.append(platform_task.c.requested_by == requested_by)
+        if created_from is not None:
+            conditions.append(platform_task.c.created_at >= created_from)
+        if created_to is not None:
+            conditions.append(platform_task.c.created_at <= created_to)
+        if resource_id is not None:
+            conditions.append(
+                or_(
+                    platform_task.c.task_id == resource_id,
+                    platform_task.c.result_artifact_id == resource_id,
+                    platform_task.c.active_attempt_id == resource_id,
+                    platform_task.c.input_refs.contains([{"resource_id": resource_id}]),
+                )
+            )
+        if cursor:
+            try:
+                decoded = json.loads(base64.urlsafe_b64decode(cursor.encode("ascii") + b"=" * (-len(cursor) % 4)))
+                cursor_at = datetime.fromisoformat(decoded[0])
+                cursor_id = str(decoded[1])
+            except (ValueError, TypeError, json.JSONDecodeError, UnicodeDecodeError) as exc:
+                raise ValueError("invalid task cursor") from exc
+            conditions.append(
+                or_(
+                    platform_task.c.created_at < cursor_at,
+                    and_(platform_task.c.created_at == cursor_at, platform_task.c.task_id < cursor_id),
+                )
+            )
+        statement = select(platform_task).order_by(platform_task.c.created_at.desc(), platform_task.c.task_id.desc()).limit(limit + 1)
+        if conditions:
+            statement = statement.where(and_(*conditions))
+        rows = list(session.execute(statement).mappings())
+        has_more = len(rows) > limit
+        rows = rows[:limit]
+        records = tuple(_task_record(row) for row in rows)
+        next_cursor = None
+        if has_more and records:
+            last = records[-1]
+            raw = json.dumps([last.created_at.astimezone(timezone.utc).isoformat(), last.task_id], separators=(",", ":"))
+            next_cursor = base64.urlsafe_b64encode(raw.encode("utf-8")).decode("ascii").rstrip("=")
+        return records, next_cursor, has_more
+
+    @staticmethod
+    def list_all_events(session: Session, *, task_id: str | None = None, after_event_id: str | None = None, limit: int = 100) -> tuple[TaskStateEventRecord, ...]:
+        statement = select(task_state_event).order_by(task_state_event.c.event_at, task_state_event.c.task_id, task_state_event.c.event_sequence).limit(limit)
+        if task_id is not None:
+            statement = statement.where(task_state_event.c.task_id == task_id)
+        rows = list(session.execute(statement).mappings())
+        events = []
+        for row in rows:
+            event_id = f"{row['task_id']}:{row['event_sequence']}"
+            if after_event_id and event_id <= after_event_id:
+                continue
+            events.append(_event_record(row))
+        return tuple(events)
+
+    @staticmethod
+    def list_checkpoints(session: Session, task_id: str) -> tuple[TaskCheckpointRecord, ...]:
+        rows = session.execute(select(task_checkpoint).where(task_checkpoint.c.task_id == task_id).order_by(task_checkpoint.c.sequence)).mappings()
+        return tuple(_checkpoint_record(row) for row in rows)
 
     @staticmethod
     def list_events(session: Session, task_id: str) -> tuple[TaskStateEventRecord, ...]:

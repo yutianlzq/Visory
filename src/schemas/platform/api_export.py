@@ -20,7 +20,9 @@ from .task import (
     TaskCheckpointRecord,
     TaskCreateRequest,
     TaskDetails,
+    TaskEventRecord,
     TaskLease,
+    TaskListQuery,
     TaskRecord,
     TaskRetryRequest,
     TaskStateEventRecord,
@@ -52,7 +54,9 @@ _API_MODELS = (
     TaskCheckpointRecord,
     TaskCreateRequest,
     TaskDetails,
+    TaskEventRecord,
     TaskLease,
+    TaskListQuery,
     TaskRecord,
     TaskRetryRequest,
     TaskStateEventRecord,
@@ -130,6 +134,23 @@ def render_platform_openapi() -> dict[str, Any]:
                 }
             },
             "/api/platform/v1/tasks": {
+                "get": {
+                    "operationId": "listTasks",
+                    "parameters": [
+                        {"name": "tab", "in": "query", "schema": {"type": "string", "enum": ["active", "blocked", "failed", "history"]}},
+                        {"name": "task_state", "in": "query", "schema": {"$ref": "#/components/schemas/TaskState"}},
+                        {"name": "task_type", "in": "query", "schema": {"type": "string"}},
+                        {"name": "priority_class", "in": "query", "schema": {"$ref": "#/components/schemas/PriorityClass"}},
+                        {"name": "requested_by", "in": "query", "schema": {"type": "string"}},
+                        {"name": "created_from", "in": "query", "schema": {"type": "string", "format": "date-time"}},
+                        {"name": "created_to", "in": "query", "schema": {"type": "string", "format": "date-time"}},
+                        {"name": "resource_id", "in": "query", "schema": {"type": "string"}},
+                        {"name": "cursor", "in": "query", "schema": {"type": "string"}},
+                        {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50}},
+                    ],
+                    "responses": {"200": {"description": "Task list", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformListEnvelope"}}}}},
+                    "summary": "List durable platform tasks",
+                },
                 "post": {
                     "operationId": "createTask",
                     "requestBody": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/TaskCreateRequest"}}}, "required": True},
@@ -140,6 +161,22 @@ def render_platform_openapi() -> dict[str, Any]:
                         "409": {"description": "Idempotency conflict", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformErrorEnvelope"}}}},
                     },
                     "summary": "Create a durable platform task",
+                }
+            },
+            "/api/platform/v1/tasks/events": {
+                "get": {
+                    "operationId": "streamTaskEvents",
+                    "parameters": [{"name": "after_event_id", "in": "query", "schema": {"type": "string"}}, {"name": "Last-Event-ID", "in": "header", "schema": {"type": "string"}}],
+                    "responses": {"200": {"description": "Resumable task event stream", "content": {"text/event-stream": {"schema": {"type": "string"}}}}},
+                    "summary": "Stream task state events",
+                }
+            },
+            "/api/platform/v1/tasks/{task_id}/events": {
+                "get": {
+                    "operationId": "streamTaskEventsForTask",
+                    "parameters": [{"name": "task_id", "in": "path", "required": True, "schema": {"type": "string"}}, {"name": "after_event_id", "in": "query", "schema": {"type": "string"}}, {"name": "Last-Event-ID", "in": "header", "schema": {"type": "string"}}],
+                    "responses": {"200": {"description": "Resumable task event stream", "content": {"text/event-stream": {"schema": {"type": "string"}}}}},
+                    "summary": "Stream state events for one task",
                 }
             },
             "/api/platform/v1/tasks/{task_id}": {

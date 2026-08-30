@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from api.platform.request_id import REQUEST_ID_HEADER
 from src.schemas.platform import (
+    TaskListQuery,
     PriorityClass,
     TaskDetails,
     TaskRecord,
@@ -63,6 +64,12 @@ class FakeTaskService:
     def create_task(self, request, *, idempotency_key, endpoint="/api/platform/v1/tasks"):
         self.idempotency_key = idempotency_key
         return self.task
+
+    def list_tasks(self, query: TaskListQuery):
+        return (self.task,), None, False
+
+    def list_event_records(self, **kwargs):
+        return ()
 
     def get_task(self, task_id):
         assert task_id == TASK_ID
@@ -140,3 +147,16 @@ def test_task_api_returns_stable_task_error_and_requires_idempotency_key(tmp_pat
     assert conflict.json()["error"]["code"] == "TASK_IDEMPOTENCY_CONFLICT"
     assert conflict.json()["error"]["retryable"] is False
     assert "must-not-leak" not in conflict.text
+
+
+def test_task_list_and_event_stream_use_stable_contract(tmp_path: Path) -> None:
+    app = create_app(static_dir=tmp_path / "missing-static")
+    app.state.task_control_service = FakeTaskService()
+    client = TestClient(app)
+    listed = client.get("/api/platform/v1/tasks?tab=active&limit=10")
+    assert listed.status_code == 200
+    assert listed.json()["data"][0]["task_id"] == TASK_ID
+    assert listed.json()["page"]["has_more"] is False
+    streamed = client.get("/api/platform/v1/tasks/events")
+    assert streamed.status_code == 200
+    assert "heartbeat" in streamed.text

@@ -389,3 +389,64 @@ class TaskDetails(PlatformContractModel):
     task: TaskRecord
     attempts: tuple[TaskAttemptRecord, ...]
     state_events: tuple[TaskStateEventRecord, ...]
+    checkpoints: tuple[TaskCheckpointRecord, ...] = ()
+    diagnostic_artifact_refs: tuple[str, ...] = ()
+
+
+class TaskListQuery(PlatformContractModel):
+    """Stable, bounded task list query used by Operations."""
+
+    tab: Literal["active", "blocked", "failed", "history"] | None = None
+    task_state: TaskState | None = None
+    task_type: str | None = None
+    priority_class: PriorityClass | None = None
+    requested_by: str | None = None
+    created_from: AwareDatetime | None = None
+    created_to: AwareDatetime | None = None
+    resource_id: str | None = None
+    cursor: str | None = None
+    limit: int = Field(default=50, ge=1, le=100)
+
+    @field_validator("task_type")
+    @classmethod
+    def validate_query_task_type(cls, value: str | None) -> str | None:
+        if value is not None and not _IDENTIFIER_PATTERN.fullmatch(value):
+            raise ValueError("task_type must be a normalized identifier")
+        return value
+
+    @field_validator("requested_by")
+    @classmethod
+    def validate_query_requested_by(cls, value: str | None) -> str | None:
+        return _nonblank(value, "requested_by")
+
+    @model_validator(mode="after")
+    def validate_query_range(self) -> "TaskListQuery":
+        if self.created_from is not None and self.created_to is not None and self.created_from > self.created_to:
+            raise ValueError("created_from must not follow created_to")
+        if self.tab == "active" and self.task_state is None:
+            object.__setattr__(self, "task_state", None)
+        return self
+
+
+class TaskEventRecord(PlatformContractModel):
+    """C-010 event projection for resumable task notifications."""
+
+    event_id: str
+    event_type: Literal["task_state_changed"]
+    resource_ref: ResourceRef
+    task_id: str
+    attempt_id: str | None = None
+    sequence: int = Field(ge=1)
+    occurred_at: AwareDatetime
+    payload_schema_version: Annotated[str, Field(pattern=_SEMVER_PATTERN, max_length=32)] = "1.0.0"
+    payload: TaskStateEventRecord
+
+    @field_validator("task_id")
+    @classmethod
+    def validate_event_task_id(cls, value: str) -> str:
+        return _resource_id(value, ResourceType.TASK, "task_id") or value
+
+    @field_validator("attempt_id")
+    @classmethod
+    def validate_event_attempt_id(cls, value: str | None) -> str | None:
+        return _resource_id(value, ResourceType.ATTEMPT, "attempt_id")

@@ -248,14 +248,43 @@ export interface TaskCreateRequest {
 
 export interface TaskDetails {
   readonly attempts: ReadonlyArray<TaskAttemptRecord>;
+  readonly checkpoints?: ReadonlyArray<TaskCheckpointRecord>;
+  readonly diagnostic_artifact_refs?: ReadonlyArray<string>;
   readonly state_events: ReadonlyArray<TaskStateEventRecord>;
   readonly task: TaskRecord;
+}
+
+/** C-010 event projection for resumable task notifications. */
+export interface TaskEventRecord {
+  readonly attempt_id?: string | null;
+  readonly event_id: string;
+  readonly event_type: "task_state_changed";
+  readonly occurred_at: string;
+  readonly payload: TaskStateEventRecord;
+  readonly payload_schema_version?: string;
+  readonly resource_ref: ResourceRef;
+  readonly sequence: number;
+  readonly task_id: string;
 }
 
 export interface TaskLease {
   readonly attempt: TaskAttemptRecord;
   readonly lease_token: string;
   readonly task: TaskRecord;
+}
+
+/** Stable, bounded task list query used by Operations. */
+export interface TaskListQuery {
+  readonly created_from?: string | null;
+  readonly created_to?: string | null;
+  readonly cursor?: string | null;
+  readonly limit?: number;
+  readonly priority_class?: PriorityClass | null;
+  readonly requested_by?: string | null;
+  readonly resource_id?: string | null;
+  readonly tab?: "active" | "blocked" | "failed" | "history" | null;
+  readonly task_state?: TaskState | null;
+  readonly task_type?: string | null;
 }
 
 export interface TaskRecord {

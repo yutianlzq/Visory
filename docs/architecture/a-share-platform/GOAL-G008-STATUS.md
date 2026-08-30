@@ -6,7 +6,7 @@
 
 - Goal：`Visory-G008`
 - Work Package：`WP-0103 Durable Task Control Plane`
-- Goal 状态：`COMPLETE / PR OPEN`
+- Goal 状态：`COMPLETE / MERGED`
 - Work Package 状态：`VERIFIED`
 - 固定基线：`main=a9a640b9c5910f839c036a94c85baec376ca7395`
 - 工作分支：`goal/g008-wp-0103-durable-task-control-plane`
