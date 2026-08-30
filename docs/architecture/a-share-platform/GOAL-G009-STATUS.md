@@ -10,7 +10,7 @@
 - Work Package 状态：`IN_PROGRESS`
 - 固定基线：`main=ea4f8b1f27b79eb64079321d28951cac83a16f79`
 - 工作分支：`goal/g009-wp-0104-operations-task-page`
-- 合并提交：`6b90bb1dba8aaf1925ef32c0c73bf1bc03dae856`；PR #9；补充测试 PR #12；错误展示/键盘回归 PR #13 已合并，merge commit `148f8d903c5e052203ce670951e3e5509287af6e`；最终 CI Run `33326870390`
+- 合并提交：PR #9 merge `6b90bb1dba8aaf1925ef32c0c73bf1bc03dae856`；PR #12；PR #13 merge `148f8d903c5e052203ce670951e3e5509287af6e`；当前分支补充真实后端旅程测试，PR 待创建；最终 CI 待验证
 - 已验证 Work Package：`6/45`
 - 目标 Migration head：`0004_wp0103_durable_task_control_plane`（本 Goal 未新增 Migration）
 
@@ -32,13 +32,13 @@
 - Playwright：`npx playwright test e2e/operations-tasks.spec.ts --project=chromium --reporter=line`，`6 passed`；覆盖 SSE 断线/恢复、Retry 确认/重复提交保护、C-010 错误码/Request ID 展示和 Tab/筛选键盘操作；
 - 平台测试：`.venv\Scripts\python.exe -m pytest tests/platform -q`，`260 passed, 5 skipped`；
 - 真实 PostgreSQL 集成：当前环境未提供可用隔离实例，相关测试保持 skipped；
-- 页面 E2E 使用本地临时 fixture 与 route mock，不写真实 `/data`。
+- 页面 E2E 使用本地临时 fixture 与 route mock，不写真实 `/data`；新增真实认证后端 Playwright 旅程，使用临时 PostgreSQL 与临时凭据文件。
 
 ## 4. 未完成与风险
 
-- PR #9、PR #12、PR #13 已合并；最终 Run `33326870390` 的 Governance、Python、Web 三项阻断 Job 全部成功；
-- 当前 Playwright 未覆盖真实认证后端旅程；SSE 断线/恢复已由受控 EventSource 旅程覆盖，但仍需真实服务端补读验证；错误展示仅验证受控 C-010 Envelope；
-- 真实 PostgreSQL 列表/SSE 集成测试仍受本地隔离实例不可用影响；
+- PR #9、PR #12、PR #13、PR #14 已合并；本轮真实后端旅程补充 PR 待创建，最终 CI 待验证；
+- 真实认证后端 HTTP/ASGI 与浏览器 Playwright 旅程已覆盖登录 Cookie、平台 API 保护和 Operations 页面访问；真实服务端 SSE replay 已覆盖首次连接、取消后增量事件、`Last-Event-ID` / `after_event_id` 补读、无重复无丢失和连接池清理；错误展示仍以受控 C-010 Envelope 为主；
+- 真实 PostgreSQL 列表/SSE 集成已在本地临时 PostgreSQL 16 容器执行；GitHub Actions 仍待验证。
 - SSE 当前发送已存在事件后以 heartbeat 结束，生产长连接策略留待后续 Operations/部署工作；
 - Legacy Task Queue 保持不变；无 Artifact 下载、任意路径访问或 `/data` 写入。
 
