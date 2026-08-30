@@ -36,7 +36,7 @@
 
 ## 4. 未完成与风险
 
-- 需要在 PR #9 的 Linux CI 复核 Governance、Python、Web 三项阻断 Job；
+- PR #9 已合并；最终 Run `33324179055` 的 Governance、Python、Web 三项阻断 Job 全部成功；
 - 当前 Playwright 未覆盖真实认证后端旅程，也未模拟 EventSource 断线后恢复事件；
 - 真实 PostgreSQL 列表/SSE 集成测试仍受本地隔离实例不可用影响；
 - SSE 当前发送已存在事件后以 heartbeat 结束，生产长连接策略留待后续 Operations/部署工作；
