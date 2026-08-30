@@ -1,0 +1,20 @@
+{
+  "contract_id": "C-003/OrphanDryRunResult",
+  "payload": {
+    "scanned_known_directories": 1,
+    "candidates": [
+      {
+        "artifact_id": "artifact_019dbd74-2a00-7000-8000-000000000001",
+        "manifest_relative_path": "artifacts/type=report/year=2026/month=08/artifact_id=artifact_019dbd74-2a00-7000-8000-000000000001/manifest.json",
+        "reason_code": "REGISTRY_ENTRY_MISSING",
+        "estimated_size_bytes": 2,
+        "recoverable_actions": [
+          "RECOVER_REGISTRATION"
+        ]
+      }
+    ],
+    "skipped_invalid_manifests": 0,
+    "estimated_recoverable_bytes": 2,
+    "deletion_performed": false
+  }
+}

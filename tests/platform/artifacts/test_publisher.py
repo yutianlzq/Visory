@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+import os
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -117,13 +119,64 @@ def test_missing_or_tampered_registry_file_is_marked_and_blocked(tmp_path: Path)
     assert record is not None
     payload_path = service.resolver.resolve(record.storage_ref.relative_path, require_exists=True)
 
-    payload_path.write_bytes(b"tampered")
+    payload_path.write_bytes(b"changed")
     with pytest.raises(ArtifactIntegrityError) as captured:
         service.read_content(ARTIFACT_ID)
     assert captured.value.error_code == "ARTIFACT_HASH_MISMATCH"
     damaged = repository.get_artifact(object(), ARTIFACT_ID)
     assert damaged is not None
     assert damaged.integrity_state.value == "HASH_MISMATCH"
+
+
+def test_missing_registry_file_is_marked_and_blocked(tmp_path: Path) -> None:
+    artifact_id = generate_resource_id(ResourceType.ARTIFACT, timestamp_ms=1_777_000_100_000, random_bits=13)
+    repository = InMemoryArtifactRepository()
+    service = ArtifactPublisherService(tmp_path, repository, _session_scope, clock=lambda: NOW)
+    service.publish(_request(artifact_id=artifact_id), b"content")
+    record = repository.get_artifact(object(), artifact_id)
+    assert record is not None
+    service.resolver.resolve(record.storage_ref.relative_path, require_exists=True).unlink()
+
+    with pytest.raises(ArtifactIntegrityError) as captured:
+        service.read_content(artifact_id)
+    assert captured.value.error_code == "ARTIFACT_FILE_MISSING"
+    damaged = repository.get_artifact(object(), artifact_id)
+    assert damaged is not None
+    assert damaged.integrity_state.value == "MISSING"
+
+
+def test_concurrent_publishers_allow_only_one_atomic_target(tmp_path: Path) -> None:
+    repository = InMemoryArtifactRepository()
+    barrier = threading.Barrier(2)
+    lock = threading.Lock()
+    outcomes: list[str] = []
+
+    def synchronized_rename(source: Path, target: Path) -> None:
+        barrier.wait(timeout=5)
+        os.rename(source, target)
+
+    def publish(content: bytes) -> None:
+        service = ArtifactPublisherService(
+            tmp_path, repository, _session_scope, clock=lambda: NOW, rename=synchronized_rename
+        )
+        try:
+            service.publish(_request(), content)
+            outcome = "published"
+        except ArtifactPublishError as exc:
+            outcome = exc.error_code
+        with lock:
+            outcomes.append(outcome)
+
+    first = threading.Thread(target=publish, args=(b"first",))
+    second = threading.Thread(target=publish, args=(b"second",))
+    first.start()
+    second.start()
+    first.join(timeout=10)
+    second.join(timeout=10)
+
+    assert sorted(outcomes) == ["ARTIFACT_TARGET_EXISTS", "published"]
+    reader = ArtifactPublisherService(tmp_path, repository, _session_scope, clock=lambda: NOW)
+    assert reader.read_content(ARTIFACT_ID) in {b"first", b"second"}
 
 
 def test_concurrent_or_repeated_publish_cannot_overwrite_existing_target(tmp_path: Path) -> None:

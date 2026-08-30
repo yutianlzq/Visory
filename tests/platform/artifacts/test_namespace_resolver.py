@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
@@ -47,6 +46,19 @@ def test_runtime_root_and_namespace_root_cannot_be_symlinks(tmp_path: Path) -> N
 
     with pytest.raises(ArtifactStorageError) as captured:
         StorageNamespaceResolver(linked_root)
+    assert captured.value.error_code == "ARTIFACT_SYMLINK_ESCAPE"
+
+
+def test_namespace_root_cannot_be_a_symlink(tmp_path: Path) -> None:
+    outside = tmp_path / "outside-namespace"
+    outside.mkdir()
+    storage = tmp_path / "storage"
+    storage.mkdir()
+    _symlink_or_skip(storage / "app", outside)
+
+    resolver = StorageNamespaceResolver(tmp_path)
+    with pytest.raises(ArtifactStorageError) as captured:
+        resolver.ensure_namespace(StorageNamespace.APP)
     assert captured.value.error_code == "ARTIFACT_SYMLINK_ESCAPE"
 
 

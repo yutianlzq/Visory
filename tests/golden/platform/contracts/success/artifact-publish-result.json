@@ -1,0 +1,19 @@
+{
+  "contract_id": "C-003/ArtifactPublishResult",
+  "payload": {
+    "artifact_id": "artifact_019dbd74-2a00-7000-8000-000000000001",
+    "storage_ref": {
+      "storage_backend": "local_fs",
+      "storage_namespace": "app",
+      "relative_path": "artifacts/type=report/year=2026/month=08/artifact_id=artifact_019dbd74-2a00-7000-8000-000000000001/payload.json",
+      "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "media_type": "application/json",
+      "size_bytes": 2
+    },
+    "artifact_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "manifest_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "publication_state": "PUBLISHED",
+    "integrity_state": "VERIFIED",
+    "published_at": "2026-08-30T08:00:00Z"
+  }
+}

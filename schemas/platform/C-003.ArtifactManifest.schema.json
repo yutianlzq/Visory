@@ -1,0 +1,267 @@
+{
+  "$defs": {
+    "ArtifactIntegrityState": {
+      "enum": [
+        "VERIFIED",
+        "MISSING",
+        "HASH_MISMATCH",
+        "SIZE_MISMATCH",
+        "MANIFEST_INVALID"
+      ],
+      "title": "ArtifactIntegrityState",
+      "type": "string"
+    },
+    "ArtifactPublicationState": {
+      "enum": [
+        "PUBLISHED"
+      ],
+      "title": "ArtifactPublicationState",
+      "type": "string"
+    },
+    "ArtifactVisibility": {
+      "enum": [
+        "PRIVATE",
+        "OWNER",
+        "INTERNAL"
+      ],
+      "title": "ArtifactVisibility",
+      "type": "string"
+    },
+    "ResourceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "resource_id": {
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "resource_type": {
+          "$ref": "#/$defs/ResourceType"
+        }
+      },
+      "required": [
+        "resource_type",
+        "resource_id"
+      ],
+      "title": "ResourceRef",
+      "type": "object"
+    },
+    "ResourceType": {
+      "enum": [
+        "task",
+        "attempt",
+        "data_snapshot",
+        "feature_snapshot",
+        "observation_snapshot",
+        "fact_pack",
+        "research",
+        "review",
+        "strategy",
+        "backtest_run",
+        "prediction",
+        "artifact",
+        "report",
+        "provider_run",
+        "sector",
+        "taxonomy",
+        "indicator",
+        "raw_object",
+        "canonical_partition",
+        "feature_partition",
+        "fact_block",
+        "claim",
+        "watch_condition",
+        "quality_report",
+        "request",
+        "checkpoint",
+        "backup",
+        "deployment"
+      ],
+      "title": "ResourceType",
+      "type": "string"
+    },
+    "RetentionClass": {
+      "enum": [
+        "PINNED",
+        "AUDIT",
+        "REBUILDABLE",
+        "CACHE",
+        "TEMP",
+        "QUARANTINE"
+      ],
+      "title": "RetentionClass",
+      "type": "string"
+    },
+    "StorageBackend": {
+      "enum": [
+        "local_fs"
+      ],
+      "title": "StorageBackend",
+      "type": "string"
+    },
+    "StorageNamespace": {
+      "enum": [
+        "app"
+      ],
+      "title": "StorageNamespace",
+      "type": "string"
+    },
+    "StorageRef": {
+      "additionalProperties": false,
+      "properties": {
+        "content_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "media_type": {
+          "title": "Media Type",
+          "type": "string"
+        },
+        "relative_path": {
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "storage_backend": {
+          "$ref": "#/$defs/StorageBackend"
+        },
+        "storage_namespace": {
+          "$ref": "#/$defs/StorageNamespace"
+        }
+      },
+      "required": [
+        "storage_backend",
+        "storage_namespace",
+        "relative_path",
+        "content_hash",
+        "media_type",
+        "size_bytes"
+      ],
+      "title": "StorageRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "artifact_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Artifact Hash",
+      "type": "string"
+    },
+    "artifact_id": {
+      "title": "Artifact Id",
+      "type": "string"
+    },
+    "artifact_type": {
+      "title": "Artifact Type",
+      "type": "string"
+    },
+    "attempt_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Attempt Id"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "integrity_checked_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Integrity Checked At"
+    },
+    "integrity_failure_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Integrity Failure Code"
+    },
+    "integrity_state": {
+      "$ref": "#/$defs/ArtifactIntegrityState"
+    },
+    "manifest_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Manifest Hash",
+      "type": "string"
+    },
+    "media_type": {
+      "title": "Media Type",
+      "type": "string"
+    },
+    "owner_resource_ref": {
+      "$ref": "#/$defs/ResourceRef"
+    },
+    "publication_state": {
+      "$ref": "#/$defs/ArtifactPublicationState"
+    },
+    "published_at": {
+      "format": "date-time",
+      "title": "Published At",
+      "type": "string"
+    },
+    "retention_class": {
+      "$ref": "#/$defs/RetentionClass"
+    },
+    "schema_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "size_bytes": {
+      "minimum": 0,
+      "title": "Size Bytes",
+      "type": "integer"
+    },
+    "storage_ref": {
+      "$ref": "#/$defs/StorageRef"
+    },
+    "visibility": {
+      "$ref": "#/$defs/ArtifactVisibility"
+    }
+  },
+  "required": [
+    "artifact_id",
+    "artifact_type",
+    "owner_resource_ref",
+    "storage_ref",
+    "media_type",
+    "size_bytes",
+    "artifact_hash",
+    "manifest_hash",
+    "schema_version",
+    "created_at",
+    "published_at",
+    "retention_class",
+    "visibility",
+    "publication_state",
+    "integrity_state"
+  ],
+  "title": "ArtifactManifest",
+  "type": "object"
+}

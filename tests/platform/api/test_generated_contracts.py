@@ -27,11 +27,21 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
     schemas = spec["components"]["schemas"]
     assert set(schemas) == {
         "AliasType",
+        "ArtifactIntegrityState",
+        "ArtifactManifest",
+        "ArtifactPublicationState",
+        "ArtifactPublishResult",
+        "ArtifactRecord",
+        "ArtifactRecoveryResult",
+        "ArtifactVisibility",
         "AssetResolutionCandidate",
         "AssetResolutionRequest",
         "AssetResolutionResult",
         "AssetType",
         "IdentityStatus",
+        "OrphanAction",
+        "OrphanCandidate",
+        "OrphanDryRunResult",
         "PlatformAPIError",
         "PlatformErrorEnvelope",
         "PlatformListEnvelope",
@@ -39,6 +49,12 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "PlatformResponseMeta",
         "PlatformSuccessEnvelope",
         "ResolutionStatus",
+        "ResourceRef",
+        "ResourceType",
+        "RetentionClass",
+        "StorageBackend",
+        "StorageNamespace",
+        "StorageRef",
     }
     assert schemas["PlatformSuccessEnvelope"]["examples"]
     assert schemas["PlatformErrorEnvelope"]["examples"]
@@ -79,6 +95,11 @@ def test_generated_frontend_types_are_strict_and_cover_c010_fields() -> None:
     assert "readonly warnings: ReadonlyArray<string>;" in generated
     assert "export interface PlatformPage" in generated
     assert "export interface PlatformErrorEnvelope" in generated
+    assert "export interface ArtifactRecord" in generated
+    assert "export interface ArtifactManifest" in generated
+    assert "export interface ArtifactPublishResult" in generated
+    assert "export interface ArtifactRecoveryResult" in generated
+    assert "export interface OrphanDryRunResult" in generated
     assert ": any" not in generated
     assert "<any>" not in generated
 

@@ -31,6 +31,8 @@ def test_storage_ref_accepts_logical_posix_path() -> None:
         "features//file.parquet",
         "features/./file.parquet",
         "features/../file.parquet",
+        "features/control\x00.parquet",
+        "features/control\x7f.parquet",
         "",
     ],
 )

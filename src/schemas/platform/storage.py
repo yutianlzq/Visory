@@ -24,7 +24,7 @@ class StorageRef(PlatformContractModel):
     def validate_relative_path(cls, value: str) -> str:
         if not value or value.startswith("/") or "\\" in value:
             raise ValueError("relative_path must be a non-empty relative POSIX path")
-        if any(ord(character) < 32 for character in value):
+        if any(ord(character) < 32 or ord(character) == 127 for character in value):
             raise ValueError("relative_path cannot contain control characters")
         segments = value.split("/")
         if any(segment in {"", ".", ".."} for segment in segments):

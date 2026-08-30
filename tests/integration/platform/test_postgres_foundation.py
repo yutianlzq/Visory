@@ -17,7 +17,7 @@ from src.repositories.platform import (
 )
 
 
-HEAD_REVISION = "0002_wp0101_asset_identity"
+HEAD_REVISION = "0003_wp0102_artifact_registry"
 
 
 def _table_names(database: PostgresDatabase) -> tuple[str, ...]:
@@ -49,7 +49,7 @@ def test_empty_database_upgrade_is_idempotent_and_reversible(isolated_postgres_d
     assert upgraded.current_revision == HEAD_REVISION
     assert upgraded.head_revision == HEAD_REVISION
     assert upgraded.is_at_head is True
-    assert first_tables == ("alembic_version", "asset_alias", "asset_identity", "identity_quarantine")
+    assert first_tables == ("alembic_version", "artifact_registry", "asset_alias", "asset_identity", "identity_quarantine")
 
     upgrade_database(database.engine)
     repeated = get_migration_status(database.engine)

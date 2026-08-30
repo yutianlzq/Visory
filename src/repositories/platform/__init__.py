@@ -1,3 +1,4 @@
+from .artifact import ArtifactRepository, InMemoryArtifactRepository
 from .database import DatabaseHealth, PostgresDatabase, build_postgres_url, create_postgres_engine
 from .errors import DatabaseConfigurationError, DatabaseSecretError, PlatformDatabaseError
 from .identity import (
@@ -11,6 +12,8 @@ from .migrations import MigrationStatus, downgrade_database, get_migration_statu
 from .settings import PostgresSettings, read_secret_file
 
 __all__ = [
+    "ArtifactRepository",
+    "InMemoryArtifactRepository",
     "AliasRegistrationOutcome",
     "AssetIdentityRepository",
     "DatabaseConfigurationError",

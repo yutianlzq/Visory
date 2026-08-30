@@ -152,3 +152,25 @@ class StorageBackend(PlatformStringEnum):
 
 class StorageNamespace(PlatformStringEnum):
     APP = "app"
+
+
+class ArtifactVisibility(PlatformStringEnum):
+    PRIVATE = "PRIVATE"
+    OWNER = "OWNER"
+    INTERNAL = "INTERNAL"
+
+
+class ArtifactPublicationState(PlatformStringEnum):
+    PUBLISHED = "PUBLISHED"
+
+
+class ArtifactIntegrityState(PlatformStringEnum):
+    VERIFIED = "VERIFIED"
+    MISSING = "MISSING"
+    HASH_MISMATCH = "HASH_MISMATCH"
+    SIZE_MISMATCH = "SIZE_MISMATCH"
+    MANIFEST_INVALID = "MANIFEST_INVALID"
+
+
+class OrphanAction(PlatformStringEnum):
+    RECOVER_REGISTRATION = "RECOVER_REGISTRATION"
