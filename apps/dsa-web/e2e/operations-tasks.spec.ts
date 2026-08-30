@@ -138,15 +138,62 @@ async function serve(rootDir: string) {
   return { url: `http://127.0.0.1:${address.port}/`, close: () => new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve())) };
 }
 
-async function mockApis(page: Page) {
+type MockApiOptions = { taskState?: string; commandDelayMs?: number };
+type MockApiState = { commands: string[]; listRequests: number };
+
+type E2EWindow = Window & {
+  __emitTaskEventSourceError: () => void;
+  __emitTaskStateChanged: () => void;
+};
+
+async function installControlledEventSource(page: Page) {
+  await page.addInitScript(() => {
+    class ControlledEventSource extends EventTarget {
+      static instances: ControlledEventSource[] = [];
+      readonly url: string;
+      readyState = 1;
+      onerror: ((event: Event) => void) | null = null;
+
+      constructor(url: string) {
+        super();
+        this.url = url;
+        ControlledEventSource.instances.push(this);
+      }
+
+      close() {
+        this.readyState = 2;
+      }
+    }
+
+    Object.defineProperty(window, 'EventSource', { configurable: true, writable: true, value: ControlledEventSource });
+    (window as Window & { __emitTaskEventSourceError: () => void }).__emitTaskEventSourceError = () => {
+      const source = ControlledEventSource.instances.at(-1);
+      source?.onerror?.(new Event('error'));
+    };
+    (window as Window & { __emitTaskStateChanged: () => void }).__emitTaskStateChanged = () => {
+      ControlledEventSource.instances.at(-1)?.dispatchEvent(new Event('task_state_changed'));
+    };
+  });
+}
+
+async function mockApis(page: Page, options: MockApiOptions = {}): Promise<MockApiState> {
+  const state: MockApiState = { commands: [], listRequests: 0 };
+  const taskPayload = options.taskState ? { ...task, task_state: options.taskState } : task;
+  const detailsPayload = options.taskState ? { ...details, task: taskPayload } : details;
   await page.route('**/api/platform/v1/tasks**', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
     if (request.method() === 'GET' && url.pathname.endsWith('/events')) return route.fulfill({ status: 200, contentType: 'text/event-stream', body: ': heartbeat\n\n' });
-    if (request.method() === 'GET' && url.pathname.endsWith(`/tasks/${taskId}`)) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: details, meta: { generated_at: task.created_at, request_id: 'req-e2e', schema_version: '1.0.0', data_snapshot_id: null, warnings: [] } }) });
-    if (request.method() === 'POST') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: task, meta: { generated_at: task.created_at, request_id: 'req-e2e', schema_version: '1.0.0', data_snapshot_id: null, warnings: [] } }) });
-    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [task], page: { cursor: null, next_cursor: null, has_more: false, limit: 50 }, meta: { generated_at: task.created_at, request_id: 'req-e2e', schema_version: '1.0.0', data_snapshot_id: null, warnings: [] } }) });
+    if (request.method() === 'GET' && url.pathname.endsWith(`/tasks/${taskId}`)) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: detailsPayload, meta: { generated_at: task.created_at, request_id: 'req-e2e', schema_version: '1.0.0', data_snapshot_id: null, warnings: [] } }) });
+    if (request.method() === 'POST') {
+      state.commands.push(url.pathname);
+      if (options.commandDelayMs) await new Promise((resolve) => setTimeout(resolve, options.commandDelayMs));
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: taskPayload, meta: { generated_at: task.created_at, request_id: 'req-e2e', schema_version: '1.0.0', data_snapshot_id: null, warnings: [] } }) });
+    }
+    state.listRequests += 1;
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [taskPayload], page: { cursor: null, next_cursor: null, has_more: false, limit: 50 }, meta: { generated_at: task.created_at, request_id: 'req-e2e', schema_version: '1.0.0', data_snapshot_id: null, warnings: [] } }) });
   });
+  return state;
 }
 
 test.describe('Operations task page', () => {
@@ -177,6 +224,33 @@ test.describe('Operations task page', () => {
     await page.getByRole('button', { name: '请求取消' }).click();
     await expect(page.getByRole('button', { name: '取消中…' })).toHaveCount(0);
     await page.screenshot({ path: test.info().outputPath('operations-tasks-desktop.png'), fullPage: true });
+    await page.close();
+  });
+
+  test('recovers from an SSE disconnect and refreshes the query result', async () => {
+    const page = await browser.newPage({ baseURL, viewport: { width: 1280, height: 900 }, locale: 'zh-CN' });
+    const state = await mockApis(page);
+    await installControlledEventSource(page);
+    await page.goto('/operations/tasks?tab=active');
+    await expect(page.getByRole('status')).toHaveText('实时事件已连接');
+    await page.evaluate(() => (window as E2EWindow).__emitTaskEventSourceError());
+    await expect(page.getByRole('status')).toHaveText('实时连接断开，15 秒轮询中');
+    await page.evaluate(() => (window as E2EWindow).__emitTaskStateChanged());
+    await expect(page.getByRole('status')).toHaveText('实时事件已连接');
+    await expect.poll(() => state.listRequests).toBeGreaterThan(1);
+    await page.close();
+  });
+
+  test('confirms retry and suppresses duplicate command submission', async () => {
+    const page = await browser.newPage({ baseURL, viewport: { width: 1280, height: 900 }, locale: 'zh-CN' });
+    const state = await mockApis(page, { taskState: 'RETRY_WAIT', commandDelayMs: 150 });
+    await page.goto(`/operations/tasks/${taskId}?tab=failed`);
+    await expect(page.getByRole('button', { name: '请求重试' })).toBeVisible();
+    page.on('dialog', (dialog) => void dialog.accept());
+    await page.getByRole('button', { name: '请求重试' }).click();
+    await expect(page.getByRole('button', { name: '重试中…' })).toBeDisabled();
+    await expect.poll(() => state.commands.filter((path) => path.endsWith('/retries')).length).toBe(1);
+    await expect(page.getByRole('button', { name: '请求重试' })).toBeVisible();
     await page.close();
   });
 
