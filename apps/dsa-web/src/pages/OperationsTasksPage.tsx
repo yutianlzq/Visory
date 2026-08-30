@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { platformTasksApi } from '../api/platformTasks';
+import { formatPlatformTaskError, platformTasksApi } from '../api/platformTasks';
 import type {
   PriorityClass,
   TaskDetails,
@@ -87,14 +87,14 @@ export default function OperationsTasksPage() {
   const loadTasks = useCallback(async () => {
     setLoading(true); setError(null);
     try { const result = await platformTasksApi.list(listQuery); setTasks(result.items); setStale(false); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : '任务服务不可用'); }
+    catch (cause) { setError(formatPlatformTaskError(cause, '任务服务不可用')); }
     finally { setLoading(false); }
   }, [listQuery]);
 
   const loadDetails = useCallback(async (id: string) => {
     setDetailLoading(true);
     try { setDetails(await platformTasksApi.get(id)); setStale(false); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : '任务详情不可用'); }
+    catch (cause) { setError(formatPlatformTaskError(cause, '任务详情不可用')); }
     finally { setDetailLoading(false); }
   }, []);
 
@@ -132,7 +132,7 @@ export default function OperationsTasksPage() {
     if (!window.confirm(kind === 'cancel' ? '确认请求取消此任务吗？' : '确认请求重试此任务吗？')) return;
     setBusy(kind); setError(null);
     try { if (kind === 'cancel') await platformTasksApi.cancel(taskId); else await platformTasksApi.retry(taskId); await loadDetails(taskId); await loadTasks(); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : '操作失败'); }
+    catch (cause) { setError(formatPlatformTaskError(cause, '操作失败')); }
     finally { setBusy(null); }
   };
   const copyTaskId = async () => {
