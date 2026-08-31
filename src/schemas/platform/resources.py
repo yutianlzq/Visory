@@ -40,6 +40,7 @@ _RESOURCE_PREFIXES: dict[ResourceType, str] = {
     ResourceType.CHECKPOINT: "checkpoint",
     ResourceType.BACKUP: "backup",
     ResourceType.DEPLOYMENT: "deployment",
+    ResourceType.RAW_INGESTION_QUARANTINE: "rawq",
 }
 _PREFIX_TYPES = {prefix: resource_type for resource_type, prefix in _RESOURCE_PREFIXES.items()}
 _RESOURCE_ID_PATTERN = re.compile(r"^([a-z][a-z0-9]*)_([0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$")

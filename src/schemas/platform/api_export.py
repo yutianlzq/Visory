@@ -28,6 +28,7 @@ from .task import (
     TaskStateEventRecord,
 )
 from .provider import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy, ProviderSettingsProjection
+from .raw_ingestion import ProviderRun, RawIngestionPublishResult, RawIngestionQuarantine, RawIngestionTaskRequirements, RawObject
 from .api import (
     PLATFORM_API_SCHEMA_VERSION,
     PlatformAPIError,
@@ -47,6 +48,11 @@ _API_MODELS = (
     ProviderDefinition,
     ProviderPolicy,
     ProviderSettingsProjection,
+    ProviderRun,
+    RawObject,
+    RawIngestionQuarantine,
+    RawIngestionTaskRequirements,
+    RawIngestionPublishResult,
     ArtifactManifest,
     ArtifactPublishResult,
     ArtifactRecord,

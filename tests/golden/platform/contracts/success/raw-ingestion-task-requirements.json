@@ -1,0 +1,1 @@
+{"contract_id":"C-004/RawIngestionTaskRequirements","payload":{"provider_id":"a_stock_data","dataset_id":"security_master","dataset_schema_version":"1.0.0","provider_policy_id":"security_master_v1","market":"CN","request":{"as_of":"2026-08-31"},"timeout_seconds":30}}

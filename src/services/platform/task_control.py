@@ -447,8 +447,8 @@ class TaskControlService:
         assert task is not None and attempt is not None
         return task, attempt
 
-    def _recover_expired_running(self, session: object, now: datetime) -> None:
-        for task_id in self.repository.list_expired_running_task_ids(session, now):
+    def _recover_expired_running(self, session: object, now: datetime, task_types: tuple[str, ...]) -> None:
+        for task_id in self.repository.list_expired_running_task_ids(session, now, task_types):
             task = self.repository.get_task(session, task_id, for_update=True)
             if task is None or task.active_attempt_id is None or task.task_state is not TaskState.RUNNING:
                 continue
@@ -505,12 +505,13 @@ class TaskControlService:
         if not worker_id.strip() or lease_seconds <= 0:
             raise ValueError("worker_id and positive lease_seconds are required")
         capabilities = tuple(sorted(set(worker_capabilities)))
-        if "artifact_orphan_dry_run" not in capabilities:
+        supported_task_types = tuple(sorted(set(capabilities) & {"artifact_orphan_dry_run", "raw_ingestion"}))
+        if not supported_task_types:
             return None
         now = self._now()
         with self.database.transaction() as session:
-            self._recover_expired_running(session, now)
-            expired = self.repository.claim_expired_leased_task(session, now)
+            self._recover_expired_running(session, now, supported_task_types)
+            expired = self.repository.claim_expired_leased_task(session, now, supported_task_types)
             if expired is not None:
                 task, old_attempt = expired
                 can_retry = old_attempt.attempt_number < task.max_attempts
@@ -555,7 +556,7 @@ class TaskControlService:
                     attempt_id=old_attempt.attempt_id,
                     updates={"failure_code": "TASK_MAX_ATTEMPTS_EXCEEDED"},
                 )
-            task = self.repository.claim_queued_task(session)
+            task = self.repository.claim_queued_task(session, supported_task_types)
             if task is None:
                 return None
             attempt, token = self._new_attempt(
@@ -917,15 +918,16 @@ class TaskControlService:
             raise TaskControlError("TASK_CHECKPOINT_INVALID", "Checkpoint cannot be resumed.")
         return checkpoint
 
-    def complete_with_artifact_in_session(
+    def complete_in_session(
         self,
         session: object,
         *,
         attempt_id: str,
         lease_token: str,
-        artifact_id: str,
         degraded: bool = False,
+        result_artifact_id: str | None = None,
     ) -> TaskRecord:
+        """Finish a worker attempt in the caller-owned registry transaction."""
         now = self._now()
         task, attempt = self._validate_lease(
             session,
@@ -942,6 +944,7 @@ class TaskControlService:
             outcome=AttemptOutcome.DEGRADED if degraded else AttemptOutcome.SUCCEEDED,
             finished_at=now,
         )
+        updates = {"result_artifact_id": result_artifact_id} if result_artifact_id is not None else None
         return self._transition(
             session,
             task,
@@ -950,8 +953,70 @@ class TaskControlService:
             actor_ref=f"worker:{attempt.worker_id}",
             event_at=now,
             attempt_id=attempt_id,
-            updates={"result_artifact_id": artifact_id},
+            updates=updates,
         )
 
+    def record_failure_in_session(
+        self,
+        session: object,
+        *,
+        attempt_id: str,
+        lease_token: str,
+        failure_code: str,
+        retryable: bool,
+    ) -> TaskRecord:
+        """Record worker failure atomically with another control-plane write."""
+        now = self._now()
+        task, attempt = self._validate_lease(
+            session,
+            attempt_id,
+            lease_token,
+            now=now,
+            allowed_states=frozenset({TaskState.RUNNING}),
+        )
+        can_retry = retryable and attempt.attempt_number < task.max_attempts
+        self._finish_attempt(
+            session,
+            attempt,
+            outcome=AttemptOutcome.FAILED,
+            finished_at=now,
+            failure_code=failure_code,
+            retryable=can_retry,
+        )
+        if can_retry:
+            return self._transition(
+                session,
+                task,
+                TaskState.RETRY_WAIT,
+                reason_code=failure_code,
+                actor_ref=f"worker:{attempt.worker_id}",
+                event_at=now,
+                attempt_id=attempt_id,
+            )
+        return self._transition(
+            session,
+            task,
+            TaskState.FAILED,
+            reason_code=failure_code,
+            actor_ref=f"worker:{attempt.worker_id}",
+            event_at=now,
+            attempt_id=attempt_id,
+            updates={"failure_code": failure_code},
+        )
 
-__all__ = ["TaskControlError", "TaskControlService"]
+    def complete_with_artifact_in_session(
+        self,
+        session: object,
+        *,
+        attempt_id: str,
+        lease_token: str,
+        artifact_id: str,
+        degraded: bool = False,
+    ) -> TaskRecord:
+        return self.complete_in_session(
+            session,
+            attempt_id=attempt_id,
+            lease_token=lease_token,
+            degraded=degraded,
+            result_artifact_id=artifact_id,
+        )

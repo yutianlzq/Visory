@@ -8,6 +8,7 @@ from pydantic import AwareDatetime, Field, field_validator, model_validator
 from .base import PlatformContractModel
 from .enums import AttemptOutcome, PriorityClass, ResourceType, TaskState
 from .resources import ResourceRef, parse_resource_id
+from .raw_ingestion import RawIngestionTaskRequirements
 from .storage import StorageRef
 
 
@@ -328,7 +329,7 @@ class TaskCheckpointRecord(PlatformContractModel):
 
 
 class TaskCreateRequest(PlatformContractModel):
-    task_type: Literal["artifact_orphan_dry_run"]
+    task_type: Literal["artifact_orphan_dry_run", "raw_ingestion"]
     task_schema_version: Annotated[str, Field(pattern=_SEMVER_PATTERN, max_length=32)] = "1.0.0"
     priority_class: PriorityClass = PriorityClass.P5_PREVIEW_AND_MAINTENANCE
     priority_value: int = Field(default=100, ge=0, le=2_147_483_647)
@@ -341,6 +342,11 @@ class TaskCreateRequest(PlatformContractModel):
     force_reason: str | None = None
     created_from_task_id: str | None = None
 
+    @model_validator(mode="after")
+    def validate_task_requirements(self) -> "TaskCreateRequest":
+        if self.task_type == "raw_ingestion":
+            RawIngestionTaskRequirements.model_validate(self.requirements)
+        return self
     @field_validator("requested_by", "request_source", "force_reason")
     @classmethod
     def validate_nonblank(cls, value: str | None, info: object) -> str | None:

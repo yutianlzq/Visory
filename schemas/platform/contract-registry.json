@@ -890,6 +890,218 @@
       ]
     },
     {
+      "business_key": "provider_run_id",
+      "compatibility": "actual_upstream is recorded per run and never inferred from ProviderDefinition",
+      "consumers": [
+        "raw ingestion",
+        "operations",
+        "canonical"
+      ],
+      "contract_id": "C-004/ProviderRun",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/provider-run.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.ProviderRun.schema.json",
+      "lineage_fields": [
+        "provider_id",
+        "actual_upstream",
+        "task_id",
+        "attempt_id",
+        "raw_object_refs"
+      ],
+      "owner_module": "src.schemas.platform.raw_ingestion",
+      "producer": "Raw Ingestion Worker",
+      "quality_semantics": [
+        "run_outcome",
+        "failure_code"
+      ],
+      "resource_id_field": "provider_run_id",
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL provider_run; request is represented only by a secret-free fingerprint",
+      "time_semantics": [
+        "started_at",
+        "finished_at"
+      ],
+      "version_semantics": [
+        "dataset_schema_version",
+        "provider_policy_version",
+        "adapter_version"
+      ]
+    },
+    {
+      "business_key": "provider_run.provider_run_id",
+      "compatibility": "exactly one normal RawObject or quarantine record is returned",
+      "consumers": [
+        "worker integration tests",
+        "future operations"
+      ],
+      "contract_id": "C-004/RawIngestionPublishResult",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/raw-ingestion-publish-result.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.RawIngestionPublishResult.schema.json",
+      "lineage_fields": [
+        "raw_object",
+        "quarantine"
+      ],
+      "owner_module": "src.schemas.platform.raw_ingestion",
+      "producer": "Raw Ingestion Worker",
+      "quality_semantics": [
+        "provider_run.run_outcome",
+        "quarantine.classification"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "worker result without arbitrary download endpoint",
+      "time_semantics": [
+        "provider_run.finished_at"
+      ],
+      "version_semantics": [
+        "provider_run.dataset_schema_version"
+      ]
+    },
+    {
+      "business_key": "raw_ingestion_quarantine_id",
+      "compatibility": "schema drift is explicit and cannot be projected as normal raw publication",
+      "consumers": [
+        "operations",
+        "data quality"
+      ],
+      "contract_id": "C-004/RawIngestionQuarantine",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/raw-ingestion-quarantine.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.RawIngestionQuarantine.schema.json",
+      "lineage_fields": [
+        "provider_run_id",
+        "observed_schema_hash",
+        "expected_schema_hash",
+        "evidence_storage_ref"
+      ],
+      "owner_module": "src.schemas.platform.raw_ingestion",
+      "producer": "Raw Ingestion Worker",
+      "quality_semantics": [
+        "classification",
+        "reason_code",
+        "quarantine_status"
+      ],
+      "resource_id_field": "raw_ingestion_quarantine_id",
+      "retention_class": "QUARANTINE",
+      "schema_version": "1.0.0",
+      "storage_profile": "controlled quarantine StorageRef; drift evidence is not a normal RawObject",
+      "time_semantics": [
+        "created_at"
+      ],
+      "version_semantics": []
+    },
+    {
+      "business_key": "provider + dataset version + provider policy + canonical request",
+      "compatibility": "only supported for task_type raw_ingestion",
+      "consumers": [
+        "Raw Ingestion Worker"
+      ],
+      "contract_id": "C-004/RawIngestionTaskRequirements",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/raw-ingestion-task-requirements.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.RawIngestionTaskRequirements.schema.json",
+      "lineage_fields": [
+        "provider_id",
+        "dataset_id",
+        "provider_policy_id"
+      ],
+      "owner_module": "src.schemas.platform.raw_ingestion",
+      "producer": "Platform API client",
+      "quality_semantics": [
+        "secret-free request persistence"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "durable Task requirements; secret-bearing inputs are rejected",
+      "time_semantics": [],
+      "version_semantics": [
+        "dataset_schema_version"
+      ]
+    },
+    {
+      "business_key": "raw_object_id",
+      "compatibility": "RawObject is published only after atomic rename and registry transaction commit",
+      "consumers": [
+        "canonical",
+        "audit",
+        "recovery"
+      ],
+      "contract_id": "C-004/RawObject",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/raw-object.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.RawObject.schema.json",
+      "lineage_fields": [
+        "provider_run_id",
+        "provider_id",
+        "actual_upstream",
+        "request_fingerprint",
+        "storage_ref"
+      ],
+      "owner_module": "src.schemas.platform.raw_ingestion",
+      "producer": "Raw Ingestion Worker",
+      "quality_semantics": [
+        "raw_content_hash",
+        "observed_schema_hash"
+      ],
+      "resource_id_field": "raw_object_id",
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "append-only StorageRef publication; never stores runtime paths or credentials",
+      "time_semantics": [
+        "observed_at",
+        "ingested_at",
+        "source_published_at"
+      ],
+      "version_semantics": [
+        "dataset_schema_version",
+        "provider_schema_version"
+      ]
+    },
+    {
       "business_key": "attempt_id",
       "compatibility": "retries create new immutable attempts and never overwrite earlier attempt evidence",
       "consumers": [

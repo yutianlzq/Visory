@@ -153,6 +153,7 @@ class ResourceType(PlatformStringEnum):
     CHECKPOINT = "checkpoint"
     BACKUP = "backup"
     DEPLOYMENT = "deployment"
+    RAW_INGESTION_QUARANTINE = "raw_ingestion_quarantine"
 
 
 class RetentionClass(PlatformStringEnum):
@@ -194,6 +195,24 @@ class OrphanAction(PlatformStringEnum):
     RECOVER_REGISTRATION = "RECOVER_REGISTRATION"
 
 
+
+class ProviderRunOutcome(PlatformStringEnum):
+    SUCCEEDED = "SUCCEEDED"
+    DEGRADED = "DEGRADED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+
+class RawSchemaDriftClassification(PlatformStringEnum):
+    MATCHED = "MATCHED"
+    ADDITIVE_DRIFT = "ADDITIVE_DRIFT"
+    BREAKING_DRIFT = "BREAKING_DRIFT"
+    UNKNOWN_SCHEMA = "UNKNOWN_SCHEMA"
+
+
+class RawCompression(PlatformStringEnum):
+    NONE = "NONE"
+    GZIP = "GZIP"
 class ProviderKind(PlatformStringEnum):
     AGGREGATOR = "AGGREGATOR"
     DIRECT = "DIRECT"

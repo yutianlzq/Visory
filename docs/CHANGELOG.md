@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/yutianlzq/Visory/releases) page.
 
 ## [Unreleased]
+- [新功能] Visory-G012 / WP-0202 建立 Raw Ingestion：新增 C-004 ProviderRun、RawObject、RawIngestionQuarantine 与受控 Adapter/离线 Transport、Migration `0007_wp0202_raw_ingestion`、staging/hash/fsync/原子 rename、Schema Drift Quarantine、只读 Orphan 识别及 Durable Task 纵向闭环；不连接生产 Provider、不写真实 /data、不实现 Canonical。
 - [新功能] Visory-G011 / WP-0201 契约强化：DatasetDefinition 显式字段语义与 schema version 绑定，Provider Registry 初始化确定性幂等，新增 Migration 0006；不连接真实 Provider、不改变 Legacy API。
 
 - [新功能] Visory-G010 / WP-0201 建立 C-004 Dataset/Provider Registry：新增 ProviderDefinition、ProviderCapability、ProviderPolicy、DatasetDefinition、受控 Adapter 注册表、PostgreSQL Migration `0005_wp0201_dataset_provider_registry`、只读平台投影 API 与确定性契约生成；不连接真实数据源、不实现 Raw Ingestion 或 Canonical。

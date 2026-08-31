@@ -59,7 +59,8 @@
         "request",
         "checkpoint",
         "backup",
-        "deployment"
+        "deployment",
+        "raw_ingestion_quarantine"
       ],
       "title": "ResourceType",
       "type": "string"
@@ -148,7 +149,10 @@
       "type": "string"
     },
     "task_type": {
-      "const": "artifact_orphan_dry_run",
+      "enum": [
+        "artifact_orphan_dry_run",
+        "raw_ingestion"
+      ],
       "title": "Task Type",
       "type": "string"
     }
