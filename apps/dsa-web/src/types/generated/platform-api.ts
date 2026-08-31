@@ -236,7 +236,19 @@ export interface ProviderSettingsProjection {
   readonly capabilities: ReadonlyArray<ProviderCapability>;
   readonly datasets: ReadonlyArray<DatasetDefinition>;
   readonly policies: ReadonlyArray<ProviderPolicy>;
-  readonly providers: ReadonlyArray<ProviderDefinition>;
+  readonly providers: ReadonlyArray<ProviderSettingsProvider>;
+}
+
+/** Public Settings projection; never exposes credential references. */
+export interface ProviderSettingsProvider {
+  readonly actual_upstream?: string | null;
+  readonly adapter_name: string;
+  readonly adapter_version: string;
+  readonly credential_configured?: boolean;
+  readonly display_name: string;
+  readonly enabled?: boolean;
+  readonly provider_id: string;
+  readonly provider_kind: ProviderKind;
 }
 
 export type ResolutionStatus = "RESOLVED" | "AMBIGUOUS" | "NOT_FOUND" | "UNSUPPORTED" | "CONFLICT" | "INACTIVE";

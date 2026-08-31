@@ -150,9 +150,22 @@ class ProviderRegistryRepository:
 
     @classmethod
     def settings_projection(cls, session: Session):
-        from src.schemas.platform import ProviderSettingsProjection
+        from src.schemas.platform import ProviderSettingsProjection, ProviderSettingsProvider
+        providers = tuple(
+            ProviderSettingsProvider(
+                provider_id=record.provider_id,
+                display_name=record.display_name,
+                adapter_name=record.adapter_name,
+                adapter_version=record.adapter_version,
+                provider_kind=record.provider_kind,
+                enabled=record.enabled,
+                credential_configured=record.credential_ref is not None,
+                actual_upstream=record.actual_upstream,
+            )
+            for record in cls.list_providers(session)
+        )
         return ProviderSettingsProjection(
-            providers=cls.list_providers(session), datasets=cls.list_datasets(session),
+            providers=providers, datasets=cls.list_datasets(session),
             capabilities=cls.list_capabilities(session), policies=cls.list_policies(session),
         )
 

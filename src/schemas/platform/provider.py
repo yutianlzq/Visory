@@ -194,11 +194,24 @@ class DatasetDefinition(PlatformContractModel):
         return self
 
 
+class ProviderSettingsProvider(PlatformContractModel):
+    """Public Settings projection; never exposes credential references."""
+
+    provider_id: str
+    display_name: Annotated[str, Field(min_length=1, max_length=255)]
+    adapter_name: str
+    adapter_version: Annotated[str, Field(pattern=_SEMVER)]
+    provider_kind: ProviderKind
+    enabled: bool = True
+    credential_configured: bool = False
+    actual_upstream: str | None = None
+
+
 class ProviderSettingsProjection(PlatformContractModel):
-    providers: tuple[ProviderDefinition, ...]
+    providers: tuple[ProviderSettingsProvider, ...]
     datasets: tuple[DatasetDefinition, ...]
     capabilities: tuple[ProviderCapability, ...]
     policies: tuple[ProviderPolicy, ...]
 
 
-__all__ = ["DatasetDefinition", "ProviderCapability", "ProviderDefinition", "ProviderPolicy", "ProviderSettingsProjection"]
+__all__ = ["DatasetDefinition", "ProviderCapability", "ProviderDefinition", "ProviderPolicy", "ProviderSettingsProvider", "ProviderSettingsProjection"]
