@@ -1,0 +1,115 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "dataset_id": {
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "entity_scope": {
+      "title": "Entity Scope",
+      "type": "string"
+    },
+    "enum_domains": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": "Enum Domains",
+      "type": "object"
+    },
+    "field_types": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Field Types",
+      "type": "object"
+    },
+    "frequency": {
+      "title": "Frequency",
+      "type": "string"
+    },
+    "null_semantics": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Null Semantics",
+      "type": "object"
+    },
+    "optional_fields": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Optional Fields",
+      "type": "array"
+    },
+    "owner_module": {
+      "title": "Owner Module",
+      "type": "string"
+    },
+    "partition_template": {
+      "title": "Partition Template",
+      "type": "string"
+    },
+    "primary_key_fields": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Primary Key Fields",
+      "type": "array"
+    },
+    "quality_rule_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Quality Rule Ids",
+      "type": "array"
+    },
+    "required_fields": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Required Fields",
+      "type": "array"
+    },
+    "schema_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "time_semantics": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Time Semantics",
+      "type": "object"
+    },
+    "units": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Units",
+      "type": "object"
+    }
+  },
+  "required": [
+    "dataset_id",
+    "schema_version",
+    "entity_scope",
+    "frequency",
+    "primary_key_fields",
+    "required_fields",
+    "field_types",
+    "units",
+    "enum_domains",
+    "time_semantics",
+    "null_semantics",
+    "partition_template",
+    "owner_module"
+  ],
+  "title": "DatasetDefinition",
+  "type": "object"
+}

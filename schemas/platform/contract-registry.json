@@ -724,6 +724,163 @@
       ]
     },
     {
+      "business_key": "dataset_id + schema_version",
+      "compatibility": "dataset schema versions are additive or explicitly versioned",
+      "consumers": [
+        "canonical",
+        "ingestion",
+        "settings"
+      ],
+      "contract_id": "C-004/DatasetDefinition",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/dataset-definition.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.DatasetDefinition.schema.json",
+      "lineage_fields": [
+        "owner_module"
+      ],
+      "owner_module": "src.schemas.platform.provider",
+      "producer": "Dataset Registry",
+      "quality_semantics": [
+        "primary keys are required fields; required/optional sets disjoint"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL dataset_definition",
+      "time_semantics": [
+        "time_semantics"
+      ],
+      "version_semantics": [
+        "schema_version"
+      ]
+    },
+    {
+      "business_key": "provider_id + dataset_id + market + frequency",
+      "compatibility": "capability observations are replaceable by newer checked_at records",
+      "consumers": [
+        "settings",
+        "ingestion"
+      ],
+      "contract_id": "C-004/ProviderCapability",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/provider-capability.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.ProviderCapability.schema.json",
+      "lineage_fields": [
+        "provider_id",
+        "dataset_id"
+      ],
+      "owner_module": "src.schemas.platform.provider",
+      "producer": "Provider Probe",
+      "quality_semantics": [
+        "capability status is explicit"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL provider_capability",
+      "time_semantics": [
+        "history_start",
+        "checked_at"
+      ],
+      "version_semantics": []
+    },
+    {
+      "business_key": "provider_id",
+      "compatibility": "provider identities remain stable; adapter changes are versioned",
+      "consumers": [
+        "settings",
+        "ingestion"
+      ],
+      "contract_id": "C-004/ProviderDefinition",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/provider-definition.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.ProviderDefinition.schema.json",
+      "lineage_fields": [
+        "actual_upstream"
+      ],
+      "owner_module": "src.schemas.platform.provider",
+      "producer": "Provider Registry",
+      "quality_semantics": [
+        "adapter_name is controlled",
+        "credential_ref is secret reference only"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL provider_definition",
+      "time_semantics": [
+        "created_at",
+        "updated_at"
+      ],
+      "version_semantics": [
+        "adapter_version"
+      ]
+    },
+    {
+      "business_key": "dataset_id + policy_version",
+      "compatibility": "policies are immutable versions with effective intervals",
+      "consumers": [
+        "ingestion",
+        "snapshot"
+      ],
+      "contract_id": "C-004/ProviderPolicy",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/provider-policy.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.ProviderPolicy.schema.json",
+      "lineage_fields": [
+        "primary_provider_id",
+        "supplemental_provider_ids"
+      ],
+      "owner_module": "src.schemas.platform.provider",
+      "producer": "Provider Policy Registry",
+      "quality_semantics": [
+        "merge mode and field authority are explicit"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL provider_policy",
+      "time_semantics": [
+        "effective_from",
+        "effective_to"
+      ],
+      "version_semantics": [
+        "policy_version"
+      ]
+    },
+    {
       "business_key": "attempt_id",
       "compatibility": "retries create new immutable attempts and never overwrite earlier attempt evidence",
       "consumers": [

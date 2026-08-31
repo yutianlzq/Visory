@@ -192,3 +192,24 @@ class ArtifactIntegrityState(PlatformStringEnum):
 
 class OrphanAction(PlatformStringEnum):
     RECOVER_REGISTRATION = "RECOVER_REGISTRATION"
+
+
+class ProviderKind(PlatformStringEnum):
+    AGGREGATOR = "AGGREGATOR"
+    DIRECT = "DIRECT"
+    FILE = "FILE"
+    INTERNAL = "INTERNAL"
+
+
+class ProviderCapabilityStatus(PlatformStringEnum):
+    AVAILABLE = "AVAILABLE"
+    DEGRADED = "DEGRADED"
+    UNAVAILABLE = "UNAVAILABLE"
+    UNVERIFIED = "UNVERIFIED"
+
+
+class ProviderMergeMode(PlatformStringEnum):
+    REPLACE_PARTITION = "REPLACE_PARTITION"
+    APPEND_DISJOINT = "APPEND_DISJOINT"
+    ENRICH_FIELDS = "ENRICH_FIELDS"
+    COMPARE_ONLY = "COMPARE_ONLY"

@@ -17,7 +17,7 @@ from src.repositories.platform import (
 )
 
 
-HEAD_REVISION = "0004_wp0103_durable_task_control_plane"
+HEAD_REVISION = "0005_wp0201_dataset_provider_registry"
 
 
 def _table_names(database: PostgresDatabase) -> tuple[str, ...]:
@@ -54,8 +54,12 @@ def test_empty_database_upgrade_is_idempotent_and_reversible(isolated_postgres_d
         "artifact_registry",
         "asset_alias",
         "asset_identity",
+        "dataset_definition",
         "identity_quarantine",
         "platform_task",
+        "provider_capability",
+        "provider_definition",
+        "provider_policy",
         "task_attempt",
         "task_checkpoint",
         "task_command_idempotency",

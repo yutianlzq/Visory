@@ -7,6 +7,7 @@ from fastapi import FastAPI
 
 from src.core.platform.identity_resolver import AssetResolverService
 from src.services.platform.task_control import TaskControlService
+from src.services.platform.provider_registry import ProviderRegistryService
 from src.repositories.platform import DatabaseConfigurationError, DatabaseSecretError, PostgresDatabase, PostgresSettings
 from src.repositories.platform.identity import PostgresAssetResolverRepository
 
@@ -33,6 +34,7 @@ def initialize_asset_identity_runtime(app: FastAPI) -> None:
     app.state.asset_resolver_service = AssetResolverService(PostgresAssetResolverRepository(database))
     runtime_root = os.getenv("VISORY_RUNTIME_ROOT")
     app.state.task_control_service = TaskControlService(database, runtime_root=runtime_root)
+    app.state.provider_registry_service = ProviderRegistryService(database)
     app.state.platform_identity_runtime_owned = True
 
 
@@ -47,4 +49,6 @@ def close_asset_identity_runtime(app: FastAPI) -> None:
         delattr(app.state, "asset_resolver_service")
     if hasattr(app.state, "task_control_service"):
         delattr(app.state, "task_control_service")
+    if hasattr(app.state, "provider_registry_service"):
+        delattr(app.state, "provider_registry_service")
     delattr(app.state, "platform_identity_runtime_owned")
