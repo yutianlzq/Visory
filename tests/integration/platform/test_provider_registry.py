@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.repositories.platform import ProviderRegistryRepository, upgrade_database
+from src.repositories.platform import PlatformDatabaseError, ProviderRegistryRepository, upgrade_database
 from src.services.platform.provider_registry import default_registry_records
 
 
@@ -41,7 +41,6 @@ def test_provider_policy_effective_intervals_cannot_overlap(isolated_postgres_da
         repo.add_policy(session, policies[0])
 
     from datetime import timedelta
-    from src.repositories.platform import PlatformDatabaseError
 
     overlapping = policies[0].model_copy(update={
         "provider_policy_id": f"{policies[0].dataset_id}_v2",
@@ -53,3 +52,32 @@ def test_provider_policy_effective_intervals_cannot_overlap(isolated_postgres_da
             ProviderRegistryRepository.add_policy(session, overlapping)
     assert captured.value.error_code == "DATABASE_OPERATION_FAILED"
     assert captured.value.retryable is False
+
+
+def test_dataset_versions_are_explicitly_bound_and_bootstrap_is_idempotent(isolated_postgres_database):
+    database = isolated_postgres_database
+    from src.services.platform.provider_registry import ProviderRegistryService
+
+    from src.services.platform.provider_registry import default_registry_records
+    upgrade_database(database.engine)
+    service = ProviderRegistryService(database)
+    service.bootstrap_defaults()
+    service.bootstrap_defaults()
+    with database.transaction() as session:
+        repo = ProviderRegistryRepository()
+        providers, datasets, capabilities, policies = default_registry_records()
+        version_two = datasets[2].model_copy(update={"schema_version": "2.0.0"})
+        repo.add_dataset(session, version_two)
+        capability_two = capabilities[5].model_copy(update={"dataset_schema_version": "2.0.0"})
+        repo.add_capability(session, capability_two)
+        policy_two = policies[2].model_copy(update={"dataset_schema_version": "2.0.0", "provider_policy_id": "bar_1d_raw_v2", "policy_version": "2.0.0"})
+        repo.add_policy(session, policy_two)
+        listed = repo.list_datasets(session)
+        assert [item.schema_version for item in listed if item.dataset_id == "bar_1d_raw"] == ["1.0.0", "2.0.0"]
+        assert all(item.dataset_schema_version in {"1.0.0", "2.0.0"} for item in repo.list_capabilities(session, "bar_1d_raw"))
+        assert all(item.dataset_schema_version in {"1.0.0", "2.0.0"} for item in repo.list_policies(session, "bar_1d_raw"))
+
+    conflicting = default_registry_records()[1][2].model_copy(update={"owner_module": "conflicting_module"})
+    with pytest.raises(ValueError, match="registry bootstrap conflict"):
+        with database.transaction() as session:
+            ProviderRegistryRepository.ensure_datasets(session, (conflicting,))

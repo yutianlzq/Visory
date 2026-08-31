@@ -17,7 +17,7 @@ from src.repositories.platform import (
 )
 
 
-HEAD_REVISION = "0005_wp0201_dataset_provider_registry"
+HEAD_REVISION = "0006_wp0201_registry_contract_hardening"
 
 
 def _table_names(database: PostgresDatabase) -> tuple[str, ...]:

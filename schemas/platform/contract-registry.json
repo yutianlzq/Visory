@@ -725,7 +725,7 @@
     },
     {
       "business_key": "dataset_id + schema_version",
-      "compatibility": "dataset schema versions are additive or explicitly versioned",
+      "compatibility": "dataset schema versions are immutable rows keyed by dataset_id + schema_version; capabilities and policies bind explicitly to one version",
       "consumers": [
         "canonical",
         "ingestion",
@@ -733,7 +733,13 @@
       ],
       "contract_id": "C-004/DatasetDefinition",
       "golden_payloads": [
-        "tests/golden/platform/contracts/success/dataset-definition.json"
+        "tests/golden/platform/contracts/success/dataset-definition.json",
+        "tests/golden/platform/contracts/success/dataset-definition-security_master.json",
+        "tests/golden/platform/contracts/success/dataset-definition-trading_calendar.json",
+        "tests/golden/platform/contracts/success/dataset-definition-bar_1d_raw.json",
+        "tests/golden/platform/contracts/rejected/dataset-definition-security_master.json",
+        "tests/golden/platform/contracts/rejected/dataset-definition-trading_calendar.json",
+        "tests/golden/platform/contracts/rejected/dataset-definition-bar_1d_raw.json"
       ],
       "hash_profile": {
         "excluded_fields": [
@@ -749,6 +755,7 @@
       "owner_module": "src.schemas.platform.provider",
       "producer": "Dataset Registry",
       "quality_semantics": [
+        "every declared field has explicit type, unit, null and time semantics",
         "primary keys are required fields; required/optional sets disjoint"
       ],
       "resource_id_field": null,
@@ -763,7 +770,7 @@
       ]
     },
     {
-      "business_key": "provider_id + dataset_id + market + frequency",
+      "business_key": "provider_id + dataset_id + dataset_schema_version + market + frequency",
       "compatibility": "capability observations are replaceable by newer checked_at records",
       "consumers": [
         "settings",
@@ -798,7 +805,9 @@
         "history_start",
         "checked_at"
       ],
-      "version_semantics": []
+      "version_semantics": [
+        "dataset_schema_version"
+      ]
     },
     {
       "business_key": "provider_id",
@@ -819,14 +828,13 @@
         "unordered_array_paths": []
       },
       "json_schema_file": "C-004.ProviderDefinition.schema.json",
-      "lineage_fields": [
-        "actual_upstream"
-      ],
+      "lineage_fields": [],
       "owner_module": "src.schemas.platform.provider",
       "producer": "Provider Registry",
       "quality_semantics": [
         "adapter_name is controlled",
-        "credential_ref is secret reference only"
+        "credential_ref is secret reference only",
+        "actual upstream is recorded only by ProviderRun"
       ],
       "resource_id_field": null,
       "retention_class": "PINNED",
@@ -841,7 +849,7 @@
       ]
     },
     {
-      "business_key": "dataset_id + policy_version",
+      "business_key": "dataset_id + dataset_schema_version + policy_version",
       "compatibility": "policies are immutable versions with effective intervals",
       "consumers": [
         "ingestion",
@@ -877,6 +885,7 @@
         "effective_to"
       ],
       "version_semantics": [
+        "dataset_schema_version",
         "policy_version"
       ]
     },

@@ -87,7 +87,7 @@ ProviderDefinition
 | `credential_ref` | string/null | Secret引用，不保存密钥值 |
 | `created_at/updated_at` | timestamptz | 控制面时间 |
 
-聚合源必须保存`actual_upstream`。页面可以展示Provider名称，但任何Canonical事实都必须追溯到实际原始上游和Raw Hash。
+`ProviderDefinition`只保存Provider/Adapter注册信息，不声明实际上游。实际上游由后续`ProviderRun.actual_upstream`按每次运行保存；Settings不得把占位字符串展示成真实来源。
 
 ### 3.3 ProviderCapability与ProviderPolicy
 
@@ -96,6 +96,7 @@ ProviderDefinition
 ```text
 provider_id
 dataset_id
+dataset_schema_version
 market
 frequency
 supported_fields[]
@@ -113,6 +114,7 @@ checked_at
 ```text
 provider_policy_id
 dataset_id
+dataset_schema_version
 policy_version
 primary_provider_id
 supplemental_provider_ids[]
@@ -176,6 +178,8 @@ retention_class=PINNED
 Raw只追加、不改写、不删源字段、不保存请求密钥。HTTP失败正文可以保存到受控诊断Artifact，但必须脱敏。
 
 ### 3.6 DatasetDefinition与CanonicalPartition
+
+`DatasetDefinition`支持同一`dataset_id`保存多个不可变`schema_version`；ProviderCapability和ProviderPolicy必须显式绑定`dataset_schema_version`。每个字段的类型、单位、时间语义和Null语义必须逐项声明，禁止统一推断。
 
 `DatasetDefinition`：
 

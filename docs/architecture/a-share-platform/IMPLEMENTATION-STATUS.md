@@ -27,8 +27,11 @@
 | Visory-G007 | COMPLETE / MERGED | [G007 / WP-0102 进度与验收记录](GOAL-G007-STATUS.md)；PR #6；merge commit `a9a640b`；最终 Run `33299476674` 三项全绿 |
 | Visory-G008 | COMPLETE / MERGED | [G008 / WP-0103 进度与验收记录](GOAL-G008-STATUS.md)；merge commit `ea4f8b1`；PR #7；Run `33315054696` 三项全绿 |
 | Visory-G009 | COMPLETE / MERGED | [G009 / WP-0104 进度与验收记录](GOAL-G009-STATUS.md)；PR #15 merge commit `9c03666740a1e7a90a616a2d774efc57ca5a0e6b`；真实认证 ASGI/浏览器旅程、PostgreSQL SSE replay 和连接清理通过；Run `33329710242` 三项阻断 Job 全绿 |
+| Visory-G011 | IN_PROGRESS | G011 / WP-0201 Registry Hardening; target Migration 0006_wp0201_registry_contract_hardening; progress remains 8/45 |
 | DSA Baseline | IMPORTED / VERIFIED | 1126/1126 blob 验签；Python/Web 双基线；`baseline_regression_delta=0`；`web_lint_build_regression_delta=0` |
 | Implemented Work Packages | 8/45 | `WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201` 为 `VERIFIED`；其余 37 项 `NOT_STARTED` |
+
+Current Goal: Visory-G011 / WP-0201 Registry Contract Hardening is IN_PROGRESS from baseline c68739f87d1fb6e13087371b6c260120c59dd02c; target migration 0006_wp0201_registry_contract_hardening; progress remains 8/45.
 
 ## 2. 状态定义
 

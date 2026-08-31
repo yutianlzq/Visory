@@ -187,6 +187,7 @@ export type PriorityClass = "P0_DATA_CERTIFICATION" | "P1_FORMAL_SIGNAL" | "P2_M
 export interface ProviderCapability {
   readonly checked_at: string;
   readonly dataset_id: string;
+  readonly dataset_schema_version: string;
   readonly frequency: string;
   readonly freshness_sla_seconds: number;
   readonly history_start?: string | null;
@@ -200,7 +201,6 @@ export interface ProviderCapability {
 export type ProviderCapabilityStatus = "AVAILABLE" | "DEGRADED" | "UNAVAILABLE" | "UNVERIFIED";
 
 export interface ProviderDefinition {
-  readonly actual_upstream?: string | null;
   readonly adapter_name: string;
   readonly adapter_version: string;
   readonly created_at: string;
@@ -220,6 +220,7 @@ export interface ProviderPolicy {
   readonly allowed_merge_mode: ProviderMergeMode;
   readonly conflict_tolerance: Readonly<Record<string, unknown>>;
   readonly dataset_id: string;
+  readonly dataset_schema_version: string;
   readonly effective_from: string;
   readonly effective_to?: string | null;
   readonly fallback_triggers?: ReadonlyArray<string>;
@@ -239,9 +240,8 @@ export interface ProviderSettingsProjection {
   readonly providers: ReadonlyArray<ProviderSettingsProvider>;
 }
 
-/** Public Settings projection; never exposes credential references. */
+/** Public Settings projection; never exposes credential references or actual upstream claims. */
 export interface ProviderSettingsProvider {
-  readonly actual_upstream?: string | null;
   readonly adapter_name: string;
   readonly adapter_version: string;
   readonly credential_configured?: boolean;

@@ -2647,7 +2647,7 @@ describe('SettingsPage', () => {
         provider_kind: 'DIRECT',
         enabled: true,
         credential_configured: true,
-        actual_upstream: null,
+
       }],
       datasets: [{
         dataset_id: 'bar_1d_raw',
@@ -2667,12 +2667,12 @@ describe('SettingsPage', () => {
         owner_module: 'data_platform',
       }],
       capabilities: [{
-        provider_id: 'financial_api', dataset_id: 'bar_1d_raw', market: 'CN', frequency: 'daily',
+        provider_id: 'financial_api', dataset_id: 'bar_1d_raw', dataset_schema_version: '1.0.0', market: 'CN', frequency: 'daily',
         supported_fields: ['entity_key'], history_start: null, freshness_sla_seconds: 86400,
         rate_limit_profile: {}, provider_capability_status: 'AVAILABLE', checked_at: '2026-08-31T00:00:00Z',
       }],
       policies: [{
-        provider_policy_id: 'bar_1d_raw_v1', dataset_id: 'bar_1d_raw', policy_version: '1.0.0',
+        provider_policy_id: 'bar_1d_raw_v1', dataset_id: 'bar_1d_raw', dataset_schema_version: '1.0.0', policy_version: '1.0.0',
         primary_provider_id: 'financial_api', supplemental_provider_ids: [], allowed_merge_mode: 'REPLACE_PARTITION',
         fallback_triggers: [], field_authority_map: { close: 'financial_api' }, conflict_tolerance: {},
         freshness_sla_seconds: 86400, required_quality_rules: ['identity_resolved'],
@@ -2711,7 +2711,7 @@ describe('SettingsPage', () => {
       providers: [{
         provider_id: 'a_stock_data', display_name: 'a-stock-data', adapter_name: 'a_stock_data',
         adapter_version: '1.0.0', provider_kind: 'AGGREGATOR', enabled: true,
-        credential_configured: false, actual_upstream: 'declared_by_adapter',
+        credential_configured: false,
       }],
       datasets: [], capabilities: [], policies: [],
     });
