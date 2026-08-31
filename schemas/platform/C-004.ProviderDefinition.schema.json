@@ -1,0 +1,89 @@
+{
+  "$defs": {
+    "ProviderKind": {
+      "enum": [
+        "AGGREGATOR",
+        "DIRECT",
+        "FILE",
+        "INTERNAL"
+      ],
+      "title": "ProviderKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actual_upstream": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Actual Upstream"
+    },
+    "adapter_name": {
+      "title": "Adapter Name",
+      "type": "string"
+    },
+    "adapter_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Adapter Version",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "credential_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Credential Ref"
+    },
+    "display_name": {
+      "maxLength": 255,
+      "minLength": 1,
+      "title": "Display Name",
+      "type": "string"
+    },
+    "enabled": {
+      "default": true,
+      "title": "Enabled",
+      "type": "boolean"
+    },
+    "provider_id": {
+      "title": "Provider Id",
+      "type": "string"
+    },
+    "provider_kind": {
+      "$ref": "#/$defs/ProviderKind"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider_id",
+    "display_name",
+    "adapter_name",
+    "adapter_version",
+    "provider_kind",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "ProviderDefinition",
+  "type": "object"
+}

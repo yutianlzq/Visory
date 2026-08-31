@@ -161,7 +161,7 @@ def check_high_confidence_secrets() -> int:
         "GitHub token": re.compile(r"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36,}\b"),
         "AWS access key": re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     }
-    excluded_parts = {".git", "node_modules", "dist", "build", "upstream", "repos"}
+    excluded_parts = {".git", ".venv", ".pytest_cache", "node_modules", "dist", "build", "__pycache__", "upstream", "repos"}
     findings: list[str] = []
     for path in ROOT.rglob("*"):
         if not path.is_file() or any(part in excluded_parts for part in path.parts):

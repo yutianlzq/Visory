@@ -10,7 +10,7 @@ def test_registry_contains_supported_contracts_and_required_metadata() -> None:
     registrations = PLATFORM_CONTRACTS.list()
     assert registrations
     assert {item.contract_id.split("/", 1)[0] for item in registrations} <= {
-        "C-001", "C-002", "C-003", "C-007", "C-010", "C-011",
+        "C-001", "C-002", "C-003", "C-004", "C-007", "C-010", "C-011",
     }
 
     for item in registrations:
@@ -45,5 +45,5 @@ def test_platform_model_rejects_ambiguous_bare_field_names(field_name: str) -> N
 def test_registry_lookup_is_explicit() -> None:
     contract = PLATFORM_CONTRACTS.get("C-003/StorageRef")
     assert contract.resource_id_field is None
-    with pytest.raises(KeyError):
-        PLATFORM_CONTRACTS.get("C-004/ProviderDefinition")
+    provider = PLATFORM_CONTRACTS.get("C-004/ProviderDefinition")
+    assert provider.schema_version == "1.0.0"

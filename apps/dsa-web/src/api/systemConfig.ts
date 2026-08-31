@@ -178,6 +178,12 @@ function toSnakeAgentBackendPayload(
 }
 
 export const systemConfigApi = {
+  async getProviderRegistry(): Promise<import('../types/generated/platform-api').ProviderSettingsProjection> {
+    const response = await apiClient.get<Record<string, unknown>>('/api/platform/v1/provider-registry');
+    const payload = toCamelCase<{ data: import('../types/generated/platform-api').ProviderSettingsProjection }>(response.data);
+    return payload.data;
+  },
+
   async getConfig(includeSchema = true): Promise<SystemConfigResponse> {
     const response = await apiClient.get<Record<string, unknown>>('/api/v1/system/config', {
       params: { include_schema: includeSchema },

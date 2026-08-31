@@ -8,12 +8,43 @@ from fastapi.responses import StreamingResponse
 from api.platform.errors import platform_error
 from api.platform.responses import build_list_envelope, build_success_envelope
 from src.services.platform.task_control import TaskControlError
+from src.services.platform.provider_registry import ProviderRegistryService
 from src.schemas.platform import TaskCancelRequest, TaskCreateRequest, TaskDetails, TaskListQuery, TaskRetryRequest
 from src.repositories.platform.errors import PlatformDatabaseError
 from src.schemas.platform import AssetResolutionRequest, PlatformSuccessEnvelope
 
 
 router = APIRouter(prefix="/platform/v1", tags=["Platform"])
+
+
+def _provider_registry_service(request: Request) -> ProviderRegistryService:
+    service = getattr(request.app.state, "provider_registry_service", None)
+    if service is None:
+        raise platform_error(503, details={"dependency": "postgresql", "operation": "provider_registry"})
+    return service
+
+
+def _provider_registry_payload(request: Request) -> dict[str, object]:
+    projection = _provider_registry_service(request).settings_projection()
+    return projection.model_dump(mode="json")
+
+
+@router.get("/provider-registry", response_model=PlatformSuccessEnvelope, summary="Read dataset and provider registry")
+def get_provider_registry(request: Request) -> PlatformSuccessEnvelope:
+    payload = _provider_registry_payload(request)
+    return build_success_envelope(request=request, data=payload, data_snapshot_id=None)
+
+
+@router.get("/providers", response_model=PlatformSuccessEnvelope, summary="List registered providers")
+def list_providers(request: Request) -> PlatformSuccessEnvelope:
+    payload = _provider_registry_payload(request)
+    return build_success_envelope(request=request, data={"providers": payload["providers"]}, data_snapshot_id=None)
+
+
+@router.get("/datasets", response_model=PlatformSuccessEnvelope, summary="List registered datasets")
+def list_datasets(request: Request) -> PlatformSuccessEnvelope:
+    payload = _provider_registry_payload(request)
+    return build_success_envelope(request=request, data={"datasets": payload["datasets"]}, data_snapshot_id=None)
 
 
 @router.post(

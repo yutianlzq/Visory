@@ -1,0 +1,109 @@
+{
+  "$defs": {
+    "ProviderMergeMode": {
+      "enum": [
+        "REPLACE_PARTITION",
+        "APPEND_DISJOINT",
+        "ENRICH_FIELDS",
+        "COMPARE_ONLY"
+      ],
+      "title": "ProviderMergeMode",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "allowed_merge_mode": {
+      "$ref": "#/$defs/ProviderMergeMode"
+    },
+    "conflict_tolerance": {
+      "additionalProperties": true,
+      "title": "Conflict Tolerance",
+      "type": "object"
+    },
+    "dataset_id": {
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "effective_from": {
+      "format": "date-time",
+      "title": "Effective From",
+      "type": "string"
+    },
+    "effective_to": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Effective To"
+    },
+    "fallback_triggers": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Fallback Triggers",
+      "type": "array"
+    },
+    "field_authority_map": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Field Authority Map",
+      "type": "object"
+    },
+    "freshness_sla_seconds": {
+      "minimum": 0,
+      "title": "Freshness Sla Seconds",
+      "type": "integer"
+    },
+    "policy_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Policy Version",
+      "type": "string"
+    },
+    "primary_provider_id": {
+      "title": "Primary Provider Id",
+      "type": "string"
+    },
+    "provider_policy_id": {
+      "title": "Provider Policy Id",
+      "type": "string"
+    },
+    "required_quality_rules": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Required Quality Rules",
+      "type": "array"
+    },
+    "supplemental_provider_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Supplemental Provider Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "provider_policy_id",
+    "dataset_id",
+    "policy_version",
+    "primary_provider_id",
+    "allowed_merge_mode",
+    "field_authority_map",
+    "conflict_tolerance",
+    "freshness_sla_seconds",
+    "effective_from"
+  ],
+  "title": "ProviderPolicy",
+  "type": "object"
+}

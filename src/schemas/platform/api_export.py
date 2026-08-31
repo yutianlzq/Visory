@@ -27,6 +27,7 @@ from .task import (
     TaskRetryRequest,
     TaskStateEventRecord,
 )
+from .provider import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy, ProviderSettingsProjection
 from .api import (
     PLATFORM_API_SCHEMA_VERSION,
     PlatformAPIError,
@@ -41,6 +42,11 @@ from .api import (
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FRONTEND_TYPE_EXPORT = REPO_ROOT / "apps" / "dsa-web" / "src" / "types" / "generated" / "platform-api.ts"
 _API_MODELS = (
+    DatasetDefinition,
+    ProviderCapability,
+    ProviderDefinition,
+    ProviderPolicy,
+    ProviderSettingsProjection,
     ArtifactManifest,
     ArtifactPublishResult,
     ArtifactRecord,
@@ -93,6 +99,9 @@ def render_platform_openapi() -> dict[str, Any]:
         },
         "openapi": "3.1.0",
         "paths": {
+            "/api/platform/v1/provider-registry": {"get": {"operationId": "getProviderRegistry", "responses": {"200": {"description": "Dataset and provider registry projection", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}}, "summary": "Read dataset and provider registry"}},
+            "/api/platform/v1/providers": {"get": {"operationId": "listProviders", "responses": {"200": {"description": "Registered providers", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}}, "summary": "List registered providers"}},
+            "/api/platform/v1/datasets": {"get": {"operationId": "listDatasets", "responses": {"200": {"description": "Registered datasets", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}}, "summary": "List registered datasets"}},
             "/api/platform/v1/asset-resolutions": {
                 "post": {
                     "operationId": "resolveAssetIdentity",

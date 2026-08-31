@@ -1,0 +1,1 @@
+{"contract_id":"C-004/ProviderCapability","payload":{"provider_id":"a_stock_data","dataset_id":"bar_1d_raw","market":"CN","frequency":"daily","supported_fields":["close","entity_key","trade_date"],"history_start":null,"freshness_sla_seconds":86400,"rate_limit_profile":{"requests_per_minute":60},"provider_capability_status":"AVAILABLE","checked_at":"2026-08-31T00:00:00Z"}}

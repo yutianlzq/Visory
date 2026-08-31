@@ -50,11 +50,15 @@ from .enums import (
     StorageBackend,
     StorageNamespace,
     TaskState,
+    ProviderCapabilityStatus,
+    ProviderKind,
+    ProviderMergeMode,
 )
 from .hashing import ContentHashValue, DEFAULT_HASH_PROFILE, HashProfile, canonical_json_bytes, compute_content_hash
 from .identity import EntityIdentity, build_entity_key, parse_entity_key
 from .registry import PLATFORM_CONTRACTS, ContractRegistration, ContractRegistry
 from .resources import ResourceRef, generate_resource_id, generate_uuid7, parse_resource_id
+from .provider import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy, ProviderSettingsProjection
 from .storage import StorageRef
 from .temporal import AvailabilityMetadata, PointInTimeWindow
 from .task import (
@@ -113,6 +117,14 @@ __all__ = [
     "PlatformResponseMeta",
     "PlatformSuccessEnvelope",
     "PointInTimeWindow",
+    "DatasetDefinition",
+    "ProviderCapability",
+    "ProviderDefinition",
+    "ProviderPolicy",
+    "ProviderSettingsProjection",
+    "ProviderCapabilityStatus",
+    "ProviderKind",
+    "ProviderMergeMode",
     "PriorityClass",
     "PublicationMetadata",
     "PublicationStatus",

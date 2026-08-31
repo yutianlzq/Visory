@@ -11,6 +11,7 @@ from .identity import (
 from .migrations import MigrationStatus, downgrade_database, get_migration_status, upgrade_database
 from .settings import PostgresSettings, read_secret_file
 from .task import TaskControlRepository
+from .provider import ProviderRegistryRepository
 
 __all__ = [
     "ArtifactRepository",
@@ -28,6 +29,7 @@ __all__ = [
     "PostgresSettings",
     "ResolverAliasRow",
     "TaskControlRepository",
+    "ProviderRegistryRepository",
     "build_postgres_url",
     "create_postgres_engine",
     "downgrade_database",

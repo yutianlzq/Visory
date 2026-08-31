@@ -100,6 +100,24 @@ export type AssetType = "stock" | "index" | "etf" | "convertible_bond" | "fund" 
 
 export type AttemptOutcome = "SUCCEEDED" | "DEGRADED" | "FAILED" | "CANCELLED" | "BLOCKED" | "LEASE_LOST";
 
+export interface DatasetDefinition {
+  readonly dataset_id: string;
+  readonly entity_scope: string;
+  readonly enum_domains: Readonly<Record<string, ReadonlyArray<string>>>;
+  readonly field_types: Readonly<Record<string, string>>;
+  readonly frequency: string;
+  readonly null_semantics: Readonly<Record<string, string>>;
+  readonly optional_fields?: ReadonlyArray<string>;
+  readonly owner_module: string;
+  readonly partition_template: string;
+  readonly primary_key_fields: ReadonlyArray<string>;
+  readonly quality_rule_ids?: ReadonlyArray<string>;
+  readonly required_fields: ReadonlyArray<string>;
+  readonly schema_version: string;
+  readonly time_semantics: Readonly<Record<string, string>>;
+  readonly units: Readonly<Record<string, string>>;
+}
+
 export type IdentityStatus = "ACTIVE" | "INACTIVE" | "DELISTED" | "QUARANTINED";
 
 export type OrphanAction = "RECOVER_REGISTRATION";
@@ -165,6 +183,61 @@ export interface PlatformSuccessEnvelope {
 }
 
 export type PriorityClass = "P0_DATA_CERTIFICATION" | "P1_FORMAL_SIGNAL" | "P2_MARKET_REVIEW" | "P3_USER_INTERACTIVE" | "P4_RESEARCH" | "P5_PREVIEW_AND_MAINTENANCE";
+
+export interface ProviderCapability {
+  readonly checked_at: string;
+  readonly dataset_id: string;
+  readonly frequency: string;
+  readonly freshness_sla_seconds: number;
+  readonly history_start?: string | null;
+  readonly market: string;
+  readonly provider_capability_status: ProviderCapabilityStatus;
+  readonly provider_id: string;
+  readonly rate_limit_profile: Readonly<Record<string, unknown>>;
+  readonly supported_fields: ReadonlyArray<string>;
+}
+
+export type ProviderCapabilityStatus = "AVAILABLE" | "DEGRADED" | "UNAVAILABLE" | "UNVERIFIED";
+
+export interface ProviderDefinition {
+  readonly actual_upstream?: string | null;
+  readonly adapter_name: string;
+  readonly adapter_version: string;
+  readonly created_at: string;
+  readonly credential_ref?: string | null;
+  readonly display_name: string;
+  readonly enabled?: boolean;
+  readonly provider_id: string;
+  readonly provider_kind: ProviderKind;
+  readonly updated_at: string;
+}
+
+export type ProviderKind = "AGGREGATOR" | "DIRECT" | "FILE" | "INTERNAL";
+
+export type ProviderMergeMode = "REPLACE_PARTITION" | "APPEND_DISJOINT" | "ENRICH_FIELDS" | "COMPARE_ONLY";
+
+export interface ProviderPolicy {
+  readonly allowed_merge_mode: ProviderMergeMode;
+  readonly conflict_tolerance: Readonly<Record<string, unknown>>;
+  readonly dataset_id: string;
+  readonly effective_from: string;
+  readonly effective_to?: string | null;
+  readonly fallback_triggers?: ReadonlyArray<string>;
+  readonly field_authority_map: Readonly<Record<string, string>>;
+  readonly freshness_sla_seconds: number;
+  readonly policy_version: string;
+  readonly primary_provider_id: string;
+  readonly provider_policy_id: string;
+  readonly required_quality_rules?: ReadonlyArray<string>;
+  readonly supplemental_provider_ids?: ReadonlyArray<string>;
+}
+
+export interface ProviderSettingsProjection {
+  readonly capabilities: ReadonlyArray<ProviderCapability>;
+  readonly datasets: ReadonlyArray<DatasetDefinition>;
+  readonly policies: ReadonlyArray<ProviderPolicy>;
+  readonly providers: ReadonlyArray<ProviderDefinition>;
+}
 
 export type ResolutionStatus = "RESOLVED" | "AMBIGUOUS" | "NOT_FOUND" | "UNSUPPORTED" | "CONFLICT" | "INACTIVE";
 

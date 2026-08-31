@@ -17,6 +17,7 @@ from .asset_identity import (
     IdentityQuarantineRecord,
 )
 from .base import PlatformContractModel
+from .provider import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy
 from .hashing import DEFAULT_HASH_PROFILE, HashProfile
 from .identity import EntityIdentity
 from .resources import ResourceRef
@@ -445,6 +446,18 @@ PLATFORM_CONTRACTS = ContractRegistry(
             ),
         ),
         ContractRegistration(
+            contract_id="C-004/ProviderDefinition", owner_module="src.schemas.platform.provider", producer="Provider Registry", consumers=("settings", "ingestion"), schema_model=ProviderDefinition, schema_version="1.0.0", business_key="provider_id", resource_id_field=None, time_semantics=("created_at", "updated_at"), version_semantics=("adapter_version",), quality_semantics=("adapter_name is controlled", "credential_ref is secret reference only"), lineage_fields=("actual_upstream",), storage_profile="PostgreSQL provider_definition", retention_class="PINNED", compatibility="provider identities remain stable; adapter changes are versioned", golden_payloads=_golden("success/provider-definition.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-004/ProviderCapability", owner_module="src.schemas.platform.provider", producer="Provider Probe", consumers=("settings", "ingestion"), schema_model=ProviderCapability, schema_version="1.0.0", business_key="provider_id + dataset_id + market + frequency", resource_id_field=None, time_semantics=("history_start", "checked_at"), version_semantics=(), quality_semantics=("capability status is explicit",), lineage_fields=("provider_id", "dataset_id"), storage_profile="PostgreSQL provider_capability", retention_class="AUDIT", compatibility="capability observations are replaceable by newer checked_at records", golden_payloads=_golden("success/provider-capability.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-004/ProviderPolicy", owner_module="src.schemas.platform.provider", producer="Provider Policy Registry", consumers=("ingestion", "snapshot"), schema_model=ProviderPolicy, schema_version="1.0.0", business_key="dataset_id + policy_version", resource_id_field=None, time_semantics=("effective_from", "effective_to"), version_semantics=("policy_version",), quality_semantics=("merge mode and field authority are explicit",), lineage_fields=("primary_provider_id", "supplemental_provider_ids"), storage_profile="PostgreSQL provider_policy", retention_class="PINNED", compatibility="policies are immutable versions with effective intervals", golden_payloads=_golden("success/provider-policy.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-004/DatasetDefinition", owner_module="src.schemas.platform.provider", producer="Dataset Registry", consumers=("canonical", "ingestion", "settings"), schema_model=DatasetDefinition, schema_version="1.0.0", business_key="dataset_id + schema_version", resource_id_field=None, time_semantics=("time_semantics",), version_semantics=("schema_version",), quality_semantics=("primary keys are required fields; required/optional sets disjoint",), lineage_fields=("owner_module",), storage_profile="PostgreSQL dataset_definition", retention_class="PINNED", compatibility="dataset schema versions are additive or explicitly versioned", golden_payloads=_golden("success/dataset-definition.json"),
+        ),
+        ContractRegistration(
             contract_id="C-007/TaskRecord",
             owner_module="src.schemas.platform.task",
             producer="Task Control Application Service",
@@ -667,7 +680,7 @@ def validate_contract_registry(registry: ContractRegistry) -> None:
         raise ValueError("platform contract registry cannot be empty")
     model_types: set[type[PlatformContractModel]] = set()
     for registration in registrations:
-        if not registration.contract_id.startswith(("C-001/", "C-002/", "C-003/", "C-007/", "C-010/", "C-011/")):
+        if not registration.contract_id.startswith(("C-001/", "C-002/", "C-003/", "C-004/", "C-007/", "C-010/", "C-011/")):
             raise ValueError(f"unsupported platform contract family: {registration.contract_id}")
         if registration.schema_model in model_types:
             raise ValueError(f"schema model registered more than once: {registration.schema_model.__name__}")

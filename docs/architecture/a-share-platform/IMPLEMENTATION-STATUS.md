@@ -1,6 +1,6 @@
 # Visory 实现状态
 
-最后更新：2026-08-30
+最后更新：2026-08-31
 
 ## 1. 当前结论
 
@@ -53,7 +53,7 @@ RELEASED     已部署且通过运行观察和回滚/恢复要求
 | WP-0102 | Storage Namespace与Artifact Publisher | VERIFIED | [G007 / WP-0102 进度与验收记录](GOAL-G007-STATUS.md)；实现 head `92ddde7`；PR #6；Migration `0003_wp0102_artifact_registry`；平台 218 passed、本地 PostgreSQL 16 集成 15 passed；Run `33299055144` 三项全绿，Python 6591 passed |
 | WP-0103 | Durable Task Control Plane | VERIFIED | [G008 / WP-0103 进度与验收记录](GOAL-G008-STATUS.md)；实现 head `826aacfa2965c98efff8a8795a46dc9f72edec5f`；PR #7；Migration `0004_wp0103_durable_task_control_plane`；平台 257 passed、5 skipped，本地 PostgreSQL 16 集成 30 passed，Legacy 定向回归 106 passed；Run `33314470672` 三项全绿 |
 | WP-0104 | Operations最小页面 | VERIFIED | [G009 / WP-0104 进度与验收记录](GOAL-G009-STATUS.md)；PR #9、#12、#13、#14、#15 已合并；真实认证 ASGI/浏览器旅程、PostgreSQL SSE replay 和连接池清理通过；平台 260 passed、5 skipped；集成目录本地 PostgreSQL 16 实例 31 passed（清理后默认 31 skipped）；Playwright 6 passed + 真实认证 1 passed；Run `33329710242` 三项阻断 Job 全绿 |
-| WP-0201 | Dataset/Provider Registry | NOT_STARTED | — |
+| WP-0201 | Dataset/Provider Registry | IN_PROGRESS | Visory-G010 工作分支 `goal/g010-wp-0201-dataset-provider-registry`；Migration `0005_wp0201_dataset_provider_registry`；尚未完成 Exit Gate |
 | WP-0202 | Raw Ingestion | NOT_STARTED | — |
 | WP-0203 | Canonical Normalization | NOT_STARTED | — |
 | WP-0204 | DataSnapshot与Capability Gate | NOT_STARTED | — |

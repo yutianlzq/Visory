@@ -1,0 +1,84 @@
+{
+  "$defs": {
+    "ProviderCapabilityStatus": {
+      "enum": [
+        "AVAILABLE",
+        "DEGRADED",
+        "UNAVAILABLE",
+        "UNVERIFIED"
+      ],
+      "title": "ProviderCapabilityStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "checked_at": {
+      "format": "date-time",
+      "title": "Checked At",
+      "type": "string"
+    },
+    "dataset_id": {
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "frequency": {
+      "title": "Frequency",
+      "type": "string"
+    },
+    "freshness_sla_seconds": {
+      "minimum": 0,
+      "title": "Freshness Sla Seconds",
+      "type": "integer"
+    },
+    "history_start": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "History Start"
+    },
+    "market": {
+      "title": "Market",
+      "type": "string"
+    },
+    "provider_capability_status": {
+      "$ref": "#/$defs/ProviderCapabilityStatus"
+    },
+    "provider_id": {
+      "title": "Provider Id",
+      "type": "string"
+    },
+    "rate_limit_profile": {
+      "additionalProperties": true,
+      "title": "Rate Limit Profile",
+      "type": "object"
+    },
+    "supported_fields": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Supported Fields",
+      "type": "array"
+    }
+  },
+  "required": [
+    "provider_id",
+    "dataset_id",
+    "market",
+    "frequency",
+    "supported_fields",
+    "freshness_sla_seconds",
+    "rate_limit_profile",
+    "provider_capability_status",
+    "checked_at"
+  ],
+  "title": "ProviderCapability",
+  "type": "object"
+}
