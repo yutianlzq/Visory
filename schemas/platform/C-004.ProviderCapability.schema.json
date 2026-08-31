@@ -22,6 +22,11 @@
       "title": "Dataset Id",
       "type": "string"
     },
+    "dataset_schema_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Dataset Schema Version",
+      "type": "string"
+    },
     "frequency": {
       "title": "Frequency",
       "type": "string"
@@ -71,6 +76,7 @@
   "required": [
     "provider_id",
     "dataset_id",
+    "dataset_schema_version",
     "market",
     "frequency",
     "supported_fields",

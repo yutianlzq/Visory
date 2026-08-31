@@ -10,9 +10,9 @@ from .enums import ProviderCapabilityStatus, ProviderKind, ProviderMergeMode
 
 _SEMVER = r"^[0-9]+\.[0-9]+\.[0-9]+$"
 _ID = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
-_PROVIDER_KINDS = ("AGGREGATOR", "DIRECT", "FILE", "INTERNAL")
 _CAPABILITY_STATUSES = ("AVAILABLE", "DEGRADED", "UNAVAILABLE", "UNVERIFIED")
 _MERGE_MODES = ("REPLACE_PARTITION", "APPEND_DISJOINT", "ENRICH_FIELDS", "COMPARE_ONLY")
+_FIELD_TYPES = frozenset({"string", "date", "number", "integer", "boolean", "timestamptz"})
 
 
 def _identifier(value: str, field: str) -> str:
@@ -29,7 +29,6 @@ class ProviderDefinition(PlatformContractModel):
     provider_kind: ProviderKind
     enabled: bool = True
     credential_ref: str | None = None
-    actual_upstream: str | None = None
     created_at: AwareDatetime
     updated_at: AwareDatetime
 
@@ -58,9 +57,7 @@ class ProviderDefinition(PlatformContractModel):
         return value
 
     @model_validator(mode="after")
-    def validate_upstream(self) -> "ProviderDefinition":
-        if self.provider_kind == "AGGREGATOR" and not self.actual_upstream:
-            raise ValueError("aggregator providers require actual_upstream")
+    def validate_timestamps(self) -> "ProviderDefinition":
         if self.updated_at < self.created_at:
             raise ValueError("updated_at must not precede created_at")
         return self
@@ -69,6 +66,7 @@ class ProviderDefinition(PlatformContractModel):
 class ProviderCapability(PlatformContractModel):
     provider_id: str
     dataset_id: str
+    dataset_schema_version: Annotated[str, Field(pattern=_SEMVER)]
     market: str
     frequency: str
     supported_fields: tuple[str, ...]
@@ -101,6 +99,7 @@ class ProviderCapability(PlatformContractModel):
 class ProviderPolicy(PlatformContractModel):
     provider_policy_id: str
     dataset_id: str
+    dataset_schema_version: Annotated[str, Field(pattern=_SEMVER)]
     policy_version: Annotated[str, Field(pattern=_SEMVER)]
     primary_provider_id: str
     supplemental_provider_ids: tuple[str, ...] = ()
@@ -191,11 +190,30 @@ class DatasetDefinition(PlatformContractModel):
         declared = required | optional
         if set(self.field_types) != declared:
             raise ValueError("field_types must exactly cover required and optional fields")
+        if any(value not in _FIELD_TYPES for value in self.field_types.values()):
+            raise ValueError("field_types contains an unsupported type")
+        if set(self.units) != declared:
+            raise ValueError("units must explicitly cover every declared field")
+        if set(self.null_semantics) != declared:
+            raise ValueError("null_semantics must explicitly cover every declared field")
+        if set(self.time_semantics) != declared:
+            raise ValueError("time_semantics must explicitly cover every declared field")
+        if not set(self.enum_domains) <= declared:
+            raise ValueError("enum_domains references an undeclared field")
+        if any(not values for values in self.enum_domains.values()):
+            raise ValueError("enum_domains must not contain empty enum domains")
+        if self.dataset_id == "bar_1d_raw":
+            forbidden = {"volume", "turnover"} & declared
+            if forbidden:
+                raise ValueError("bar_1d_raw must use formal volume_shares and amount_cny fields")
+            required_bar_fields = {"entity_key", "trade_date", "open", "high", "low", "close", "volume_shares", "amount_cny", "prev_close", "trading_status", "price_limit_up", "price_limit_down", "available_at"}
+            if not required_bar_fields <= required:
+                raise ValueError("bar_1d_raw is missing a formal contract field")
         return self
 
 
 class ProviderSettingsProvider(PlatformContractModel):
-    """Public Settings projection; never exposes credential references."""
+    """Public Settings projection; never exposes credential references or actual upstream claims."""
 
     provider_id: str
     display_name: Annotated[str, Field(min_length=1, max_length=255)]
@@ -204,7 +222,6 @@ class ProviderSettingsProvider(PlatformContractModel):
     provider_kind: ProviderKind
     enabled: bool = True
     credential_configured: bool = False
-    actual_upstream: str | None = None
 
 
 class ProviderSettingsProjection(PlatformContractModel):

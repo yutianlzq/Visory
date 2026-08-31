@@ -1014,6 +1014,11 @@
             "title": "Dataset Id",
             "type": "string"
           },
+          "dataset_schema_version": {
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "title": "Dataset Schema Version",
+            "type": "string"
+          },
           "frequency": {
             "title": "Frequency",
             "type": "string"
@@ -1063,6 +1068,7 @@
         "required": [
           "provider_id",
           "dataset_id",
+          "dataset_schema_version",
           "market",
           "frequency",
           "supported_fields",
@@ -1087,18 +1093,6 @@
       "ProviderDefinition": {
         "additionalProperties": false,
         "properties": {
-          "actual_upstream": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Actual Upstream"
-          },
           "adapter_name": {
             "title": "Adapter Name",
             "type": "string"
@@ -1196,6 +1190,11 @@
             "title": "Dataset Id",
             "type": "string"
           },
+          "dataset_schema_version": {
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "title": "Dataset Schema Version",
+            "type": "string"
+          },
           "effective_from": {
             "format": "date-time",
             "title": "Effective From",
@@ -1267,6 +1266,7 @@
         "required": [
           "provider_policy_id",
           "dataset_id",
+          "dataset_schema_version",
           "policy_version",
           "primary_provider_id",
           "allowed_merge_mode",
@@ -1321,20 +1321,8 @@
       },
       "ProviderSettingsProvider": {
         "additionalProperties": false,
-        "description": "Public Settings projection; never exposes credential references.",
+        "description": "Public Settings projection; never exposes credential references or actual upstream claims.",
         "properties": {
-          "actual_upstream": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Actual Upstream"
-          },
           "adapter_name": {
             "title": "Adapter Name",
             "type": "string"

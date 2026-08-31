@@ -13,18 +13,6 @@
   },
   "additionalProperties": false,
   "properties": {
-    "actual_upstream": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "title": "Actual Upstream"
-    },
     "adapter_name": {
       "title": "Adapter Name",
       "type": "string"

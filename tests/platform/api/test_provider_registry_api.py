@@ -19,7 +19,7 @@ class _ProjectionService:
             providers=tuple(ProviderSettingsProvider(
                 provider_id=item.provider_id, display_name=item.display_name, adapter_name=item.adapter_name,
                 adapter_version=item.adapter_version, provider_kind=item.provider_kind, enabled=item.enabled,
-                credential_configured=item.credential_ref is not None, actual_upstream=item.actual_upstream,
+                credential_configured=item.credential_ref is not None,
             ) for item in providers),
             datasets=datasets, capabilities=capabilities, policies=policies,
         )
