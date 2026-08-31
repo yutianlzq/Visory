@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 - [新功能] Visory-G010 / WP-0201 建立 C-004 Dataset/Provider Registry：新增 ProviderDefinition、ProviderCapability、ProviderPolicy、DatasetDefinition、受控 Adapter 注册表、PostgreSQL Migration `0005_wp0201_dataset_provider_registry`、只读平台投影 API 与确定性契约生成；不连接真实数据源、不实现 Raw Ingestion 或 Canonical。
+- [修复] Visory-G010 / WP-0201 收敛 Settings 对外投影：仅返回凭据已配置布尔语义，并以 PostgreSQL GiST exclusion constraint 阻止同一数据集有效策略区间重叠。
+- [测试] Visory-G010 / WP-0201 补充 Settings 成功/加载/空数据/错误/响应式视口及 PostgreSQL 策略重叠拒绝回归覆盖。
 - [新功能] Visory-G009 / WP-0104 增加 Operations 任务运维页面、Task 列表筛选与稳定 Cursor、Task 详情 Checkpoint 投影、可恢复 Task State SSE 及断线轮询降级；不新增下载端点、不替换 Legacy Task Queue。
 - [测试] Visory-G009 / WP-0104 补充 Operations 页面 C-010 错误码/Request ID 脱敏展示、SSE 恢复与 Retry 防重复、Tab/筛选键盘旅程覆盖。
 - [测试] Visory-G009 / WP-0104 新增真实 FastAPI 认证旅程与 PostgreSQL Task SSE replay 集成覆盖，验证登录 Cookie、平台 API 保护、Last-Event-ID/after_event_id 断线补读和连接池清理。

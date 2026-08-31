@@ -97,9 +97,19 @@ def upgrade() -> None:
     )
     op.create_index("ix_provider_capability_dataset", "provider_capability", ["dataset_id", "provider_capability_status"])
     op.create_index("ix_provider_policy_effective", "provider_policy", ["dataset_id", "effective_from", "effective_to"])
+    # PostgreSQL GiST exclusion prevents overlapping effective policy intervals per dataset.
+    op.execute("""
+        ALTER TABLE provider_policy
+        ADD CONSTRAINT ex_provider_policy_effective_no_overlap
+        EXCLUDE USING gist (
+            dataset_id WITH =,
+            tstzrange(effective_from, COALESCE(effective_to, 'infinity'::timestamptz), '[)'::text) WITH &&
+        )
+    """)
 
 
 def downgrade() -> None:
+    op.execute("ALTER TABLE provider_policy DROP CONSTRAINT IF EXISTS ex_provider_policy_effective_no_overlap")
     op.drop_index("ix_provider_policy_effective", table_name="provider_policy")
     op.drop_index("ix_provider_capability_dataset", table_name="provider_capability")
     op.drop_table("provider_policy")

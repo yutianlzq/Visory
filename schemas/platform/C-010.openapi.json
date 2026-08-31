@@ -1304,7 +1304,7 @@
           },
           "providers": {
             "items": {
-              "$ref": "#/components/schemas/ProviderDefinition"
+              "$ref": "#/components/schemas/ProviderSettingsProvider"
             },
             "title": "Providers",
             "type": "array"
@@ -1317,6 +1317,65 @@
           "policies"
         ],
         "title": "ProviderSettingsProjection",
+        "type": "object"
+      },
+      "ProviderSettingsProvider": {
+        "additionalProperties": false,
+        "description": "Public Settings projection; never exposes credential references.",
+        "properties": {
+          "actual_upstream": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Actual Upstream"
+          },
+          "adapter_name": {
+            "title": "Adapter Name",
+            "type": "string"
+          },
+          "adapter_version": {
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "title": "Adapter Version",
+            "type": "string"
+          },
+          "credential_configured": {
+            "default": false,
+            "title": "Credential Configured",
+            "type": "boolean"
+          },
+          "display_name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "provider_id": {
+            "title": "Provider Id",
+            "type": "string"
+          },
+          "provider_kind": {
+            "$ref": "#/components/schemas/ProviderKind"
+          }
+        },
+        "required": [
+          "provider_id",
+          "display_name",
+          "adapter_name",
+          "adapter_version",
+          "provider_kind"
+        ],
+        "title": "ProviderSettingsProvider",
         "type": "object"
       },
       "ResolutionStatus": {

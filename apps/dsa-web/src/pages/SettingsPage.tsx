@@ -36,6 +36,7 @@ import type {
   SystemConfigUpdateItem,
 } from '../types/systemConfig';
 import type { UiLanguage, UiTextKey } from '../i18n/uiText';
+import type { ProviderSettingsProjection } from '../types/generated/platform-api';
 
 type DesktopWindow = Window & {
   dsaDesktop?: {
@@ -852,6 +853,100 @@ const SchedulerSettingsCard: React.FC<SchedulerSettingsCardProps> = ({
   );
 };
 
+type ProviderRegistryCardProps = {
+  projection: ProviderSettingsProjection | null;
+  isLoading: boolean;
+  error: ParsedApiError | null;
+  language: UiLanguage;
+};
+
+const ProviderRegistryCard: React.FC<ProviderRegistryCardProps> = ({ projection, isLoading, error, language }) => {
+  const isEnglish = language === 'en';
+  const text = {
+    title: isEnglish ? 'Dataset & provider registry' : '数据集与数据源注册表',
+    description: isEnglish
+      ? 'Read-only runtime projection of provider health, adapter versions, dataset policies and credential readiness.'
+      : '只读展示数据源状态、适配器版本、数据集策略和凭据配置状态。',
+    empty: isEnglish ? 'No provider or dataset registry records are configured.' : '尚未配置数据源或数据集注册记录。',
+    providers: isEnglish ? 'Providers' : '数据源',
+    datasets: isEnglish ? 'Datasets' : '数据集',
+    adapter: isEnglish ? 'Adapter' : '适配器',
+    capability: isEnglish ? 'Capability' : '能力状态',
+    credential: isEnglish ? 'Credential' : '凭据',
+    configured: isEnglish ? 'Configured' : '已配置',
+    missing: isEnglish ? 'Not configured' : '未配置',
+    primary: isEnglish ? 'Primary' : '主源',
+    supplemental: isEnglish ? 'Supplemental' : '补充源',
+    merge: isEnglish ? 'Merge' : '合并方式',
+    quality: isEnglish ? 'Quality rules' : '质量规则',
+    effective: isEnglish ? 'Effective' : '生效时间',
+  };
+
+  return (
+    <SettingsSectionCard title={text.title} description={text.description}>
+      {isLoading && !projection ? <div data-testid="provider-registry-loading" className="space-y-3" aria-live="polite"><div className="settings-skeleton-soft h-10 rounded-lg" /><div className="settings-skeleton-soft h-24 rounded-lg" /></div> : null}
+      {error ? <div data-testid="provider-registry-error"><ApiErrorAlert error={error} /></div> : null}
+      {!isLoading && !error && projection && projection.providers.length === 0 && projection.datasets.length === 0 ? (
+        <EmptyState title={text.empty} description={text.description} />
+      ) : null}
+      {!isLoading && !error && projection && (projection.providers.length > 0 || projection.datasets.length > 0) ? (
+        <div data-testid="provider-registry-content" className="space-y-5">
+          <div>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">{text.providers}</h3>
+            <div data-testid="provider-registry-providers" className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {projection.providers.map((provider) => {
+                const capabilities = projection.capabilities.filter((item) => item.provider_id === provider.provider_id);
+                const statuses = [...new Set(capabilities.map((item) => item.provider_capability_status))];
+                return (
+                  <div key={provider.provider_id} className="rounded-2xl border settings-border bg-background/35 px-4 py-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-foreground">{provider.display_name}</p>
+                      <span className="rounded-full border settings-border px-2 py-0.5 text-[11px] text-muted-text">{provider.enabled ? 'ENABLED' : 'DISABLED'}</span>
+                    </div>
+                    <dl className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
+                      <div><dt className="text-muted-text">{text.adapter}</dt><dd className="mt-1 font-mono text-foreground">{provider.adapter_name} {provider.adapter_version}</dd></div>
+                      <div><dt className="text-muted-text">{text.capability}</dt><dd className="mt-1 text-foreground">{statuses.length ? statuses.join(', ') : 'UNVERIFIED'}</dd></div>
+                      <div><dt className="text-muted-text">{text.credential}</dt><dd className="mt-1 text-foreground">{provider.credential_configured ? text.configured : text.missing}</dd></div>
+                    </dl>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">{text.datasets}</h3>
+            <div className="space-y-3">
+              {projection.datasets.map((dataset) => {
+                const policies = projection.policies.filter((policy) => policy.dataset_id === dataset.dataset_id);
+                return (
+                  <div key={dataset.dataset_id} className="rounded-2xl border settings-border bg-background/35 px-4 py-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-foreground">{dataset.dataset_id}</p>
+                      <span className="font-mono text-[11px] text-muted-text">v{dataset.schema_version}</span>
+                    </div>
+                    {policies.length ? <div className="mt-3 grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
+                      {policies.map((policy) => <div key={policy.provider_policy_id} className="rounded-xl border settings-border bg-card/40 px-3 py-2">
+                        <p className="font-medium text-foreground">{policy.provider_policy_id} · v{policy.policy_version}</p>
+                        <dl className="mt-2 grid grid-cols-1 gap-1 text-muted-text sm:grid-cols-2">
+                          <div><dt>{text.primary}</dt><dd className="text-foreground">{policy.primary_provider_id}</dd></div>
+                          <div><dt>{text.supplemental}</dt><dd className="text-foreground">{policy.supplemental_provider_ids?.join(', ') || '—'}</dd></div>
+                          <div><dt>{text.merge}</dt><dd className="text-foreground">{policy.allowed_merge_mode}</dd></div>
+                          <div><dt>{text.quality}</dt><dd className="text-foreground">{policy.required_quality_rules?.join(', ') || '—'}</dd></div>
+                        </dl>
+                        <p className="mt-2 text-[11px] text-muted-text">{text.effective}: {policy.effective_from}{policy.effective_to ? ` → ${policy.effective_to}` : ''}</p>
+                      </div>)}
+                    </div> : <p className="mt-2 text-xs text-muted-text">—</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </SettingsSectionCard>
+  );
+};
+
 const SettingsPage: React.FC = () => {
   const { authEnabled, passwordChangeable } = useAuth();
   const { language: uiLanguage, t } = useUiLanguage();
@@ -875,6 +970,9 @@ const SettingsPage: React.FC = () => {
   const [setupSmokeError, setSetupSmokeError] = useState<ParsedApiError | null>(null);
   const [setupSmokeSuccess, setSetupSmokeSuccess] = useState('');
   const [llmChannelDraftItems, setLlmChannelDraftItems] = useState<SystemConfigUpdateItem[]>([]);
+  const [providerRegistry, setProviderRegistry] = useState<ProviderSettingsProjection | null>(null);
+  const [isLoadingProviderRegistry, setIsLoadingProviderRegistry] = useState(false);
+  const [providerRegistryError, setProviderRegistryError] = useState<ParsedApiError | null>(null);
   const envBackupImportRef = useRef<HTMLInputElement | null>(null);
   const setupStatusRequestIdRef = useRef(0);
   const desktopRuntimeApi = getDesktopRuntimeApi();
@@ -973,6 +1071,27 @@ const SettingsPage: React.FC = () => {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    const getProviderRegistry = systemConfigApi.getProviderRegistry;
+    if (typeof getProviderRegistry !== 'function') {
+      return;
+    }
+    let active = true;
+    setIsLoadingProviderRegistry(true);
+    setProviderRegistryError(null);
+    void getProviderRegistry()
+      .then((value) => {
+        if (active) setProviderRegistry(value);
+      })
+      .catch((error: unknown) => {
+        if (active) setProviderRegistryError(getParsedApiError(error));
+      })
+      .finally(() => {
+        if (active) setIsLoadingProviderRegistry(false);
+      });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     const requestedCategory = new URLSearchParams(window.location.search).get('category');
@@ -1606,6 +1725,14 @@ const SettingsPage: React.FC = () => {
                   </div>
                 ) : null}
               </SettingsSectionCard>
+            ) : null}
+            {activeCategory === 'data_source' ? (
+              <ProviderRegistryCard
+                projection={providerRegistry}
+                isLoading={isLoadingProviderRegistry}
+                error={providerRegistryError}
+                language={uiLanguage}
+              />
             ) : null}
             {activeCategory === 'system' ? <AuthSettingsCard /> : null}
             {activeCategory === 'system' ? (

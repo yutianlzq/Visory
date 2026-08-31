@@ -58,7 +58,7 @@ from .hashing import ContentHashValue, DEFAULT_HASH_PROFILE, HashProfile, canoni
 from .identity import EntityIdentity, build_entity_key, parse_entity_key
 from .registry import PLATFORM_CONTRACTS, ContractRegistration, ContractRegistry
 from .resources import ResourceRef, generate_resource_id, generate_uuid7, parse_resource_id
-from .provider import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy, ProviderSettingsProjection
+from .provider import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy, ProviderSettingsProvider, ProviderSettingsProjection
 from .storage import StorageRef
 from .temporal import AvailabilityMetadata, PointInTimeWindow
 from .task import (
@@ -121,6 +121,7 @@ __all__ = [
     "ProviderCapability",
     "ProviderDefinition",
     "ProviderPolicy",
+    "ProviderSettingsProvider",
     "ProviderSettingsProjection",
     "ProviderCapabilityStatus",
     "ProviderKind",

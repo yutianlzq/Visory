@@ -8,6 +8,7 @@ import SettingsPage from '../SettingsPage';
 const {
   analyzeAsync,
   exportEnv,
+  getProviderRegistry,
   getSchedulerStatus,
   getSetupStatus,
   importEnv,
@@ -38,6 +39,7 @@ const {
 } = vi.hoisted(() => ({
   analyzeAsync: vi.fn(),
   exportEnv: vi.fn(),
+  getProviderRegistry: vi.fn(),
   getSchedulerStatus: vi.fn(),
   getSetupStatus: vi.fn(),
   importEnv: vi.fn(),
@@ -84,6 +86,7 @@ vi.mock('../../hooks', () => ({
 vi.mock('../../api/systemConfig', () => ({
   systemConfigApi: {
     exportEnv: (...args: unknown[]) => exportEnv(...args),
+    getProviderRegistry: (...args: unknown[]) => getProviderRegistry(...args),
     getSchedulerStatus: (...args: unknown[]) => getSchedulerStatus(...args),
     getSetupStatus: (...args: unknown[]) => getSetupStatus(...args),
     importEnv: (...args: unknown[]) => importEnv(...args),
@@ -306,7 +309,7 @@ const baseCategories = [
 ];
 
 type ConfigState = {
-  categories: Array<{ category: string; title: string; description: string; displayOrder: number; fields: [] }>;
+  categories: Array<{ category: string; title: string; description: string; displayOrder: number; fields: unknown[] }>;
   itemsByCategory: Record<string, Array<Record<string, unknown>>>;
   issueByKey: Record<string, unknown[]>;
   activeCategory: string;
@@ -518,6 +521,12 @@ describe('SettingsPage', () => {
       content: 'STOCK_LIST=600519\n',
       configVersion: 'v1',
       updatedAt: '2026-03-21T00:00:00Z',
+    });
+    getProviderRegistry.mockResolvedValue({
+      providers: [],
+      datasets: [],
+      capabilities: [],
+      policies: [],
     });
     getSchedulerStatus.mockResolvedValue({
       enabled: true,
@@ -2627,4 +2636,114 @@ describe('SettingsPage', () => {
 
     await waitFor(() => expect(desktopInstallDownloadedUpdate).toHaveBeenCalledTimes(1));
   });
+
+  it('renders provider and dataset registry without exposing credential references', async () => {
+    getProviderRegistry.mockResolvedValueOnce({
+      providers: [{
+        provider_id: 'financial_api',
+        display_name: 'Financial API',
+        adapter_name: 'financial_api',
+        adapter_version: '1.0.0',
+        provider_kind: 'DIRECT',
+        enabled: true,
+        credential_configured: true,
+        actual_upstream: null,
+      }],
+      datasets: [{
+        dataset_id: 'bar_1d_raw',
+        schema_version: '1.0.0',
+        entity_scope: 'a_share',
+        frequency: 'daily',
+        primary_key_fields: ['entity_key', 'trade_date'],
+        required_fields: ['entity_key', 'trade_date', 'close'],
+        optional_fields: [],
+        field_types: { entity_key: 'string', trade_date: 'date', close: 'number' },
+        units: { entity_key: 'unit', trade_date: 'unit', close: 'unit' },
+        enum_domains: {},
+        time_semantics: { available_at: 'timestamptz' },
+        null_semantics: { entity_key: 'forbidden', trade_date: 'forbidden', close: 'forbidden' },
+        partition_template: 'bar_1d_raw/{date}',
+        quality_rule_ids: ['identity_resolved'],
+        owner_module: 'data_platform',
+      }],
+      capabilities: [{
+        provider_id: 'financial_api', dataset_id: 'bar_1d_raw', market: 'CN', frequency: 'daily',
+        supported_fields: ['entity_key'], history_start: null, freshness_sla_seconds: 86400,
+        rate_limit_profile: {}, provider_capability_status: 'AVAILABLE', checked_at: '2026-08-31T00:00:00Z',
+      }],
+      policies: [{
+        provider_policy_id: 'bar_1d_raw_v1', dataset_id: 'bar_1d_raw', policy_version: '1.0.0',
+        primary_provider_id: 'financial_api', supplemental_provider_ids: [], allowed_merge_mode: 'REPLACE_PARTITION',
+        fallback_triggers: [], field_authority_map: { close: 'financial_api' }, conflict_tolerance: {},
+        freshness_sla_seconds: 86400, required_quality_rules: ['identity_resolved'],
+        effective_from: '2026-08-31T00:00:00Z', effective_to: null,
+      }],
+    });
+    useSystemConfigMock.mockReturnValue(buildSystemConfigState({
+      activeCategory: 'data_source',
+      categories: [...baseCategories, { category: 'data_source', title: 'Data Source', description: '数据源', displayOrder: 6, fields: [] }],
+      itemsByCategory: { ...buildSystemConfigState().itemsByCategory, data_source: [] },
+    }));
+
+    render(<SettingsPage />);
+
+    expect(await screen.findByTestId('provider-registry-content')).toBeInTheDocument();
+    expect(screen.getByText('Financial API')).toBeInTheDocument();
+    expect(screen.getByText('已配置')).toBeInTheDocument();
+    expect(screen.queryByText('secret://financial_api')).not.toBeInTheDocument();
+  });
+
+  it('renders an explicit empty registry state', async () => {
+    getProviderRegistry.mockResolvedValueOnce({ providers: [], datasets: [], capabilities: [], policies: [] });
+    useSystemConfigMock.mockReturnValue(buildSystemConfigState({
+      activeCategory: 'data_source',
+      categories: [...baseCategories, { category: 'data_source', title: 'Data Source', description: '数据源', displayOrder: 6, fields: [] }],
+      itemsByCategory: { ...buildSystemConfigState().itemsByCategory, data_source: [] },
+    }));
+
+    render(<SettingsPage />);
+
+    expect(await screen.findByText('尚未配置数据源或数据集注册记录。')).toBeInTheDocument();
+  });
+
+  it('keeps registry cards usable at mobile and desktop viewport widths', async () => {
+    getProviderRegistry.mockResolvedValueOnce({
+      providers: [{
+        provider_id: 'a_stock_data', display_name: 'a-stock-data', adapter_name: 'a_stock_data',
+        adapter_version: '1.0.0', provider_kind: 'AGGREGATOR', enabled: true,
+        credential_configured: false, actual_upstream: 'declared_by_adapter',
+      }],
+      datasets: [], capabilities: [], policies: [],
+    });
+    useSystemConfigMock.mockReturnValue(buildSystemConfigState({
+      activeCategory: 'data_source',
+      categories: [...baseCategories, { category: 'data_source', title: 'Data Source', description: '数据源', displayOrder: 6, fields: [] }],
+      itemsByCategory: { ...buildSystemConfigState().itemsByCategory, data_source: [] },
+    }));
+
+    window.innerWidth = 375;
+    render(<SettingsPage />);
+    const providers = await screen.findByTestId('provider-registry-providers');
+    expect(providers.className).toContain('grid-cols-1');
+    expect(providers.className).toContain('md:grid-cols-2');
+
+    window.innerWidth = 1280;
+    expect(screen.getByTestId('provider-registry-content')).toBeInTheDocument();
+  });
+
+  it('renders provider registry loading and error states', async () => {
+    const deferred = createDeferred<unknown>();
+    getProviderRegistry.mockReturnValueOnce(deferred.promise);
+    useSystemConfigMock.mockReturnValue(buildSystemConfigState({
+      activeCategory: 'data_source',
+      categories: [...baseCategories, { category: 'data_source', title: 'Data Source', description: '数据源', displayOrder: 6, fields: [] }],
+      itemsByCategory: { ...buildSystemConfigState().itemsByCategory, data_source: [] },
+    }));
+
+    render(<SettingsPage />);
+    expect(screen.getByTestId('provider-registry-loading')).toBeInTheDocument();
+    deferred.reject(new Error('registry unavailable'));
+    expect(await screen.findByTestId('provider-registry-error')).toBeInTheDocument();
+  });
+
 });
