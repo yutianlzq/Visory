@@ -60,6 +60,15 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "ProviderKind",
         "ProviderMergeMode",
         "ProviderPolicy",
+        "ProviderRun",
+        "ProviderRunOutcome",
+        "QuarantineStatus",
+        "RawCompression",
+        "RawIngestionPublishResult",
+        "RawIngestionQuarantine",
+        "RawIngestionTaskRequirements",
+        "RawObject",
+        "RawSchemaDriftClassification",
         "ProviderSettingsProjection",
         "ProviderSettingsProvider",
         "DatasetDefinition",
@@ -141,6 +150,9 @@ def test_generated_frontend_types_are_strict_and_cover_c010_fields() -> None:
     assert "export interface ArtifactPublishResult" in generated
     assert "export interface ArtifactRecoveryResult" in generated
     assert "export interface OrphanDryRunResult" in generated
+    assert "export interface ProviderRun" in generated
+    assert "export interface RawObject" in generated
+    assert "export interface RawIngestionQuarantine" in generated
     assert "export interface TaskRecord" in generated
     assert "export interface TaskAttemptRecord" in generated
     assert "export interface TaskCheckpointRecord" in generated

@@ -233,6 +233,33 @@ export interface ProviderPolicy {
   readonly supplemental_provider_ids?: ReadonlyArray<string>;
 }
 
+export interface ProviderRun {
+  readonly actual_upstream?: string | null;
+  readonly adapter_version: string;
+  readonly attempt_id: string;
+  readonly byte_count?: number | null;
+  readonly capability_frequency: string;
+  readonly capability_market: string;
+  readonly dataset_id: string;
+  readonly dataset_schema_version: string;
+  readonly failure_code?: string | null;
+  readonly failure_detail_redacted?: string | null;
+  readonly finished_at?: string | null;
+  readonly observed_schema_hash?: string | null;
+  readonly provider_id: string;
+  readonly provider_policy_id: string;
+  readonly provider_policy_version: string;
+  readonly provider_run_id: string;
+  readonly raw_object_refs?: ReadonlyArray<string>;
+  readonly request_fingerprint: string;
+  readonly row_count?: number | null;
+  readonly run_outcome?: ProviderRunOutcome | null;
+  readonly started_at: string;
+  readonly task_id: string;
+}
+
+export type ProviderRunOutcome = "SUCCEEDED" | "DEGRADED" | "FAILED" | "CANCELLED";
+
 export interface ProviderSettingsProjection {
   readonly capabilities: ReadonlyArray<ProviderCapability>;
   readonly datasets: ReadonlyArray<DatasetDefinition>;
@@ -251,6 +278,65 @@ export interface ProviderSettingsProvider {
   readonly provider_kind: ProviderKind;
 }
 
+export type QuarantineStatus = "OPEN" | "RESOLVED" | "REJECTED";
+
+export type RawCompression = "NONE" | "GZIP";
+
+export interface RawIngestionPublishResult {
+  readonly provider_run: ProviderRun;
+  readonly quarantine?: RawIngestionQuarantine | null;
+  readonly raw_object?: RawObject | null;
+}
+
+export interface RawIngestionQuarantine {
+  readonly classification: RawSchemaDriftClassification;
+  readonly created_at: string;
+  readonly evidence_hash: string;
+  readonly evidence_storage_ref: StorageRef;
+  readonly expected_schema_hash: string;
+  readonly failure_detail_redacted?: string | null;
+  readonly observed_schema_hash?: string | null;
+  readonly provider_run_id: string;
+  readonly quarantine_status?: QuarantineStatus;
+  readonly raw_ingestion_quarantine_id: string;
+  readonly reason_code: string;
+}
+
+/** Secret-free durable task input for one controlled raw-provider request. */
+export interface RawIngestionTaskRequirements {
+  readonly dataset_id: string;
+  readonly dataset_schema_version: string;
+  readonly market?: string;
+  readonly provider_id: string;
+  readonly provider_policy_id: string;
+  readonly request?: Readonly<Record<string, unknown>>;
+  readonly timeout_seconds?: number;
+}
+
+export interface RawObject {
+  readonly actual_upstream: string;
+  readonly byte_count: number;
+  readonly compression: RawCompression;
+  readonly dataset_id: string;
+  readonly dataset_schema_version: string;
+  readonly ingested_at: string;
+  readonly media_type: string;
+  readonly observed_at: string;
+  readonly observed_schema_hash: string;
+  readonly provider_id: string;
+  readonly provider_run_id: string;
+  readonly provider_schema_version: string;
+  readonly raw_content_hash: string;
+  readonly raw_object_id: string;
+  readonly request_fingerprint: string;
+  readonly retention_class?: RetentionClass;
+  readonly row_count: number;
+  readonly source_published_at?: string | null;
+  readonly storage_ref: StorageRef;
+}
+
+export type RawSchemaDriftClassification = "MATCHED" | "ADDITIVE_DRIFT" | "BREAKING_DRIFT" | "UNKNOWN_SCHEMA";
+
 export type ResolutionStatus = "RESOLVED" | "AMBIGUOUS" | "NOT_FOUND" | "UNSUPPORTED" | "CONFLICT" | "INACTIVE";
 
 export interface ResourceRef {
@@ -258,7 +344,7 @@ export interface ResourceRef {
   readonly resource_type: ResourceType;
 }
 
-export type ResourceType = "task" | "attempt" | "data_snapshot" | "feature_snapshot" | "observation_snapshot" | "fact_pack" | "research" | "review" | "strategy" | "backtest_run" | "prediction" | "artifact" | "report" | "provider_run" | "sector" | "taxonomy" | "indicator" | "raw_object" | "canonical_partition" | "feature_partition" | "fact_block" | "claim" | "watch_condition" | "quality_report" | "request" | "checkpoint" | "backup" | "deployment";
+export type ResourceType = "task" | "attempt" | "data_snapshot" | "feature_snapshot" | "observation_snapshot" | "fact_pack" | "research" | "review" | "strategy" | "backtest_run" | "prediction" | "artifact" | "report" | "provider_run" | "sector" | "taxonomy" | "indicator" | "raw_object" | "canonical_partition" | "feature_partition" | "fact_block" | "claim" | "watch_condition" | "quality_report" | "request" | "checkpoint" | "backup" | "deployment" | "raw_ingestion_quarantine";
 
 export type RetentionClass = "PINNED" | "AUDIT" | "REBUILDABLE" | "CACHE" | "TEMP" | "QUARANTINE";
 
@@ -328,7 +414,7 @@ export interface TaskCreateRequest {
   readonly requested_by: string;
   readonly requirements?: Readonly<Record<string, unknown>>;
   readonly task_schema_version?: string;
-  readonly task_type: "artifact_orphan_dry_run";
+  readonly task_type: "artifact_orphan_dry_run" | "raw_ingestion";
 }
 
 export interface TaskDetails {

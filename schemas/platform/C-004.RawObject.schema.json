@@ -1,0 +1,193 @@
+{
+  "$defs": {
+    "RawCompression": {
+      "enum": [
+        "NONE",
+        "GZIP"
+      ],
+      "title": "RawCompression",
+      "type": "string"
+    },
+    "RetentionClass": {
+      "enum": [
+        "PINNED",
+        "AUDIT",
+        "REBUILDABLE",
+        "CACHE",
+        "TEMP",
+        "QUARANTINE"
+      ],
+      "title": "RetentionClass",
+      "type": "string"
+    },
+    "StorageBackend": {
+      "enum": [
+        "local_fs"
+      ],
+      "title": "StorageBackend",
+      "type": "string"
+    },
+    "StorageNamespace": {
+      "enum": [
+        "app"
+      ],
+      "title": "StorageNamespace",
+      "type": "string"
+    },
+    "StorageRef": {
+      "additionalProperties": false,
+      "properties": {
+        "content_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "media_type": {
+          "title": "Media Type",
+          "type": "string"
+        },
+        "relative_path": {
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "storage_backend": {
+          "$ref": "#/$defs/StorageBackend"
+        },
+        "storage_namespace": {
+          "$ref": "#/$defs/StorageNamespace"
+        }
+      },
+      "required": [
+        "storage_backend",
+        "storage_namespace",
+        "relative_path",
+        "content_hash",
+        "media_type",
+        "size_bytes"
+      ],
+      "title": "StorageRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "actual_upstream": {
+      "title": "Actual Upstream",
+      "type": "string"
+    },
+    "byte_count": {
+      "minimum": 0,
+      "title": "Byte Count",
+      "type": "integer"
+    },
+    "compression": {
+      "$ref": "#/$defs/RawCompression"
+    },
+    "dataset_id": {
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "dataset_schema_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Dataset Schema Version",
+      "type": "string"
+    },
+    "ingested_at": {
+      "format": "date-time",
+      "title": "Ingested At",
+      "type": "string"
+    },
+    "media_type": {
+      "title": "Media Type",
+      "type": "string"
+    },
+    "observed_at": {
+      "format": "date-time",
+      "title": "Observed At",
+      "type": "string"
+    },
+    "observed_schema_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Observed Schema Hash",
+      "type": "string"
+    },
+    "provider_id": {
+      "title": "Provider Id",
+      "type": "string"
+    },
+    "provider_run_id": {
+      "title": "Provider Run Id",
+      "type": "string"
+    },
+    "provider_schema_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Provider Schema Version",
+      "type": "string"
+    },
+    "raw_content_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Raw Content Hash",
+      "type": "string"
+    },
+    "raw_object_id": {
+      "title": "Raw Object Id",
+      "type": "string"
+    },
+    "request_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Request Fingerprint",
+      "type": "string"
+    },
+    "retention_class": {
+      "$ref": "#/$defs/RetentionClass",
+      "default": "PINNED"
+    },
+    "row_count": {
+      "minimum": 0,
+      "title": "Row Count",
+      "type": "integer"
+    },
+    "source_published_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Published At"
+    },
+    "storage_ref": {
+      "$ref": "#/$defs/StorageRef"
+    }
+  },
+  "required": [
+    "raw_object_id",
+    "provider_run_id",
+    "provider_id",
+    "actual_upstream",
+    "dataset_id",
+    "dataset_schema_version",
+    "request_fingerprint",
+    "storage_ref",
+    "raw_content_hash",
+    "media_type",
+    "compression",
+    "observed_at",
+    "ingested_at",
+    "provider_schema_version",
+    "observed_schema_hash",
+    "row_count",
+    "byte_count"
+  ],
+  "title": "RawObject",
+  "type": "object"
+}

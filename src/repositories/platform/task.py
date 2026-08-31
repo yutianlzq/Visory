@@ -563,12 +563,13 @@ class TaskControlRepository:
         session.execute(update(task_attempt).where(task_attempt.c.attempt_id == attempt_id).values(**normalized))
 
     @staticmethod
-    def claim_queued_task(session: Session) -> TaskRecord | None:
+    def claim_queued_task(session: Session, task_types: tuple[str, ...]) -> TaskRecord | None:
         row = session.execute(
             select(platform_task)
             .where(
                 platform_task.c.task_state == TaskState.QUEUED.value,
                 platform_task.c.cancel_requested_at.is_(None),
+                platform_task.c.task_type.in_(task_types),
             )
             .order_by(
                 platform_task.c.priority_class,
@@ -582,7 +583,7 @@ class TaskControlRepository:
         return _task_record(row) if row is not None else None
 
     @staticmethod
-    def claim_expired_leased_task(session: Session, now: datetime) -> tuple[TaskRecord, TaskAttemptRecord] | None:
+    def claim_expired_leased_task(session: Session, now: datetime, task_types: tuple[str, ...]) -> tuple[TaskRecord, TaskAttemptRecord] | None:
         row = session.execute(
             select(platform_task, task_attempt)
             .join(task_attempt, platform_task.c.active_attempt_id == task_attempt.c.attempt_id)
@@ -590,6 +591,7 @@ class TaskControlRepository:
                 platform_task.c.task_state == TaskState.LEASED.value,
                 task_attempt.c.attempt_outcome.is_(None),
                 task_attempt.c.lease_expires_at <= now,
+                platform_task.c.task_type.in_(task_types),
             )
             .order_by(
                 platform_task.c.priority_class,
@@ -607,7 +609,7 @@ class TaskControlRepository:
         return _task_record(task_row), _attempt_record(attempt_row)
 
     @staticmethod
-    def list_expired_running_task_ids(session: Session, now: datetime) -> tuple[str, ...]:
+    def list_expired_running_task_ids(session: Session, now: datetime, task_types: tuple[str, ...]) -> tuple[str, ...]:
         rows = session.execute(
             select(platform_task.c.task_id)
             .join(task_attempt, platform_task.c.active_attempt_id == task_attempt.c.attempt_id)
@@ -615,6 +617,7 @@ class TaskControlRepository:
                 platform_task.c.task_state == TaskState.RUNNING.value,
                 task_attempt.c.attempt_outcome.is_(None),
                 task_attempt.c.lease_expires_at <= now,
+                platform_task.c.task_type.in_(task_types),
             )
             .order_by(platform_task.c.task_id)
             .with_for_update(of=platform_task, skip_locked=True)

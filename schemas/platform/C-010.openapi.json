@@ -1278,6 +1278,202 @@
         "title": "ProviderPolicy",
         "type": "object"
       },
+      "ProviderRun": {
+        "additionalProperties": false,
+        "properties": {
+          "actual_upstream": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Actual Upstream"
+          },
+          "adapter_version": {
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "title": "Adapter Version",
+            "type": "string"
+          },
+          "attempt_id": {
+            "title": "Attempt Id",
+            "type": "string"
+          },
+          "byte_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Byte Count"
+          },
+          "capability_frequency": {
+            "title": "Capability Frequency",
+            "type": "string"
+          },
+          "capability_market": {
+            "title": "Capability Market",
+            "type": "string"
+          },
+          "dataset_id": {
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "dataset_schema_version": {
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "title": "Dataset Schema Version",
+            "type": "string"
+          },
+          "failure_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Failure Code"
+          },
+          "failure_detail_redacted": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Failure Detail Redacted"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Finished At"
+          },
+          "observed_schema_hash": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Observed Schema Hash"
+          },
+          "provider_id": {
+            "title": "Provider Id",
+            "type": "string"
+          },
+          "provider_policy_id": {
+            "title": "Provider Policy Id",
+            "type": "string"
+          },
+          "provider_policy_version": {
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "title": "Provider Policy Version",
+            "type": "string"
+          },
+          "provider_run_id": {
+            "title": "Provider Run Id",
+            "type": "string"
+          },
+          "raw_object_refs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Raw Object Refs",
+            "type": "array"
+          },
+          "request_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Request Fingerprint",
+            "type": "string"
+          },
+          "row_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Row Count"
+          },
+          "run_outcome": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProviderRunOutcome"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "task_id": {
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_run_id",
+          "provider_id",
+          "dataset_id",
+          "dataset_schema_version",
+          "provider_policy_id",
+          "provider_policy_version",
+          "adapter_version",
+          "capability_market",
+          "capability_frequency",
+          "task_id",
+          "attempt_id",
+          "request_fingerprint",
+          "started_at"
+        ],
+        "title": "ProviderRun",
+        "type": "object"
+      },
+      "ProviderRunOutcome": {
+        "enum": [
+          "SUCCEEDED",
+          "DEGRADED",
+          "FAILED",
+          "CANCELLED"
+        ],
+        "title": "ProviderRunOutcome",
+        "type": "string"
+      },
       "ProviderSettingsProjection": {
         "additionalProperties": false,
         "properties": {
@@ -1366,6 +1562,313 @@
         "title": "ProviderSettingsProvider",
         "type": "object"
       },
+      "QuarantineStatus": {
+        "enum": [
+          "OPEN",
+          "RESOLVED",
+          "REJECTED"
+        ],
+        "title": "QuarantineStatus",
+        "type": "string"
+      },
+      "RawCompression": {
+        "enum": [
+          "NONE",
+          "GZIP"
+        ],
+        "title": "RawCompression",
+        "type": "string"
+      },
+      "RawIngestionPublishResult": {
+        "additionalProperties": false,
+        "properties": {
+          "provider_run": {
+            "$ref": "#/components/schemas/ProviderRun"
+          },
+          "quarantine": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RawIngestionQuarantine"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "raw_object": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RawObject"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "provider_run"
+        ],
+        "title": "RawIngestionPublishResult",
+        "type": "object"
+      },
+      "RawIngestionQuarantine": {
+        "additionalProperties": false,
+        "properties": {
+          "classification": {
+            "$ref": "#/components/schemas/RawSchemaDriftClassification"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "evidence_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Evidence Hash",
+            "type": "string"
+          },
+          "evidence_storage_ref": {
+            "$ref": "#/components/schemas/StorageRef"
+          },
+          "expected_schema_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Schema Hash",
+            "type": "string"
+          },
+          "failure_detail_redacted": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Failure Detail Redacted"
+          },
+          "observed_schema_hash": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Observed Schema Hash"
+          },
+          "provider_run_id": {
+            "title": "Provider Run Id",
+            "type": "string"
+          },
+          "quarantine_status": {
+            "$ref": "#/components/schemas/QuarantineStatus",
+            "default": "OPEN"
+          },
+          "raw_ingestion_quarantine_id": {
+            "title": "Raw Ingestion Quarantine Id",
+            "type": "string"
+          },
+          "reason_code": {
+            "title": "Reason Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "raw_ingestion_quarantine_id",
+          "provider_run_id",
+          "classification",
+          "reason_code",
+          "expected_schema_hash",
+          "evidence_storage_ref",
+          "evidence_hash",
+          "created_at"
+        ],
+        "title": "RawIngestionQuarantine",
+        "type": "object"
+      },
+      "RawIngestionTaskRequirements": {
+        "additionalProperties": false,
+        "description": "Secret-free durable task input for one controlled raw-provider request.",
+        "properties": {
+          "dataset_id": {
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "dataset_schema_version": {
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "title": "Dataset Schema Version",
+            "type": "string"
+          },
+          "market": {
+            "default": "CN",
+            "title": "Market",
+            "type": "string"
+          },
+          "provider_id": {
+            "title": "Provider Id",
+            "type": "string"
+          },
+          "provider_policy_id": {
+            "title": "Provider Policy Id",
+            "type": "string"
+          },
+          "request": {
+            "additionalProperties": true,
+            "title": "Request",
+            "type": "object"
+          },
+          "timeout_seconds": {
+            "default": 30,
+            "maximum": 300,
+            "minimum": 1,
+            "title": "Timeout Seconds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "provider_id",
+          "dataset_id",
+          "dataset_schema_version",
+          "provider_policy_id"
+        ],
+        "title": "RawIngestionTaskRequirements",
+        "type": "object"
+      },
+      "RawObject": {
+        "additionalProperties": false,
+        "properties": {
+          "actual_upstream": {
+            "title": "Actual Upstream",
+            "type": "string"
+          },
+          "byte_count": {
+            "minimum": 0,
+            "title": "Byte Count",
+            "type": "integer"
+          },
+          "compression": {
+            "$ref": "#/components/schemas/RawCompression"
+          },
+          "dataset_id": {
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "dataset_schema_version": {
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "title": "Dataset Schema Version",
+            "type": "string"
+          },
+          "ingested_at": {
+            "format": "date-time",
+            "title": "Ingested At",
+            "type": "string"
+          },
+          "media_type": {
+            "title": "Media Type",
+            "type": "string"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "observed_schema_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Observed Schema Hash",
+            "type": "string"
+          },
+          "provider_id": {
+            "title": "Provider Id",
+            "type": "string"
+          },
+          "provider_run_id": {
+            "title": "Provider Run Id",
+            "type": "string"
+          },
+          "provider_schema_version": {
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "title": "Provider Schema Version",
+            "type": "string"
+          },
+          "raw_content_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Raw Content Hash",
+            "type": "string"
+          },
+          "raw_object_id": {
+            "title": "Raw Object Id",
+            "type": "string"
+          },
+          "request_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Request Fingerprint",
+            "type": "string"
+          },
+          "retention_class": {
+            "$ref": "#/components/schemas/RetentionClass",
+            "default": "PINNED"
+          },
+          "row_count": {
+            "minimum": 0,
+            "title": "Row Count",
+            "type": "integer"
+          },
+          "source_published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Published At"
+          },
+          "storage_ref": {
+            "$ref": "#/components/schemas/StorageRef"
+          }
+        },
+        "required": [
+          "raw_object_id",
+          "provider_run_id",
+          "provider_id",
+          "actual_upstream",
+          "dataset_id",
+          "dataset_schema_version",
+          "request_fingerprint",
+          "storage_ref",
+          "raw_content_hash",
+          "media_type",
+          "compression",
+          "observed_at",
+          "ingested_at",
+          "provider_schema_version",
+          "observed_schema_hash",
+          "row_count",
+          "byte_count"
+        ],
+        "title": "RawObject",
+        "type": "object"
+      },
+      "RawSchemaDriftClassification": {
+        "enum": [
+          "MATCHED",
+          "ADDITIVE_DRIFT",
+          "BREAKING_DRIFT",
+          "UNKNOWN_SCHEMA"
+        ],
+        "title": "RawSchemaDriftClassification",
+        "type": "string"
+      },
       "ResolutionStatus": {
         "enum": [
           "RESOLVED",
@@ -1425,7 +1928,8 @@
           "request",
           "checkpoint",
           "backup",
-          "deployment"
+          "deployment",
+          "raw_ingestion_quarantine"
         ],
         "title": "ResourceType",
         "type": "string"
@@ -1832,7 +2336,10 @@
             "type": "string"
           },
           "task_type": {
-            "const": "artifact_orphan_dry_run",
+            "enum": [
+              "artifact_orphan_dry_run",
+              "raw_ingestion"
+            ],
             "title": "Task Type",
             "type": "string"
           }

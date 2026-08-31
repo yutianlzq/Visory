@@ -53,12 +53,24 @@ from .enums import (
     ProviderCapabilityStatus,
     ProviderKind,
     ProviderMergeMode,
+    ProviderRunOutcome,
+    RawCompression,
+    RawSchemaDriftClassification,
 )
 from .hashing import ContentHashValue, DEFAULT_HASH_PROFILE, HashProfile, canonical_json_bytes, compute_content_hash
 from .identity import EntityIdentity, build_entity_key, parse_entity_key
 from .registry import PLATFORM_CONTRACTS, ContractRegistration, ContractRegistry
 from .resources import ResourceRef, generate_resource_id, generate_uuid7, parse_resource_id
 from .provider import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy, ProviderSettingsProvider, ProviderSettingsProjection
+from .raw_ingestion import (
+    ProviderRun,
+    RawIngestionPublishResult,
+    RawIngestionQuarantine,
+    RawIngestionTaskRequirements,
+    RawObject,
+    ensure_safe_actual_upstream,
+    ensure_secret_free,
+)
 from .storage import StorageRef
 from .temporal import AvailabilityMetadata, PointInTimeWindow
 from .task import (
@@ -126,6 +138,14 @@ __all__ = [
     "ProviderCapabilityStatus",
     "ProviderKind",
     "ProviderMergeMode",
+    "ProviderRun",
+    "ProviderRunOutcome",
+    "RawCompression",
+    "RawIngestionPublishResult",
+    "RawIngestionQuarantine",
+    "RawIngestionTaskRequirements",
+    "RawObject",
+    "RawSchemaDriftClassification",
     "PriorityClass",
     "PublicationMetadata",
     "PublicationStatus",
@@ -163,4 +183,6 @@ __all__ = [
     "normalize_alias_value",
     "parse_entity_key",
     "parse_resource_id",
+    "ensure_safe_actual_upstream",
+    "ensure_secret_free",
 ]

@@ -12,6 +12,7 @@ from .migrations import MigrationStatus, downgrade_database, get_migration_statu
 from .settings import PostgresSettings, read_secret_file
 from .task import TaskControlRepository
 from .provider import ProviderRegistryRepository
+from .raw_ingestion import RawIngestionRepository
 
 __all__ = [
     "ArtifactRepository",
@@ -30,6 +31,7 @@ __all__ = [
     "ResolverAliasRow",
     "TaskControlRepository",
     "ProviderRegistryRepository",
+    "RawIngestionRepository",
     "build_postgres_url",
     "create_postgres_engine",
     "downgrade_database",

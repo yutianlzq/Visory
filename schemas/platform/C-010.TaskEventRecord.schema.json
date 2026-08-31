@@ -47,7 +47,8 @@
         "request",
         "checkpoint",
         "backup",
-        "deployment"
+        "deployment",
+        "raw_ingestion_quarantine"
       ],
       "title": "ResourceType",
       "type": "string"

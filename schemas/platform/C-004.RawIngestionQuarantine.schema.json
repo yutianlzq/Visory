@@ -1,0 +1,153 @@
+{
+  "$defs": {
+    "QuarantineStatus": {
+      "enum": [
+        "OPEN",
+        "RESOLVED",
+        "REJECTED"
+      ],
+      "title": "QuarantineStatus",
+      "type": "string"
+    },
+    "RawSchemaDriftClassification": {
+      "enum": [
+        "MATCHED",
+        "ADDITIVE_DRIFT",
+        "BREAKING_DRIFT",
+        "UNKNOWN_SCHEMA"
+      ],
+      "title": "RawSchemaDriftClassification",
+      "type": "string"
+    },
+    "StorageBackend": {
+      "enum": [
+        "local_fs"
+      ],
+      "title": "StorageBackend",
+      "type": "string"
+    },
+    "StorageNamespace": {
+      "enum": [
+        "app"
+      ],
+      "title": "StorageNamespace",
+      "type": "string"
+    },
+    "StorageRef": {
+      "additionalProperties": false,
+      "properties": {
+        "content_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "media_type": {
+          "title": "Media Type",
+          "type": "string"
+        },
+        "relative_path": {
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "storage_backend": {
+          "$ref": "#/$defs/StorageBackend"
+        },
+        "storage_namespace": {
+          "$ref": "#/$defs/StorageNamespace"
+        }
+      },
+      "required": [
+        "storage_backend",
+        "storage_namespace",
+        "relative_path",
+        "content_hash",
+        "media_type",
+        "size_bytes"
+      ],
+      "title": "StorageRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "classification": {
+      "$ref": "#/$defs/RawSchemaDriftClassification"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "evidence_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Evidence Hash",
+      "type": "string"
+    },
+    "evidence_storage_ref": {
+      "$ref": "#/$defs/StorageRef"
+    },
+    "expected_schema_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Expected Schema Hash",
+      "type": "string"
+    },
+    "failure_detail_redacted": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Failure Detail Redacted"
+    },
+    "observed_schema_hash": {
+      "anyOf": [
+        {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Observed Schema Hash"
+    },
+    "provider_run_id": {
+      "title": "Provider Run Id",
+      "type": "string"
+    },
+    "quarantine_status": {
+      "$ref": "#/$defs/QuarantineStatus",
+      "default": "OPEN"
+    },
+    "raw_ingestion_quarantine_id": {
+      "title": "Raw Ingestion Quarantine Id",
+      "type": "string"
+    },
+    "reason_code": {
+      "title": "Reason Code",
+      "type": "string"
+    }
+  },
+  "required": [
+    "raw_ingestion_quarantine_id",
+    "provider_run_id",
+    "classification",
+    "reason_code",
+    "expected_schema_hash",
+    "evidence_storage_ref",
+    "evidence_hash",
+    "created_at"
+  ],
+  "title": "RawIngestionQuarantine",
+  "type": "object"
+}
