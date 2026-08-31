@@ -6,16 +6,16 @@
 
 - Goal：`Visory-G012`
 - Work Package：`WP-0202 Raw Ingestion`
-- Goal 状态：`IN_PROGRESS / LOCAL_VERIFIED`
-- Work Package 状态：`IN_PROGRESS`（仅在实现、测试、CI 与普通 merge commit 全部完成后改为 `VERIFIED`）
+- Goal 状态：`COMPLETE / MERGED / VERIFIED`
+- Work Package 状态：`VERIFIED`
 - 固定基线：`main=79ae6d4a0742d054e0d18fb8418d6055847e0241`
 - 工作分支：`goal/g012-wp-0202-raw-ingestion`
-- 已验证 Work Package：`8/45`（合并前保持不变）
+- 已验证 Work Package：`9/45`
 - 目标 Migration head：`0007_wp0202_raw_ingestion`
 - parent：`0006_wp0201_registry_contract_hardening`
-- PR / 合并提交 / 最终 CI：待创建、待核验、待普通 merge commit。
+- PR：[#22](https://github.com/yutianlzq/Visory/pull/22)`；合并提交：`1572a3f7f4bbeedc4fdeaafd03011b6a453073fe`（普通 merge commit）；最终 CI：Run [`33405263970`](https://github.com/yutianlzq/Visory/actions/runs/33405263970)，Governance、Python、Web 三项阻断 Job 全部成功。
 
-开始前已核验本地 `HEAD`、本地 `origin/main` 与 GitHub `main` 均为固定基线，工作区干净。本 Goal 只实现 Raw Ingestion，不启动 `WP-0203 Canonical Normalization` 或后续 Work Package。
+开始前已核验本地 `HEAD`、本地 `origin/main` 与 GitHub `main` 均为固定基线，工作区干净。合并后重新 fetch，GitHub `main`、本地 `origin/main` 与 PR #22 merge commit 均为 `1572a3f7f4bbeedc4fdeaafd03011b6a453073fe`，工作区干净。本 Goal 只实现 Raw Ingestion，不启动 `WP-0203 Canonical Normalization` 或后续 Work Package。
 
 ## 2. 实现结果
 
@@ -56,12 +56,12 @@
 - 本 Goal Python 与 Migration 的定向 `flake8`：通过；
 - `scripts/export_platform_contracts.py` 与 `--check`：通过，`40` 个平台契约导出无 drift；
 - `scripts/check_ai_assets.py`、`scripts/check_visory_baseline.py`：通过；前者/后者均无本 Goal 新问题；
-- 全量 `scripts/ci_gate.sh`、Web `npm ci && npm run lint && npm run build`、最终 `git diff --check`、GitHub Actions 尚在本次收尾阶段核验，完成前不能据此标记 `VERIFIED`。
+- Web `npm ci && npm run lint && npm run build`：通过；GitHub Actions Run `33405263970` 的 Governance、Python deterministic gate、Web lint and build 全部成功；全量本地 `scripts/ci_gate.sh` 在 Windows 环境报告 83 个与本 Goal 无关的既有环境敏感失败，Goal-specific 与平台测试均通过；`git diff --check`：通过。
 
 ## 4. 环境、风险与回滚
 
 - Python 使用本地 `.venv`；PostgreSQL 使用 `postgres:16-alpine` 一次性 Docker 容器、每用例隔离数据库和临时 Secret 文件；所有 Secret 在记录中显示为 `***`；
-- 测试仅使用每用例临时 Namespace，未写真实 `/data`，未连接生产 Provider、未写生产数据库或生产 Secret，未部署；未修改 `upstream/`、`references/`、Legacy Task Queue、依赖清单或 lockfile；
+- 测试仅使用每用例临时 Namespace，未写真实 `/data`，未连接生产 Provider、未写生产数据库或生产 Secret，未部署；PostgreSQL 16 Docker 容器、临时 Secret 文件和 Goal 临时目录已清理；未修改 `upstream/`、`references/`、Legacy Task Queue、依赖清单或 lockfile；
 - Migration downgrade 仅回滚数据库 Schema，不删除 Raw、Quarantine 或 rename 后 Orphan 文件；因此回滚前必须保留 Storage 审计证据；
 - 回滚代码：普通 revert 本 Goal 的 merge commit；Schema：在隔离数据库 downgrade 至 `0006_wp0201_registry_contract_hardening`，并按上述文件保留语义进行审计或受控恢复；
 - 后续风险：真实 Provider 适配、Canonical Normalization、Raw 自动恢复/删除、生产调度与公网数据访问均明确不属于本 Goal。

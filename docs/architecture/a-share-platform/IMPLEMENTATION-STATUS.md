@@ -8,9 +8,9 @@
 
 工程底座状态：DSA 固定提交 `fb4735a1055caefa2396982af3b09121feb9ff30` 已完成导入和双基线验收，状态为 `IMPORTED / VERIFIED`。导入代码中的 React/FastAPI、Legacy SQLite、内存 Task Queue、分析、LLM、报告、通知和数据 Fetcher 仍是迁移基线，不能作为 Visory 新契约已实现的证据。
 
-目标架构状态：implemented work packages 为 `8/45`；`WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201` 均为 `VERIFIED`，其余 37 个 WP 为 `NOT_STARTED`。
+目标架构状态：implemented work packages 为 `9/45`；`WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201`、`WP-0202` 均为 `VERIFIED`，其余 36 个 WP 为 `NOT_STARTED`。
 
-最近完成的 Work Package：`WP-0201 Dataset/Provider Registry`。`Visory-G010` 完成 C-004 Dataset/Provider Registry、受控 Adapter 注册表、Migration `0005_wp0201_dataset_provider_registry`、只读平台投影 API 与生成契约；PR #17 已合并，merge commit `208f1d442f642a17d412c02eb06c3fb3e4b19ba3`，最终 Run `33351050060` 的 Governance、Python、Web 三项阻断 Job 全部成功；合并后补充了 credential-safe Settings projection、有效策略区间 GiST exclusion constraint 及对应回归测试。状态为 `COMPLETE / MERGED / VERIFIED / 8/45`。
+最近完成的 Work Package：`WP-0202 Raw Ingestion`。`Visory-G010` 完成 C-004 Dataset/Provider Registry、受控 Adapter 注册表、Migration `0005_wp0201_dataset_provider_registry`、只读平台投影 API 与生成契约；PR #17 已合并，merge commit `208f1d442f642a17d412c02eb06c3fb3e4b19ba3`，最终 Run `33351050060` 的 Governance、Python、Web 三项阻断 Job 全部成功；合并后补充了 credential-safe Settings projection、有效策略区间 GiST exclusion constraint 及对应回归测试。状态为 `COMPLETE / MERGED / VERIFIED / 8/45`。
 
 交付阶段：MVP 一期为本地核心功能版（M0—M6 + WP-0701—0703）；MVP 二期为本地生产预演与服务器发布版（WP-0704 + M8）。未过 Local Release Gate 不得将 WP 标记为 `RELEASED`。
 
@@ -28,11 +28,11 @@
 | Visory-G008 | COMPLETE / MERGED | [G008 / WP-0103 进度与验收记录](GOAL-G008-STATUS.md)；merge commit `ea4f8b1`；PR #7；Run `33315054696` 三项全绿 |
 | Visory-G009 | COMPLETE / MERGED | [G009 / WP-0104 进度与验收记录](GOAL-G009-STATUS.md)；PR #15 merge commit `9c03666740a1e7a90a616a2d774efc57ca5a0e6b`；真实认证 ASGI/浏览器旅程、PostgreSQL SSE replay 和连接清理通过；Run `33329710242` 三项阻断 Job 全绿 |
 | Visory-G011 | COMPLETE / MERGED | [G011 / WP-0201 Registry Hardening](GOAL-G011-STATUS.md)；PR #20 merge commit `dbd8c271041b17323cff09ec00679f5f0ea59547`；Run `33373953485` 的 Governance、Python、Web 三项阻断 Job 全绿；进度保持 `8/45` |
-| Visory-G012 | IN_PROGRESS / LOCAL_VERIFIED | [G012 / WP-0202 Raw Ingestion](GOAL-G012-STATUS.md)；当前分支 goal/g012-wp-0202-raw-ingestion；Migration `0007_wp0202_raw_ingestion`；本地平台、PostgreSQL 16、契约与治理证据已通过，等待完整 CI 和普通 merge commit |
+| Visory-G012 | COMPLETE / MERGED / VERIFIED | [G012 / WP-0202 Raw Ingestion](GOAL-G012-STATUS.md)；PR #22；merge commit `1572a3f7f4bbeedc4fdeaafd03011b6a453073fe`；Migration `0007_wp0202_raw_ingestion`；Run `33405263970` 的 Governance、Python、Web 三项阻断 Job 全绿；进度 `9/45` |
 | DSA Baseline | IMPORTED / VERIFIED | 1126/1126 blob 验签；Python/Web 双基线；`baseline_regression_delta=0`；`web_lint_build_regression_delta=0` |
-| Implemented Work Packages | 8/45 | `WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201` 为 `VERIFIED`；其余 37 项 `NOT_STARTED` |
+| Implemented Work Packages | 9/45 | `WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201`、`WP-0202` 为 `VERIFIED`；其余 36 项 `NOT_STARTED` |
 
-Current Goal: Visory-G012 / WP-0202 Raw Ingestion is IN_PROGRESS / LOCAL_VERIFIED from baseline 79ae6d4a0742d054e0d18fb8418d6055847e0241; target migration 0007_wp0202_raw_ingestion; progress remains 8/45 until CI and ordinary merge complete.
+Current Goal: Visory-G012 / WP-0202 Raw Ingestion is COMPLETE / MERGED / VERIFIED from baseline 79ae6d4a0742d054e0d18fb8418d6055847e0241; target migration 0007_wp0202_raw_ingestion; progress is 9/45.
 
 ## 2. 状态定义
 
@@ -58,7 +58,7 @@ RELEASED     已部署且通过运行观察和回滚/恢复要求
 | WP-0103 | Durable Task Control Plane | VERIFIED | [G008 / WP-0103 进度与验收记录](GOAL-G008-STATUS.md)；实现 head `826aacfa2965c98efff8a8795a46dc9f72edec5f`；PR #7；Migration `0004_wp0103_durable_task_control_plane`；平台 257 passed、5 skipped，本地 PostgreSQL 16 集成 30 passed，Legacy 定向回归 106 passed；Run `33314470672` 三项全绿 |
 | WP-0104 | Operations最小页面 | VERIFIED | [G009 / WP-0104 进度与验收记录](GOAL-G009-STATUS.md)；PR #9、#12、#13、#14、#15 已合并；真实认证 ASGI/浏览器旅程、PostgreSQL SSE replay 和连接池清理通过；平台 260 passed、5 skipped；集成目录本地 PostgreSQL 16 实例 31 passed（清理后默认 31 skipped）；Playwright 6 passed + 真实认证 1 passed；Run `33329710242` 三项阻断 Job 全绿 |
 | WP-0201 | Dataset/Provider Registry | VERIFIED | [G010 / WP-0201 进度与验收记录](GOAL-G010-STATUS.md)；实现 head `77a38e5bacc85e986d8062a55d0d867ec9387d89`；PR #17；merge commit `208f1d442f642a17d412c02eb06c3fb3e4b19ba3`；Migration `0005_wp0201_dataset_provider_registry`；补充 credential-safe Settings projection、GiST exclusion constraint 与真实 PostgreSQL 重叠拒绝测试；Run `33351050060` 三项阻断 Job 全绿 |
-| WP-0202 | Raw Ingestion | IN_PROGRESS / LOCAL_VERIFIED | [G012 / WP-0202 进度与验收记录](GOAL-G012-STATUS.md)；Migration `0007_wp0202_raw_ingestion`；本地平台 283 passed、PostgreSQL 16 integration 46 passed；CI/merge 完成后才标记 VERIFIED |
+| WP-0202 | Raw Ingestion | VERIFIED | [G012 / WP-0202 进度与验收记录](GOAL-G012-STATUS.md)；PR #22；merge commit `1572a3f7f4bbeedc4fdeaafd03011b6a453073fe`；Migration `0007_wp0202_raw_ingestion`；平台 283 passed、PostgreSQL 16 integration 46 passed；Run `33405263970` 三项阻断 Job 全绿 |
 | WP-0203 | Canonical Normalization | NOT_STARTED | — |
 | WP-0204 | DataSnapshot与Capability Gate | NOT_STARTED | — |
 | WP-0205 | 16:00 Scheduler与补充源 | NOT_STARTED | — |
