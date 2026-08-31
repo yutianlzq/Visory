@@ -309,7 +309,7 @@ const baseCategories = [
 ];
 
 type ConfigState = {
-  categories: Array<{ category: string; title: string; description: string; displayOrder: number; fields: [] }>;
+  categories: Array<{ category: string; title: string; description: string; displayOrder: number; fields: unknown[] }>;
   itemsByCategory: Record<string, Array<Record<string, unknown>>>;
   issueByKey: Record<string, unknown[]>;
   activeCategory: string;
