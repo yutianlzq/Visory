@@ -10,7 +10,7 @@
 
 目标架构状态：implemented work packages 为 `9/45`；`WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201`、`WP-0202` 均为 `VERIFIED`，其余 36 个 WP 为 `NOT_STARTED`。
 
-最近完成的 Work Package：`WP-0202 Raw Ingestion`。`Visory-G010` 完成 C-004 Dataset/Provider Registry、受控 Adapter 注册表、Migration `0005_wp0201_dataset_provider_registry`、只读平台投影 API 与生成契约；PR #17 已合并，merge commit `208f1d442f642a17d412c02eb06c3fb3e4b19ba3`，最终 Run `33351050060` 的 Governance、Python、Web 三项阻断 Job 全部成功；合并后补充了 credential-safe Settings projection、有效策略区间 GiST exclusion constraint 及对应回归测试。状态为 `COMPLETE / MERGED / VERIFIED / 8/45`。
+最近完成的 Work Package：`WP-0202 Raw Ingestion`。`Visory-G012` 完成 C-004 Raw Ingestion 契约、受控 Provider Adapter 注册表、Migration `0007_wp0202_raw_ingestion`、原子 Raw 发布、Schema Drift Quarantine 和 Durable Task 纵向闭环；PR #22 已合并，merge commit `1572a3f7f4bbeedc4fdeaafd03011b6a453073fe`，最终 Run `33405263970` 的 Governance、Python、Web 三项阻断 Job 全部成功。状态为 `COMPLETE / MERGED / VERIFIED / 9/45`。
 
 交付阶段：MVP 一期为本地核心功能版（M0—M6 + WP-0701—0703）；MVP 二期为本地生产预演与服务器发布版（WP-0704 + M8）。未过 Local Release Gate 不得将 WP 标记为 `RELEASED`。
 
