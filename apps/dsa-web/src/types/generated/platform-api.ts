@@ -233,6 +233,19 @@ export interface ProviderPolicy {
   readonly supplemental_provider_ids?: ReadonlyArray<string>;
 }
 
+/** Versioned provider-native schema; intentionally separate from DatasetDefinition. */
+export interface ProviderRawSchemaDefinition {
+  readonly adapter_version: string;
+  readonly dataset_id: string;
+  readonly dataset_schema_version: string;
+  readonly expected_schema_hash: string;
+  readonly field_types: Readonly<Record<string, string>>;
+  readonly optional_fields?: ReadonlyArray<string>;
+  readonly provider_id: string;
+  readonly provider_schema_version: string;
+  readonly required_fields: ReadonlyArray<string>;
+}
+
 export interface ProviderRun {
   readonly actual_upstream?: string | null;
   readonly adapter_version: string;

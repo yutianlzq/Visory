@@ -17,7 +17,7 @@ from src.repositories.platform import (
 )
 
 
-HEAD_REVISION = "0007_wp0202_raw_ingestion"
+HEAD_REVISION = "0008_wp0202_raw_schema_hardening"
 
 
 def _table_names(database: PostgresDatabase) -> tuple[str, ...]:
@@ -60,6 +60,8 @@ def test_empty_database_upgrade_is_idempotent_and_reversible(isolated_postgres_d
         "provider_capability",
         "provider_definition",
         "provider_policy",
+        "provider_rate_limit_window",
+        "provider_raw_schema_definition",
         "provider_run",
         "raw_ingestion_quarantine",
         "raw_object",

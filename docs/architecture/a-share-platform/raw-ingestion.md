@@ -21,7 +21,7 @@ Durable Task → Controlled Provider Adapter → ProviderRun → RawObject / Qua
 - `RawIngestionTaskRequirements`：`raw_ingestion` Durable Task 的 secret-free 输入；请求内容在持久化前验证；
 - `RawIngestionPublishResult`：Worker 的内部发布结果，不提供公网文件下载端点。
 
-Migration `0007_wp0202_raw_ingestion`（parent `0006_wp0201_registry_contract_hardening`）创建 `provider_run`、`raw_object` 与 `raw_ingestion_quarantine`。它对 Registry、Task 与 Attempt 使用外键；`raw_object` 的 `provider_run_id` 和 `relative_path` 均唯一，保留/压缩/统计约束由数据库与契约共同限制。
+Migration `0007_wp0202_raw_ingestion`（parent `0006_wp0201_registry_contract_hardening`）创建 `provider_run`、`raw_object` 与 `raw_ingestion_quarantine`；G013 新增 Migration `0008_wp0202_raw_schema_hardening`，创建独立 `provider_raw_schema_definition` 与 PostgreSQL `provider_rate_limit_window`。它对 Registry、Task 与 Attempt 使用外键；`raw_object` 的 `provider_run_id` 和 `relative_path` 均唯一，保留/压缩/统计约束由数据库与契约共同限制。
 
 Repository 只执行读写操作，不提交事务。Worker 以调用方拥有的事务同时登记 ProviderRun/RawObject 或 Quarantine，并完成或失败 Durable Task。
 
@@ -63,16 +63,16 @@ Alembic downgrade 仅删除数据库 Schema；它绝不删除 Raw、Quarantine�
 
 ## 5. Drift、取消、租约与恢复
 
-Schema 比较的是 Provider Raw Schema：
+Schema 比较的是独立、版本化的 Provider Raw Schema（不从 Canonical DatasetDefinition 派生）：
 
-- `MATCHED`：字段集合与 DatasetDefinition 完全一致；
-- `ADDITIVE_DRIFT`：存在额外字段但未缺少正式字段；
-- `BREAKING_DRIFT`：缺少正式字段或语义不满足；
+- `MATCHED`：必需字段存在、可选字段缺失允许、已声明字段类型一致且无额外字段；
+- `ADDITIVE_DRIFT`：存在额外字段但未缺少必需字段；
+- `BREAKING_DRIFT`：缺少必需字段、已声明字段类型不符或 Provider Schema 版本未注册；
 - `UNKNOWN_SCHEMA`：Provider 未提供可比较的 Raw schema。
 
 漂移响应的内容和 Manifest 以 Quarantine 证据保存；其内容不会注册为消费用 RawObject。
 
-Worker 使用 WP-0103 的单 Worker Lease：fetch 前、fetch 后/发布前都检查取消；过期或丢失 Lease 的 Worker 不能完成 Task、登记 RawObject 或把半成品发布成可见结果。Provider timeout 可映射为 retryable Raw 错误；Provider/Dataset rate limiter 只约束该受控采集路径。
+Worker 使用 WP-0103 的单 Worker Lease：fetch 前、fetch 后/发布前都检查取消；过期或丢失 Lease 的 Worker 不能完成 Task、登记 RawObject 或把半成品发布成可见结果。Provider timeout 可映射为 retryable Raw 错误；Provider/Dataset rate limiter 只约束该受控采集路径，并通过 PostgreSQL 固定窗口行锁在 Worker 间协调；独立内存计数器仅用于离线单元测试。
 
 `RawIngestionOrphanScanner` 是只读 Dry-run。它只扫描上述已知目录结构，跳过未知目录、Symlink 与无效 Manifest，重验 Manifest、路径、Hash、字节数和 Registry 状态，输出候选与 `RAW_REGISTRY_ENTRY_MISSING` / `PROVIDER_RUN_ENTRY_MISSING` 原因。它不删除、不自动恢复注册，也不处理未知目录。
 

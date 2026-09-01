@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, MetaData, String, Table, select
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, MetaData, String, Table, select
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
 
-from src.schemas.platform import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy
+from src.schemas.platform import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy, ProviderRawSchemaDefinition
 
 metadata = MetaData()
 CONTROLLED_ADAPTERS = {"a_stock_data", "financial_api"}
@@ -36,6 +36,27 @@ provider_capability = Table(
     Column("rate_limit_profile", JSONB, nullable=False), Column("provider_capability_status", String(16), nullable=False),
     Column("checked_at", DateTime(timezone=True), nullable=False),
 )
+provider_raw_schema_definition = Table(
+    "provider_raw_schema_definition", metadata,
+    Column("provider_id", String(64), primary_key=True),
+    Column("adapter_version", String(32), primary_key=True),
+    Column("dataset_id", String(64), primary_key=True),
+    Column("dataset_schema_version", String(32), primary_key=True),
+    Column("provider_schema_version", String(32), primary_key=True),
+    Column("required_fields", JSONB, nullable=False),
+    Column("optional_fields", JSONB, nullable=False),
+    Column("field_types", JSONB, nullable=False),
+    Column("expected_schema_hash", String(71), nullable=False),
+)
+provider_rate_limit_window = Table(
+    "provider_rate_limit_window", metadata,
+    Column("provider_id", String(64), primary_key=True),
+    Column("dataset_id", String(64), primary_key=True),
+    Column("market", String(32), primary_key=True),
+    Column("frequency", String(32), primary_key=True),
+    Column("window_epoch", BigInteger, nullable=False),
+    Column("request_count", BigInteger, nullable=False),
+)
 provider_policy = Table(
     "provider_policy", metadata,
     Column("provider_policy_id", String(64), primary_key=True), Column("dataset_id", String(64), nullable=False),
@@ -64,6 +85,13 @@ def _capability(row) -> ProviderCapability:
     value = dict(row)
     value["supported_fields"] = tuple(value["supported_fields"])
     return ProviderCapability.model_validate(value)
+
+
+def _raw_schema(row) -> ProviderRawSchemaDefinition:
+    value = dict(row)
+    value["required_fields"] = tuple(value["required_fields"])
+    value["optional_fields"] = tuple(value["optional_fields"])
+    return ProviderRawSchemaDefinition.model_validate(value)
 
 
 def _policy(row) -> ProviderPolicy:
@@ -116,6 +144,64 @@ class ProviderRegistryRepository:
             if current != record:
                 raise ValueError(f"registry bootstrap conflict for {table.name}: {key}")
 
+    @staticmethod
+    def add_provider_raw_schema(session: Session, record: ProviderRawSchemaDefinition) -> None:
+        session.execute(provider_raw_schema_definition.insert().values(**record.model_dump(mode="python")))
+
+    @classmethod
+    def ensure_provider_raw_schemas(cls, session: Session, records: tuple[ProviderRawSchemaDefinition, ...]) -> None:
+        for record in records:
+            key = {
+                "provider_id": record.provider_id,
+                "adapter_version": record.adapter_version,
+                "dataset_id": record.dataset_id,
+                "dataset_schema_version": record.dataset_schema_version,
+                "provider_schema_version": record.provider_schema_version,
+            }
+            row = session.execute(select(provider_raw_schema_definition).filter_by(**key)).mappings().first()
+            if row is None:
+                cls.add_provider_raw_schema(session, record)
+            elif _raw_schema(row) != record:
+                raise ValueError(f"registry bootstrap conflict for provider_raw_schema_definition: {key}")
+
+    @staticmethod
+    def get_provider_raw_schema(
+        session: Session,
+        provider_id: str,
+        adapter_version: str,
+        dataset_id: str,
+        dataset_schema_version: str,
+        provider_schema_version: str,
+    ) -> ProviderRawSchemaDefinition | None:
+        row = session.execute(
+            select(provider_raw_schema_definition).where(
+                provider_raw_schema_definition.c.provider_id == provider_id,
+                provider_raw_schema_definition.c.adapter_version == adapter_version,
+                provider_raw_schema_definition.c.dataset_id == dataset_id,
+                provider_raw_schema_definition.c.dataset_schema_version == dataset_schema_version,
+                provider_raw_schema_definition.c.provider_schema_version == provider_schema_version,
+            )
+        ).mappings().one_or_none()
+        return _raw_schema(row) if row is not None else None
+
+    @staticmethod
+    def list_provider_raw_schemas(
+        session: Session,
+        provider_id: str,
+        adapter_version: str,
+        dataset_id: str,
+        dataset_schema_version: str,
+    ) -> tuple[ProviderRawSchemaDefinition, ...]:
+        rows = session.execute(
+            select(provider_raw_schema_definition).where(
+                provider_raw_schema_definition.c.provider_id == provider_id,
+                provider_raw_schema_definition.c.adapter_version == adapter_version,
+                provider_raw_schema_definition.c.dataset_id == dataset_id,
+                provider_raw_schema_definition.c.dataset_schema_version == dataset_schema_version,
+            ).order_by(provider_raw_schema_definition.c.provider_schema_version)
+        ).mappings()
+        return tuple(_raw_schema(row) for row in rows)
+
     @classmethod
     def ensure_providers(cls, session: Session, records: tuple[ProviderDefinition, ...]) -> None:
         cls._ensure(session, provider_definition, ("provider_id",), records, cls.add_provider)
@@ -164,4 +250,4 @@ class ProviderRegistryRepository:
         return ProviderSettingsProjection(providers=providers, datasets=cls.list_datasets(session), capabilities=cls.list_capabilities(session), policies=cls.list_policies(session))
 
 
-__all__ = ["CONTROLLED_ADAPTERS", "ProviderRegistryRepository", "provider_definition", "dataset_definition", "provider_capability", "provider_policy"]
+__all__ = ["CONTROLLED_ADAPTERS", "ProviderRegistryRepository", "provider_definition", "dataset_definition", "provider_capability", "provider_policy", "provider_raw_schema_definition", "provider_rate_limit_window"]

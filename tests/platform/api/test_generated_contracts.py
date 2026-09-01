@@ -60,6 +60,7 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "ProviderKind",
         "ProviderMergeMode",
         "ProviderPolicy",
+        "ProviderRawSchemaDefinition",
         "ProviderRun",
         "ProviderRunOutcome",
         "QuarantineStatus",

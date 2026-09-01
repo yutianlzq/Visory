@@ -5,6 +5,7 @@ from .raw_ingestion import (
     ControlledProviderAdapterRegistry,
     FakeProviderTransport,
     ProviderRateLimiter,
+    PostgresRateLimiter,
     RawIngestionError,
     RawIngestionOrphanCandidate,
     RawIngestionOrphanScanResult,
@@ -14,4 +15,4 @@ from .raw_ingestion import (
 )
 
 
-__all__ = ["ADAPTER_REGISTRY", "ArtifactPublisherService", "ControlledProviderAdapterRegistry", "FakeProviderTransport", "ProviderRateLimiter", "ProviderRegistryService", "RawIngestionError", "RawIngestionOrphanCandidate", "RawIngestionOrphanScanResult", "RawIngestionOrphanScanner", "RawIngestionTaskWorker", "RawObjectPublisher", "TaskControlError", "TaskControlService"]
+__all__ = ["ADAPTER_REGISTRY", "ArtifactPublisherService", "ControlledProviderAdapterRegistry", "FakeProviderTransport", "ProviderRateLimiter", "PostgresRateLimiter", "ProviderRegistryService", "RawIngestionError", "RawIngestionOrphanCandidate", "RawIngestionOrphanScanResult", "RawIngestionOrphanScanner", "RawIngestionTaskWorker", "RawObjectPublisher", "TaskControlError", "TaskControlService"]
