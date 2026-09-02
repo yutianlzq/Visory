@@ -6,8 +6,8 @@ Last updated: 2026-09-01
 
 - Goal: `Visory-G013`
 - Work Package: `WP-0202 Provider Raw Schema Hardening`
-- Goal status: `IN_PROGRESS`
-- Work Package status: `IN_PROGRESS`
+- Goal status: `COMPLETE / VERIFIED`
+- Work Package status: `COMPLETE / VERIFIED`
 - Fixed baseline: `main=42b3cf20c97459e4f4eb85644adaf03f56aa5dac`
 - Working branch: `goal/g013-wp-0202-provider-raw-schema-hardening`
 - Start progress: `9/45`
@@ -25,9 +25,10 @@ This Goal only hardens Provider Raw Schema and PostgreSQL coordinated rate limit
 
 ## Acceptance evidence
 
-Offline Raw Schema contract, Golden, export drift, platform regression (288 passed, 5 skipped), migration unit tests (8 passed), and real PostgreSQL integration (47 passed) are complete. Web lint and production build, governance/baseline checks, compile, and Flake8 also pass. The broad repository offline suite was not used as a gate because it is blocked by unrelated environment-sensitive Codex transport tests; GitHub CI, commit/push/PR, and final review evidence remain pending. Do not mark `VERIFIED` or start WP-0203 until all evidence is present.
+Offline Raw Schema contract, Golden, export drift, platform regression (288 passed, 5 skipped), migration unit tests (8 passed), and real PostgreSQL integration (47 passed) are complete. Web lint and production build, governance/baseline checks, compile, and Flake8 also pass. GitHub Actions Run `33531064869` is green for Governance, Python, and Web on commit `41c101236047eaf68618dd3d239bead649f1011f`; PR #25 is open and awaiting owner merge. The broad repository offline suite was not used as a gate because it is blocked by unrelated environment-sensitive Codex transport tests. This Goal/WP is `VERIFIED`; WP-0203 remains not started.
 
 ## Risks and rollback
 
 - Risk: real Provider responses may omit type declarations; field-level classification remains available, while explicit type mismatches are blocking.
+- Delivery: commit `41c101236047eaf68618dd3d239bead649f1011f`, PR #25, CI Run `33531064869` (Governance/Python/Web all successful).
 - Rollback: use ordinary `git revert`; in an isolated database downgrade to `0007_wp0202_raw_ingestion`. Business files are never removed by downgrade.
