@@ -10,7 +10,7 @@
 
 目标架构状态：implemented work packages 为 `9/45`；`WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201`、`WP-0202` 为 `VERIFIED`，其余 WP 为 `NOT_STARTED`。G013 Provider Raw Schema Hardening 已完成并通过最终 CI，仍计入同一 `WP-0202`。
 
-最近完成的 Work Package：`WP-0202 Provider Raw Schema Hardening`。`Visory-G012` 完成 C-004 Raw Ingestion 契约、受控 Provider Adapter 注册表、Migration `0007_wp0202_raw_ingestion`、原子 Raw 发布、Schema Drift Quarantine 和 Durable Task 纵向闭环；PR #22 已合并，merge commit `1572a3f7f4bbeedc4fdeaafd03011b6a453073fe`，最终 Run `33405263970` 的 Governance、Python、Web 三项阻断 Job 全部成功。`Visory-G013` 在其上新增 Migration `0008_wp0202_raw_schema_hardening`、Provider Raw Schema Registry 和 PostgreSQL 协调限流；PR #25、head `41c101236047eaf68618dd3d239bead649f1011f`、Run `33531064869` 三项阻断 Job 全部成功，状态为 `COMPLETE / VERIFIED / 9/45`。
+最近完成的 Work Package：`WP-0202 Provider Raw Schema Hardening`。`Visory-G012` 完成 C-004 Raw Ingestion 契约、受控 Provider Adapter 注册表、Migration `0007_wp0202_raw_ingestion`、原子 Raw 发布、Schema Drift Quarantine 和 Durable Task 纵向闭环；PR #22 已合并，merge commit `1572a3f7f4bbeedc4fdeaafd03011b6a453073fe`，最终 Run `33405263970` 的 Governance、Python、Web 三项阻断 Job 全部成功。`Visory-G013` 在其上新增 Migration `0008_wp0202_raw_schema_hardening`、Provider Raw Schema Registry 和 PostgreSQL 协调限流；PR #25 已合并，merge commit `71328fd512400a0cc0a2c38c128fead14a9a57d4`；head `766476d60bc3a1539dc8589fa2d830ed754b7117`、Run `33578007314` 三项阻断 Job 全部成功，状态为 `COMPLETE / VERIFIED / 9/45`。
 
 交付阶段：MVP 一期为本地核心功能版（M0—M6 + WP-0701—0703）；MVP 二期为本地生产预演与服务器发布版（WP-0704 + M8）。未过 Local Release Gate 不得将 WP 标记为 `RELEASED`。
 
@@ -33,7 +33,7 @@
 | DSA Baseline | IMPORTED / VERIFIED | 1126/1126 blob 验签；Python/Web 双基线；`baseline_regression_delta=0`；`web_lint_build_regression_delta=0` |
 | Implemented Work Packages | 9/45 | `WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201`、`WP-0202` 为 `VERIFIED`；其余 36 项 `NOT_STARTED` |
 
-Current Goal: Visory-G013 / WP-0202 Provider Raw Schema Hardening is COMPLETE / VERIFIED from baseline 42b3cf20c97459e4f4eb85644adaf03f56aa5dac; target migration `0008_wp0202_raw_schema_hardening`; PR #25 remains open for owner merge; progress remains `9/45` because WP-0202 is already counted.
+Current Goal: Visory-G014 / WP-0203 Core Canonical Normalization is IN_PROGRESS from baseline 71328fd512400a0cc0a2c38c128fead14a9a57d4; target migration `0009_wp0203_core_canonical_normalization`; PR #25 is merged; progress remains `9/45` until WP-0203 verification.
 
 ## 2. 状态定义
 
