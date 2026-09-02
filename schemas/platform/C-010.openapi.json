@@ -1278,6 +1278,74 @@
         "title": "ProviderPolicy",
         "type": "object"
       },
+      "ProviderRawSchemaDefinition": {
+        "additionalProperties": false,
+        "description": "Versioned provider-native schema; intentionally separate from DatasetDefinition.",
+        "properties": {
+          "adapter_version": {
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "title": "Adapter Version",
+            "type": "string"
+          },
+          "dataset_id": {
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "dataset_schema_version": {
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "title": "Dataset Schema Version",
+            "type": "string"
+          },
+          "expected_schema_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Schema Hash",
+            "type": "string"
+          },
+          "field_types": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Field Types",
+            "type": "object"
+          },
+          "optional_fields": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Optional Fields",
+            "type": "array"
+          },
+          "provider_id": {
+            "title": "Provider Id",
+            "type": "string"
+          },
+          "provider_schema_version": {
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "title": "Provider Schema Version",
+            "type": "string"
+          },
+          "required_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Required Fields",
+            "type": "array"
+          }
+        },
+        "required": [
+          "provider_id",
+          "adapter_version",
+          "dataset_id",
+          "dataset_schema_version",
+          "provider_schema_version",
+          "required_fields",
+          "field_types",
+          "expected_schema_hash"
+        ],
+        "title": "ProviderRawSchemaDefinition",
+        "type": "object"
+      },
       "ProviderRun": {
         "additionalProperties": false,
         "properties": {

@@ -18,6 +18,7 @@ from src.artifacts.namespace import StorageNamespaceResolver, fsync_directory
 from src.repositories.platform.database import PostgresDatabase
 from src.repositories.platform.raw_ingestion import RawIngestionRepository
 from src.schemas.platform import (
+    ProviderRawSchemaDefinition,
     ProviderRun,
     ProviderRunOutcome,
     RawCompression,
@@ -82,6 +83,7 @@ class ProviderFetchResponse:
     observed_at: datetime
     source_published_at: datetime | None
     raw_schema_fields: tuple[str, ...] | None
+    raw_schema_field_types: Mapping[str, str] | None = None
     provider_schema_version: str = "1.0.0"
     row_count: int | None = None
 
@@ -143,11 +145,13 @@ class FakeProviderTransport:
 
 
 class ProviderRateLimiter:
+    """In-memory limiter retained for deterministic unit tests only."""
+
     def __init__(self, *, monotonic: Callable[[], float] = time.monotonic) -> None:
         self._monotonic = monotonic
         self._requests: dict[tuple[str, str], deque[float]] = {}
 
-    def acquire(self, provider_id: str, dataset_id: str, profile: Mapping[str, Any]) -> None:
+    def acquire(self, provider_id: str, dataset_id: str, profile: Mapping[str, Any], **_: Any) -> None:
         limit = profile.get("requests_per_minute")
         if not isinstance(limit, int) or limit <= 0:
             raise RawIngestionError("RAW_RATE_LIMIT_PROFILE_INVALID", "Provider rate-limit policy is invalid.")
@@ -166,22 +170,86 @@ class ProviderRateLimiter:
         window.append(now)
 
 
+class PostgresRateLimiter:
+    """Coordinates provider quotas across workers using PostgreSQL row locks."""
+
+    def __init__(
+        self,
+        transaction_context: Callable[[], AbstractContextManager[object]],
+        *,
+        clock: Callable[[], datetime] = _utc_now,
+        repository: RawIngestionRepository | None = None,
+    ) -> None:
+        self.transaction_context = transaction_context
+        self.clock = clock
+        self.repository = repository or RawIngestionRepository()
+
+    def acquire(
+        self,
+        provider_id: str,
+        dataset_id: str,
+        profile: Mapping[str, Any],
+        *,
+        market: str = "CN",
+        frequency: str = "1d",
+    ) -> None:
+        limit = profile.get("requests_per_minute")
+        if not isinstance(limit, int) or limit <= 0:
+            raise RawIngestionError("RAW_RATE_LIMIT_PROFILE_INVALID", "Provider rate-limit policy is invalid.")
+        window_epoch = int(self.clock().timestamp() // 60)
+        with self.transaction_context() as session:
+            allowed = self.repository.increment_rate_limit_window(
+                session, provider_id=provider_id, dataset_id=dataset_id, market=market,
+                frequency=frequency, window_epoch=window_epoch, limit=limit,
+            )
+        if not allowed:
+            raise RawIngestionError(
+                "RAW_RATE_LIMITED",
+                "Provider rate limit is currently exhausted.",
+                retryable=True,
+                details={"provider_id": provider_id, "dataset_id": dataset_id},
+            )
+
+
 def classify_raw_schema(
-    expected_fields: tuple[str, ...], observed_fields: tuple[str, ...] | None
+    expected: ProviderRawSchemaDefinition | tuple[str, ...],
+    observed_fields: tuple[str, ...] | None,
+    observed_field_types: Mapping[str, str] | None = None,
 ) -> RawSchemaDriftClassification:
+    """Classify only provider-native fields; canonical DatasetDefinition is never used."""
+
     if observed_fields is None or not observed_fields:
         return RawSchemaDriftClassification.UNKNOWN_SCHEMA
+    if isinstance(expected, ProviderRawSchemaDefinition):
+        required = set(expected.required_fields)
+        optional = set(expected.optional_fields)
+        declared = required | optional
+        observed = set(observed_fields)
+        if not required <= observed:
+            return RawSchemaDriftClassification.BREAKING_DRIFT
+        if observed_field_types is not None:
+            for field_name in observed & declared:
+                if observed_field_types.get(field_name) != expected.field_types[field_name]:
+                    return RawSchemaDriftClassification.BREAKING_DRIFT
+        return RawSchemaDriftClassification.MATCHED if observed <= declared and observed >= required else RawSchemaDriftClassification.ADDITIVE_DRIFT
     observed = set(observed_fields)
-    expected = set(expected_fields)
-    if observed == expected:
+    expected_fields = set(expected)
+    if observed == expected_fields:
         return RawSchemaDriftClassification.MATCHED
-    if expected <= observed:
+    if expected_fields <= observed:
         return RawSchemaDriftClassification.ADDITIVE_DRIFT
     return RawSchemaDriftClassification.BREAKING_DRIFT
 
 
-def _schema_hash(fields: tuple[str, ...] | None) -> str | None:
-    return compute_content_hash({"raw_schema_fields": tuple(sorted(fields))}) if fields else None
+def _schema_hash(
+    fields: tuple[str, ...] | None, field_types: Mapping[str, str] | None = None
+) -> str | None:
+    if not fields:
+        return None
+    payload: dict[str, object] = {"raw_schema_fields": tuple(sorted(fields))}
+    if field_types is not None:
+        payload["raw_schema_field_types"] = {key: field_types[key] for key in sorted(field_types)}
+    return compute_content_hash(payload)
 
 
 def _row_count(content: bytes, declared: int | None) -> int:
@@ -500,7 +568,7 @@ class RawIngestionTaskWorker:
         *,
         repository: RawIngestionRepository | None = None,
         adapter_registry: ControlledProviderAdapterRegistry | None = None,
-        rate_limiter: ProviderRateLimiter | None = None,
+        rate_limiter: ProviderRateLimiter | PostgresRateLimiter | None = None,
         clock: Callable[[], datetime] = _utc_now,
     ) -> None:
         self.task_control = task_control
@@ -509,7 +577,7 @@ class RawIngestionTaskWorker:
         self.transport = transport
         self.repository = repository or RawIngestionRepository()
         self.adapter_registry = adapter_registry or ControlledProviderAdapterRegistry()
-        self.rate_limiter = rate_limiter or ProviderRateLimiter()
+        self.rate_limiter = rate_limiter or PostgresRateLimiter(database.transaction, clock=clock, repository=self.repository)
         self.clock = clock
 
     def _configuration(self, requirements: RawIngestionTaskRequirements):
@@ -533,9 +601,15 @@ class RawIngestionTaskWorker:
                 requirements.market,
                 dataset.frequency,
             )
+            raw_schemas = self.repository.list_provider_raw_schemas(
+                session, provider.provider_id, provider.adapter_version,
+                requirements.dataset_id, requirements.dataset_schema_version,
+            )
             if capability is None:
                 raise RawIngestionError("RAW_CAPABILITY_UNAVAILABLE", "Provider capability is unavailable.", retryable=True)
-        return provider, dataset, policy, capability
+            if not raw_schemas:
+                raise RawIngestionError("RAW_SCHEMA_REGISTRY_UNAVAILABLE", "Provider raw schema is unavailable.")
+        return provider, dataset, policy, capability, raw_schemas
 
     def _start_run(self, lease: TaskLease, requirements: RawIngestionTaskRequirements, provider: Any, dataset: Any, policy: Any, capability: Any, adapter: ControlledProviderAdapter) -> ProviderRun:
         now = self.clock()
@@ -587,7 +661,7 @@ class RawIngestionTaskWorker:
             raise TaskControlError("TASK_TYPE_UNSUPPORTED", "Worker does not support this task type.", status_code=422)
         self.task_control.start_attempt(lease.attempt.attempt_id, lease.lease_token)
         requirements = RawIngestionTaskRequirements.model_validate(lease.task.requirements)
-        provider, dataset, policy, capability = self._configuration(requirements)
+        provider, dataset, policy, capability, raw_schemas = self._configuration(requirements)
         adapter = self.adapter_registry.resolve(provider.adapter_name)
         run = self._start_run(lease, requirements, provider, dataset, policy, capability, adapter)
         try:
@@ -595,7 +669,7 @@ class RawIngestionTaskWorker:
             if current.cancel_requested_at is not None:
                 self._cancel(lease, run, "RAW_CANCELLED_BEFORE_FETCH")
                 raise TaskControlError("TASK_CANCEL_PENDING", "Cancelled task cannot publish raw data.")
-            self.rate_limiter.acquire(requirements.provider_id, requirements.dataset_id, capability.rate_limit_profile)
+            self.rate_limiter.acquire(requirements.provider_id, requirements.dataset_id, capability.rate_limit_profile, market=requirements.market, frequency=capability.frequency)
             try:
                 response = adapter.fetch(
                     self.transport,
@@ -614,10 +688,12 @@ class RawIngestionTaskWorker:
             if current.cancel_requested_at is not None:
                 self._cancel(lease, run.model_copy(update={"actual_upstream": actual_upstream}), "RAW_CANCELLED_AFTER_FETCH")
                 raise TaskControlError("TASK_CANCEL_PENDING", "Cancelled task cannot publish raw data.")
-            observed_schema_hash = _schema_hash(response.raw_schema_fields)
-            expected_schema_hash = _schema_hash(tuple(dataset.required_fields))
-            assert expected_schema_hash is not None
-            classification = classify_raw_schema(tuple(dataset.required_fields), response.raw_schema_fields)
+            observed_schema_hash = _schema_hash(response.raw_schema_fields, response.raw_schema_field_types)
+            expected_schema = next((item for item in raw_schemas if item.provider_schema_version == response.provider_schema_version), raw_schemas[-1])
+            expected_schema_hash = expected_schema.expected_schema_hash
+            classification = classify_raw_schema(expected_schema, response.raw_schema_fields, response.raw_schema_field_types)
+            if response.provider_schema_version != expected_schema.provider_schema_version:
+                classification = RawSchemaDriftClassification.BREAKING_DRIFT
             now = self.clock()
             bytes_count = len(response.content)
             rows = _row_count(response.content, response.row_count)
@@ -737,6 +813,7 @@ __all__ = [
     "ProviderFetchRequest",
     "ProviderFetchResponse",
     "ProviderRateLimiter",
+    "PostgresRateLimiter",
     "RawIngestionError",
     "RawIngestionOrphanCandidate",
     "RawIngestionOrphanScanResult",

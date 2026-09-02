@@ -10,7 +10,7 @@ from sqlalchemy import text
 
 from src.repositories.platform import RawIngestionRepository, upgrade_database
 from src.schemas.platform import RawCompression, TaskCreateRequest, TaskState
-from src.services.platform.provider_registry import ProviderRegistryService, default_registry_records
+from src.services.platform.provider_registry import ProviderRegistryService, default_provider_raw_schema_records
 from src.services.platform.raw_ingestion import (
     FakeProviderTransport,
     ProviderFetchResponse,
@@ -48,8 +48,14 @@ def _request(dataset_id: str, *, key: str = "raw-key", max_attempts: int = 2) ->
 
 
 def _response(dataset_id: str, *, extra_field: str | None = None) -> ProviderFetchResponse:
-    datasets = {item.dataset_id: item for item in default_registry_records()[1]}
-    fields = tuple(datasets[dataset_id].required_fields) + ((extra_field,) if extra_field else ())
+    schema = next(
+        item for item in default_provider_raw_schema_records()
+        if item.provider_id == "a_stock_data" and item.dataset_id == dataset_id
+    )
+    fields = tuple(schema.required_fields) + ((extra_field,) if extra_field else ())
+    field_types = dict(schema.field_types)
+    if extra_field:
+        field_types[extra_field] = "string"
     payload = [{field: None for field in fields}]
     return ProviderFetchResponse(
         content=json.dumps(payload, sort_keys=True).encode("utf-8"),
@@ -59,6 +65,7 @@ def _response(dataset_id: str, *, extra_field: str | None = None) -> ProviderFet
         observed_at=NOW,
         source_published_at=None,
         raw_schema_fields=fields,
+        raw_schema_field_types=field_types,
         row_count=1,
     )
 
@@ -286,3 +293,24 @@ def test_append_only_target_rejects_a_second_publication(raw_runtime) -> None:
     with pytest.raises(RawIngestionError) as captured:
         publisher.publish_raw(result.raw_object, _response("security_master").content, after_register=lambda _session, _record: None)
     assert captured.value.error_code == "RAW_TARGET_EXISTS"
+
+
+def test_postgres_rate_limiter_coordinates_fixed_window(raw_runtime) -> None:
+    from concurrent.futures import ThreadPoolExecutor
+    from src.services.platform.raw_ingestion import PostgresRateLimiter
+
+    database, _, _ = raw_runtime
+    limiter_a = PostgresRateLimiter(database.transaction, clock=lambda: NOW)
+    limiter_b = PostgresRateLimiter(database.transaction, clock=lambda: NOW)
+
+    def attempt(limiter):
+        try:
+            limiter.acquire("a_stock_data", "security_master", {"requests_per_minute": 1}, market="CN", frequency="1d")
+            return True
+        except RawIngestionError as exc:
+            assert exc.error_code == "RAW_RATE_LIMITED"
+            return False
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(attempt, (limiter_a, limiter_b)))
+    assert sorted(results) == [False, True]

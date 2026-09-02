@@ -18,6 +18,7 @@ from .asset_identity import (
 )
 from .base import PlatformContractModel
 from .provider import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy
+from .provider_raw_schema import ProviderRawSchemaDefinition
 from .raw_ingestion import ProviderRun, RawIngestionPublishResult, RawIngestionQuarantine, RawIngestionTaskRequirements, RawObject
 from .hashing import DEFAULT_HASH_PROFILE, HashProfile
 from .identity import EntityIdentity
@@ -450,6 +451,24 @@ PLATFORM_CONTRACTS = ContractRegistry(
             contract_id="C-004/ProviderDefinition", owner_module="src.schemas.platform.provider", producer="Provider Registry", consumers=("settings", "ingestion"), schema_model=ProviderDefinition, schema_version="1.0.0", business_key="provider_id", resource_id_field=None, time_semantics=("created_at", "updated_at"), version_semantics=("adapter_version",), quality_semantics=("adapter_name is controlled", "credential_ref is secret reference only", "actual upstream is recorded only by ProviderRun"), lineage_fields=(), storage_profile="PostgreSQL provider_definition", retention_class="PINNED", compatibility="provider identities remain stable; adapter changes are versioned", golden_payloads=_golden("success/provider-definition.json"),
         ),
         ContractRegistration(
+            contract_id="C-004/ProviderRawSchemaDefinition",
+            owner_module="src.schemas.platform.provider_raw_schema",
+            producer="Provider Raw Schema Registry",
+            consumers=("raw ingestion", "provider drift quarantine", "operations"),
+            schema_model=ProviderRawSchemaDefinition,
+            schema_version="1.0.0",
+            business_key="provider_id + adapter_version + dataset_id + dataset_schema_version + provider_schema_version",
+            resource_id_field=None,
+            time_semantics=(),
+            version_semantics=("adapter_version", "dataset_schema_version", "provider_schema_version"),
+            quality_semantics=("required_fields", "optional_fields", "field_types", "expected_schema_hash"),
+            lineage_fields=("provider_id", "dataset_id"),
+            storage_profile="PostgreSQL provider_raw_schema_definition; provider-native fields only",
+            retention_class="PINNED",
+            compatibility="Raw schema versions are immutable and never derived from canonical DatasetDefinition fields",
+            golden_payloads=_golden("success/provider-raw-schema-definition.json"),
+        ),
+        ContractRegistration(
             contract_id="C-004/ProviderCapability", owner_module="src.schemas.platform.provider", producer="Provider Probe", consumers=("settings", "ingestion"), schema_model=ProviderCapability, schema_version="1.0.0", business_key="provider_id + dataset_id + dataset_schema_version + market + frequency", resource_id_field=None, time_semantics=("history_start", "checked_at"), version_semantics=("dataset_schema_version",), quality_semantics=("capability status is explicit",), lineage_fields=("provider_id", "dataset_id"), storage_profile="PostgreSQL provider_capability", retention_class="AUDIT", compatibility="capability observations are replaceable by newer checked_at records", golden_payloads=_golden("success/provider-capability.json"),
         ),
         ContractRegistration(
@@ -745,7 +764,8 @@ PLATFORM_CONTRACTS = ContractRegistry(
             retention_class="AUDIT",
             compatibility="exactly one normal RawObject or quarantine record is returned",
             golden_payloads=_golden("success/raw-ingestion-publish-result.json"),
-        ),    )
+        ),
+    )
 )
 
 

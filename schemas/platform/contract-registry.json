@@ -890,6 +890,49 @@
       ]
     },
     {
+      "business_key": "provider_id + adapter_version + dataset_id + dataset_schema_version + provider_schema_version",
+      "compatibility": "Raw schema versions are immutable and never derived from canonical DatasetDefinition fields",
+      "consumers": [
+        "raw ingestion",
+        "provider drift quarantine",
+        "operations"
+      ],
+      "contract_id": "C-004/ProviderRawSchemaDefinition",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/provider-raw-schema-definition.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.ProviderRawSchemaDefinition.schema.json",
+      "lineage_fields": [
+        "provider_id",
+        "dataset_id"
+      ],
+      "owner_module": "src.schemas.platform.provider_raw_schema",
+      "producer": "Provider Raw Schema Registry",
+      "quality_semantics": [
+        "required_fields",
+        "optional_fields",
+        "field_types",
+        "expected_schema_hash"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL provider_raw_schema_definition; provider-native fields only",
+      "time_semantics": [],
+      "version_semantics": [
+        "adapter_version",
+        "dataset_schema_version",
+        "provider_schema_version"
+      ]
+    },
+    {
       "business_key": "provider_run_id",
       "compatibility": "actual_upstream is recorded per run and never inferred from ProviderDefinition",
       "consumers": [

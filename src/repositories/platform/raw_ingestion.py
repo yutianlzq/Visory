@@ -3,10 +3,17 @@ from __future__ import annotations
 from typing import Any
 
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, ForeignKeyConstraint, MetaData, String, Table, select, update
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, insert as postgresql_insert
 from sqlalchemy.orm import Session
 
-from src.repositories.platform.provider import dataset_definition, provider_capability, provider_definition, provider_policy
+from src.repositories.platform.provider import (
+    dataset_definition,
+    provider_capability,
+    provider_definition,
+    provider_policy,
+    provider_raw_schema_definition,
+    provider_rate_limit_window,
+)
 from src.schemas.platform import (
     DatasetDefinition,
     ProviderCapability,
@@ -18,6 +25,7 @@ from src.schemas.platform import (
     StorageBackend,
     StorageNamespace,
     StorageRef,
+    ProviderRawSchemaDefinition,
 )
 
 
@@ -165,6 +173,13 @@ def _policy(row: Any) -> ProviderPolicy:
     return ProviderPolicy.model_validate(value)
 
 
+def _raw_schema(row: Any) -> ProviderRawSchemaDefinition:
+    value = dict(row)
+    value["required_fields"] = tuple(value["required_fields"])
+    value["optional_fields"] = tuple(value["optional_fields"])
+    return ProviderRawSchemaDefinition.model_validate(value)
+
+
 class RawIngestionRepository:
     """Raw data persistence; application services own commit/rollback boundaries."""
 
@@ -247,10 +262,101 @@ class RawIngestionRepository:
         row = session.execute(select(provider_policy).where(provider_policy.c.provider_policy_id == provider_policy_id)).mappings().one_or_none()
         return _policy(row) if row is not None else None
 
+    @staticmethod
+    def get_provider_raw_schema(
+        session: Session,
+        provider_id: str,
+        adapter_version: str,
+        dataset_id: str,
+        dataset_schema_version: str,
+        provider_schema_version: str,
+    ) -> ProviderRawSchemaDefinition | None:
+        row = session.execute(
+            select(provider_raw_schema_definition).where(
+                provider_raw_schema_definition.c.provider_id == provider_id,
+                provider_raw_schema_definition.c.adapter_version == adapter_version,
+                provider_raw_schema_definition.c.dataset_id == dataset_id,
+                provider_raw_schema_definition.c.dataset_schema_version == dataset_schema_version,
+                provider_raw_schema_definition.c.provider_schema_version == provider_schema_version,
+            )
+        ).mappings().one_or_none()
+        return _raw_schema(row) if row is not None else None
+
+    @staticmethod
+    def list_provider_raw_schemas(
+        session: Session, provider_id: str, adapter_version: str, dataset_id: str, dataset_schema_version: str
+    ) -> tuple[ProviderRawSchemaDefinition, ...]:
+        rows = session.execute(
+            select(provider_raw_schema_definition).where(
+                provider_raw_schema_definition.c.provider_id == provider_id,
+                provider_raw_schema_definition.c.adapter_version == adapter_version,
+                provider_raw_schema_definition.c.dataset_id == dataset_id,
+                provider_raw_schema_definition.c.dataset_schema_version == dataset_schema_version,
+            ).order_by(provider_raw_schema_definition.c.provider_schema_version)
+        ).mappings()
+        return tuple(_raw_schema(row) for row in rows)
+
+    @staticmethod
+    def increment_rate_limit_window(
+        session: Session,
+        *,
+        provider_id: str,
+        dataset_id: str,
+        market: str,
+        frequency: str,
+        window_epoch: int,
+        limit: int,
+    ) -> bool:
+        key_columns = [
+            provider_rate_limit_window.c.provider_id,
+            provider_rate_limit_window.c.dataset_id,
+            provider_rate_limit_window.c.market,
+            provider_rate_limit_window.c.frequency,
+        ]
+        session.execute(
+            postgresql_insert(provider_rate_limit_window)
+            .values(
+                provider_id=provider_id, dataset_id=dataset_id, market=market, frequency=frequency,
+                window_epoch=window_epoch, request_count=0,
+            )
+            .on_conflict_do_nothing(index_elements=key_columns)
+        )
+        row = session.execute(
+            select(provider_rate_limit_window).where(
+                provider_rate_limit_window.c.provider_id == provider_id,
+                provider_rate_limit_window.c.dataset_id == dataset_id,
+                provider_rate_limit_window.c.market == market,
+                provider_rate_limit_window.c.frequency == frequency,
+            ).with_for_update()
+        ).mappings().one()
+        if row["window_epoch"] != window_epoch:
+            session.execute(
+                update(provider_rate_limit_window).where(
+                    provider_rate_limit_window.c.provider_id == provider_id,
+                    provider_rate_limit_window.c.dataset_id == dataset_id,
+                    provider_rate_limit_window.c.market == market,
+                    provider_rate_limit_window.c.frequency == frequency,
+                ).values(window_epoch=window_epoch, request_count=1)
+            )
+            return True
+        if row["request_count"] >= limit:
+            return False
+        session.execute(
+            update(provider_rate_limit_window).where(
+                provider_rate_limit_window.c.provider_id == provider_id,
+                provider_rate_limit_window.c.dataset_id == dataset_id,
+                provider_rate_limit_window.c.market == market,
+                provider_rate_limit_window.c.frequency == frequency,
+            ).values(request_count=row["request_count"] + 1)
+        )
+        return True
+
 
 __all__ = [
     "RawIngestionRepository",
     "provider_run",
     "raw_ingestion_quarantine",
     "raw_object",
+    "provider_raw_schema_definition",
+    "provider_rate_limit_window",
 ]

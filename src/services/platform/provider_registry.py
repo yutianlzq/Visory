@@ -6,6 +6,7 @@ from src.repositories.platform import PostgresDatabase, ProviderRegistryReposito
 from src.schemas.platform import (
     DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderKind,
     ProviderCapabilityStatus, ProviderMergeMode, ProviderPolicy,
+    ProviderRawSchemaDefinition, build_provider_raw_schema_definition,
 )
 
 ADAPTER_REGISTRY: dict[str, str] = {
@@ -73,6 +74,33 @@ def _dataset_contracts() -> tuple[DatasetDefinition, ...]:
     )
 
 
+def default_provider_raw_schema_records(now: datetime | None = None) -> tuple[ProviderRawSchemaDefinition, ...]:
+    """Return provider-native raw schemas; never derive these from DatasetDefinition."""
+
+    del now
+    definitions = (
+        ("a_stock_data", "security_master", ("ts_code", "exchange_code", "asset_type", "listed_on", "currency_code", "lot_size", "as_of"), ("security_name", "delisted_on", "market_board"), {"ts_code": "string", "exchange_code": "string", "asset_type": "string", "listed_on": "date", "currency_code": "string", "lot_size": "integer", "as_of": "timestamptz", "security_name": "string", "delisted_on": "date", "market_board": "string"}),
+        ("a_stock_data", "trading_calendar", ("cal_date", "is_open", "as_of"), ("market_code", "session_open", "session_close"), {"cal_date": "date", "is_open": "boolean", "as_of": "timestamptz", "market_code": "string", "session_open": "timestamptz", "session_close": "timestamptz"}),
+        ("a_stock_data", "bar_1d_raw", ("ts_code", "trade_date", "open_price", "high_price", "low_price", "close_price", "vol", "amount", "pre_close", "trade_status", "limit_up", "limit_down", "as_of"), (), {"ts_code": "string", "trade_date": "date", "open_price": "number", "high_price": "number", "low_price": "number", "close_price": "number", "vol": "number", "amount": "number", "pre_close": "number", "trade_status": "string", "limit_up": "number", "limit_down": "number", "as_of": "timestamptz"}),
+        ("financial_api", "security_master", ("symbol", "exchange_code", "asset_class", "listed_on", "currency_code", "lot_size", "observed_at"), ("security_name", "delisted_on", "market_board"), {"symbol": "string", "exchange_code": "string", "asset_class": "string", "listed_on": "date", "currency_code": "string", "lot_size": "integer", "observed_at": "timestamptz", "security_name": "string", "delisted_on": "date", "market_board": "string"}),
+        ("financial_api", "trading_calendar", ("session_date", "market_code", "open_flag", "available_at"), ("session_open", "session_close"), {"session_date": "date", "market_code": "string", "open_flag": "boolean", "available_at": "timestamptz", "session_open": "timestamptz", "session_close": "timestamptz"}),
+        ("financial_api", "bar_1d_raw", ("symbol", "trade_date", "o", "h", "l", "c", "volume", "turnover", "prev_close", "status", "upper_limit", "lower_limit", "available_at"), (), {"symbol": "string", "trade_date": "date", "o": "number", "h": "number", "l": "number", "c": "number", "volume": "number", "turnover": "number", "prev_close": "number", "status": "string", "upper_limit": "number", "lower_limit": "number", "available_at": "timestamptz"}),
+    )
+    return tuple(
+        build_provider_raw_schema_definition(
+            provider_id=provider_id,
+            adapter_version="1.0.0",
+            dataset_id=dataset_id,
+            dataset_schema_version="1.0.0",
+            provider_schema_version="1.0.0",
+            required_fields=required_fields,
+            optional_fields=optional_fields,
+            field_types=field_types,
+        )
+        for provider_id, dataset_id, required_fields, optional_fields, field_types in definitions
+    )
+
+
 def default_registry_records(now: datetime | None = None):
     # The default seed is a deterministic contract fixture. Runtime timestamps are not part of its business hash.
     effective_at = now or DEFAULT_REGISTRY_TIMESTAMP
@@ -108,6 +136,7 @@ class ProviderRegistryService:
             self.repository.ensure_datasets(session, datasets)
             self.repository.ensure_capabilities(session, capabilities)
             self.repository.ensure_policies(session, policies)
+            self.repository.ensure_provider_raw_schemas(session, default_provider_raw_schema_records())
 
 
-__all__ = ["ADAPTER_REGISTRY", "DEFAULT_REGISTRY_TIMESTAMP", "ProviderRegistryService", "default_registry_records"]
+__all__ = ["ADAPTER_REGISTRY", "DEFAULT_REGISTRY_TIMESTAMP", "ProviderRegistryService", "default_registry_records", "default_provider_raw_schema_records"]

@@ -62,6 +62,7 @@ from .identity import EntityIdentity, build_entity_key, parse_entity_key
 from .registry import PLATFORM_CONTRACTS, ContractRegistration, ContractRegistry
 from .resources import ResourceRef, generate_resource_id, generate_uuid7, parse_resource_id
 from .provider import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy, ProviderSettingsProvider, ProviderSettingsProjection
+from .provider_raw_schema import ProviderRawSchemaDefinition, build_provider_raw_schema_definition, compute_provider_raw_schema_hash
 from .raw_ingestion import (
     ProviderRun,
     RawIngestionPublishResult,
@@ -132,9 +133,12 @@ __all__ = [
     "DatasetDefinition",
     "ProviderCapability",
     "ProviderDefinition",
+    "ProviderRawSchemaDefinition",
     "ProviderPolicy",
     "ProviderSettingsProvider",
     "ProviderSettingsProjection",
+    "build_provider_raw_schema_definition",
+    "compute_provider_raw_schema_hash",
     "ProviderCapabilityStatus",
     "ProviderKind",
     "ProviderMergeMode",
