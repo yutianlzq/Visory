@@ -13,7 +13,7 @@ NOW = datetime(2026, 9, 1, tzinfo=timezone.utc)
 
 def test_provider_raw_schema_definition_is_independent_from_canonical_fields() -> None:
     records = default_provider_raw_schema_records(NOW)
-    assert len(records) == 6
+    assert len(records) == 14
     security = next(
         record
         for record in records
@@ -29,9 +29,9 @@ def test_raw_schema_registry_covers_both_providers_and_all_datasets() -> None:
     assert {(item.provider_id, item.dataset_id) for item in records} == {
         (provider, dataset)
         for provider in ("a_stock_data", "financial_api")
-        for dataset in ("security_master", "trading_calendar", "bar_1d_raw")
+        for dataset in ("security_master", "trading_calendar", "bar_1d_raw", "instrument_status_daily", "listing_status_history", "corporate_action", "financial_statement")
     }
-    assert len({item.expected_schema_hash for item in records}) == 6
+    assert len({item.expected_schema_hash for item in records}) == 14
 
 
 def test_provider_raw_schema_rejects_hash_not_matching_definition() -> None:

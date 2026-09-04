@@ -9,6 +9,7 @@ from .base import PlatformContractModel
 from .enums import ProviderCapabilityStatus, ProviderKind, ProviderMergeMode
 
 _SEMVER = r"^[0-9]+\.[0-9]+\.[0-9]+$"
+_KNOWN_UNITS = frozenset({"identifier", "calendar_date", "enum", "boolean", "reason_code", "utc_instant", "iso_4217", "ratio", "cny_per_share", "revision", "statement_type", "line_item", "financial_value", "financial_unit", "text", "code", "shares", "shares_per_lot", "cny"})
 _ID = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
 _CAPABILITY_STATUSES = ("AVAILABLE", "DEGRADED", "UNAVAILABLE", "UNVERIFIED")
 _MERGE_MODES = ("REPLACE_PARTITION", "APPEND_DISJOINT", "ENRICH_FIELDS", "COMPARE_ONLY")
@@ -194,6 +195,8 @@ class DatasetDefinition(PlatformContractModel):
             raise ValueError("field_types contains an unsupported type")
         if set(self.units) != declared:
             raise ValueError("units must explicitly cover every declared field")
+        if any(unit not in _KNOWN_UNITS for unit in self.units.values()):
+            raise ValueError("units contains an unsupported unit")
         if set(self.null_semantics) != declared:
             raise ValueError("null_semantics must explicitly cover every declared field")
         if set(self.time_semantics) != declared:

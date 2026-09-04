@@ -14,6 +14,18 @@
   },
   "additionalProperties": false,
   "properties": {
+    "attempt_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Attempt Id"
+    },
     "canonical_partition_id": {
       "anyOf": [
         {
@@ -30,6 +42,31 @@
       "format": "date-time",
       "title": "Created At",
       "type": "string"
+    },
+    "dataset_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Dataset Id"
+    },
+    "dataset_schema_version": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Dataset Schema Version"
     },
     "duplicate_key_count": {
       "minimum": 0,
@@ -54,12 +91,54 @@
       "title": "Identity Unresolved Count",
       "type": "integer"
     },
+    "mapping_hash": {
+      "anyOf": [
+        {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mapping Hash"
+    },
+    "mapping_version": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mapping Version"
+    },
+    "provider_run_refs": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Provider Run Refs",
+      "type": "array"
+    },
     "quality_report_id": {
       "title": "Quality Report Id",
       "type": "string"
     },
     "quality_status": {
       "$ref": "#/$defs/QualityStatus"
+    },
+    "raw_object_refs": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Raw Object Refs",
+      "type": "array"
     },
     "rejected_row_count": {
       "minimum": 0,
@@ -77,6 +156,18 @@
       },
       "title": "Rule Results",
       "type": "object"
+    },
+    "task_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Task Id"
     }
   },
   "required": [

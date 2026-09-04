@@ -22,7 +22,7 @@ def test_provider_registry_round_trip_and_controlled_adapter(isolated_postgres_d
             repo.add_policy(session, record)
         projection = repo.settings_projection(session)
     assert [item.provider_id for item in projection.providers] == ["a_stock_data", "financial_api"]
-    assert [item.dataset_id for item in projection.datasets] == ["bar_1d_raw", "security_master", "trading_calendar"]
+    assert [item.dataset_id for item in projection.datasets] == ["bar_1d_raw", "corporate_action", "financial_statement", "instrument_status_daily", "listing_status_history", "security_master", "trading_calendar"]
     assert projection.policies[0].primary_provider_id == "a_stock_data"
 
 
@@ -66,18 +66,20 @@ def test_dataset_versions_are_explicitly_bound_and_bootstrap_is_idempotent(isola
     with database.transaction() as session:
         repo = ProviderRegistryRepository()
         providers, datasets, capabilities, policies = default_registry_records()
-        version_two = datasets[2].model_copy(update={"schema_version": "2.0.0"})
+        bar_dataset = next(item for item in datasets if item.dataset_id == "bar_1d_raw")
+        version_two = bar_dataset.model_copy(update={"schema_version": "2.0.0"})
         repo.add_dataset(session, version_two)
-        capability_two = capabilities[5].model_copy(update={"dataset_schema_version": "2.0.0"})
+        bar_capability = next(item for item in capabilities if item.dataset_id == "bar_1d_raw" and item.provider_id == "financial_api")
+        capability_two = bar_capability.model_copy(update={"dataset_schema_version": "2.0.0"})
         repo.add_capability(session, capability_two)
-        policy_two = policies[2].model_copy(update={"dataset_schema_version": "2.0.0", "provider_policy_id": "bar_1d_raw_v2", "policy_version": "2.0.0"})
+        policy_two = next(item for item in policies if item.dataset_id == "bar_1d_raw").model_copy(update={"dataset_schema_version": "2.0.0", "provider_policy_id": "bar_1d_raw_v2", "policy_version": "2.0.0"})
         repo.add_policy(session, policy_two)
         listed = repo.list_datasets(session)
         assert [item.schema_version for item in listed if item.dataset_id == "bar_1d_raw"] == ["1.0.0", "2.0.0"]
         assert all(item.dataset_schema_version in {"1.0.0", "2.0.0"} for item in repo.list_capabilities(session, "bar_1d_raw"))
         assert all(item.dataset_schema_version in {"1.0.0", "2.0.0"} for item in repo.list_policies(session, "bar_1d_raw"))
 
-    conflicting = default_registry_records()[1][2].model_copy(update={"owner_module": "conflicting_module"})
+    conflicting = next(item for item in default_registry_records()[1] if item.dataset_id == "bar_1d_raw").model_copy(update={"owner_module": "conflicting_module"})
     with pytest.raises(ValueError, match="registry bootstrap conflict"):
         with database.transaction() as session:
             ProviderRegistryRepository.ensure_datasets(session, (conflicting,))

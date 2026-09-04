@@ -1,8 +1,8 @@
-# Visory-G014 / WP-0203 Canonical Normalization
+# Visory-G015 / WP-0203 Extended Canonical Datasets
 
 
 
-WP-0203 introduces provider-to-canonical mappings for `a_stock_data` and `financial_api` across `security_master`, `trading_calendar`, and `bar_1d_raw`. Raw objects remain immutable; normalization emits append-only canonical partitions with deterministic schema/content hashes, quality reports, and explicit ProviderRun/RawObject lineage.
+WP-0203 introduces provider-to-canonical mappings for `a_stock_data` and `financial_api` across `security_master`, `trading_calendar`, `bar_1d_raw`, `instrument_status_daily`, `listing_status_history`, `corporate_action`, and `financial_statement`. Raw objects remain immutable; normalization emits append-only canonical partitions with deterministic schema/content hashes, quality reports, and explicit ProviderRun/RawObject lineage.
 
 
 
@@ -12,7 +12,7 @@ Input-boundary failures (including invalid Raw manifests, Raw hash/size mismatch
 
 
 
-The implementation intentionally does not create DataSnapshot, certified pointers, production provider connections, or real `/data` writes. Migration `0009_wp0203_core_canonical_normalization` is schema-only on downgrade and never deletes business files.
+The implementation intentionally does not create DataSnapshot, certified pointers, production provider connections, or real `/data` writes. Migration `0009_wp0203_core_canonical_normalization` and `0010_wp0203_extended_canonical_datasets` are schema-only on downgrade and never deletes business files.
 
 
 
@@ -32,3 +32,7 @@ Canonical partition 文件先在同一 Storage Namespace 的 staging 目录完�
 For `security_master`, the worker derives a Canonical stock identity only from a Provider symbol with an explicit exchange suffix and an agreeing mapped exchange; it creates or validates the existing `AssetIdentityRecord` and a verified Provider alias in `<provider_id>:cn_stock`. Bare six-digit values, unknown assets, multi-match aliases, or provider/exchange conflicts become deterministic Canonical quality failures. `bar_1d_raw` can only resolve through that existing Provider alias.
 
 For `bar_1d_raw`, a caller-supplied test resolver may be used, but the default runtime resolver reads the already published, integrity-checked Canonical `trading_calendar` partition for the requested market and date. A missing, corrupt, incomplete, or closed calendar rejects the bar; it is never treated as an implicit trading day.
+
+## Extended datasets
+
+`instrument_status_daily` 与 `listing_status_history` 保留历史状态和有效区间；`corporate_action` 与 `financial_statement` 使用 revision 追加语义，并要求 `published_at <= available_at`。所有标的字段仍通过 Identity Resolver 解析。未知财务单位、重叠上市区间、日期倒序、负金额或不一致的交易状态会生成失败质量报告，不发布可消费分区。`CanonicalQualityReport` 记录 `task_id`、`attempt_id`、数据集/Schema、Mapping 版本与 Hash 以及 ProviderRun/RawObject 引用，支持从质量结果回溯到输入。

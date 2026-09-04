@@ -23,6 +23,9 @@ canonical_quality_report = Table(
     Column("row_count", BigInteger, nullable=False), Column("rejected_row_count", BigInteger, nullable=False),
     Column("duplicate_key_count", BigInteger, nullable=False), Column("identity_unresolved_count", BigInteger, nullable=False),
     Column("identity_ambiguous_count", BigInteger, nullable=False), Column("failure_reasons", JSONB, nullable=False),
+    Column("task_id", String(64)), Column("attempt_id", String(64)), Column("dataset_id", String(64)),
+    Column("dataset_schema_version", String(32)), Column("mapping_version", String(32)), Column("mapping_hash", String(71)),
+    Column("provider_run_refs", JSONB, nullable=False, server_default="[]"), Column("raw_object_refs", JSONB, nullable=False, server_default="[]"),
     Column("created_at", DateTime(timezone=True), nullable=False),
 )
 canonical_partition = Table(
@@ -50,6 +53,8 @@ def _mapping(row: Any) -> ProviderCanonicalMappingDefinition:
 def _quality(row: Any) -> CanonicalQualityReport:
     value = dict(row)
     value["failure_reasons"] = tuple(value["failure_reasons"])
+    value["provider_run_refs"] = tuple(value.get("provider_run_refs") or ())
+    value["raw_object_refs"] = tuple(value.get("raw_object_refs") or ())
     return CanonicalQualityReport.model_validate(value)
 
 

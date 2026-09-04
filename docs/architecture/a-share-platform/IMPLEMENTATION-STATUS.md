@@ -1,6 +1,6 @@
 # Visory 实现状态
 
-最后更新：2026-09-02
+最后更新：2026-09-04
 
 ## 1. 当前结论
 
@@ -31,10 +31,11 @@
 | Visory-G012 | COMPLETE / MERGED / VERIFIED | [G012 / WP-0202 Raw Ingestion](GOAL-G012-STATUS.md)；PR #22；merge commit `1572a3f7f4bbeedc4fdeaafd03011b6a453073fe`；Migration `0007_wp0202_raw_ingestion`；Run `33405263970` 的 Governance、Python、Web 三项阻断 Job 全绿；进度 `9/45` |
 | Visory-G013 | COMPLETE / VERIFIED | G013 / WP-0202 Provider Raw Schema Hardening; target migration `0008_wp0202_raw_schema_hardening`; PR #25 merged with head `766476d60bc3a1539dc8589fa2d830ed754b7117`, merge commit `71328fd512400a0cc0a2c38c128fead14a9a57d4`; final Run `33578007314` Governance/Python/Web all successful; progress remains `9/45` because WP-0202 is already counted |
 | Visory-G014 | COMPLETE / MERGED | G014 / WP-0203 Core Canonical Normalization; PR #26 head `072484513b1f1a26d90bf6b33639fd8589af56a0`, ordinary merge commit `fbe34cbc0ee851ee99237a6b4e644abff5f48d66`; Run `33836754285` Governance/Python/Web all successful; Goal complete, WP-0203 remains `IN_PROGRESS`, progress `9/45` pending G015 |
+| Visory-G015 | IN_PROGRESS | [G015 / WP-0203 扩展 Canonical 数据集](GOAL-G015-STATUS.md)；目标 migration `0010_wp0203_extended_canonical_datasets`；四数据集、14 条 Provider Schema/Mapping 与质量血缘字段已在工作分支实现，本地 PostgreSQL、契约生成、治理与 Web 验证及 Run `33850545423` 已通过；PR #28 待 owner review/merge，进度保持 `9/45` |
 | DSA Baseline | IMPORTED / VERIFIED | 1126/1126 blob 验签；Python/Web 双基线；`baseline_regression_delta=0`；`web_lint_build_regression_delta=0` |
 | Implemented Work Packages | 9/45 | `WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201`、`WP-0202` 为 `VERIFIED`；其余 36 项 `NOT_STARTED` |
 
-Current Goal: Visory-G014 / WP-0203 Core Canonical Normalization is COMPLETE / MERGED from baseline 71328fd512400a0cc0a2c38c128fead14a9a57d4; target migration `0009_wp0203_core_canonical_normalization`; PR #26 head `072484513b1f1a26d90bf6b33639fd8589af56a0`, merge commit `fbe34cbc0ee851ee99237a6b4e644abff5f48d66`; GitHub Actions Run `33836754285` Governance/Python/Web all successful; Goal is complete, WP-0203 remains `IN_PROGRESS` and progress remains `9/45` until G015 verification.
+Current Goal: Visory-G015 / WP-0203 Extended Canonical Datasets is IN_PROGRESS from baseline `9bcd2f3ef414e1f4eedec04b4aa04f45423ea70c`; target migration `0010_wp0203_extended_canonical_datasets` (parent `0009_wp0203_core_canonical_normalization`); working tree adds four extended datasets, provider schemas/mappings, and quality-report lineage. Local platform tests (`323 passed, 5 skipped`), PostgreSQL integration (`55 passed`), deterministic export/governance checks, and Web lint/build now pass; GitHub Actions Run `33850545423` is green; the full unrelated offline suite remains unclaimed, and PR #28 is open pending owner review/merge. Goal remains `IN_PROGRESS`, WP-0203 remains `IN_PROGRESS`, progress `9/45`.
 
 ## 2. 状态定义
 
@@ -61,7 +62,7 @@ RELEASED     已部署且通过运行观察和回滚/恢复要求
 | WP-0104 | Operations最小页面 | VERIFIED | [G009 / WP-0104 进度与验收记录](GOAL-G009-STATUS.md)；PR #9、#12、#13、#14、#15 已合并；真实认证 ASGI/浏览器旅程、PostgreSQL SSE replay 和连接池清理通过；平台 260 passed、5 skipped；集成目录本地 PostgreSQL 16 实例 31 passed（清理后默认 31 skipped）；Playwright 6 passed + 真实认证 1 passed；Run `33329710242` 三项阻断 Job 全绿 |
 | WP-0201 | Dataset/Provider Registry | VERIFIED | [G010 / WP-0201 进度与验收记录](GOAL-G010-STATUS.md)；实现 head `77a38e5bacc85e986d8062a55d0d867ec9387d89`；PR #17；merge commit `208f1d442f642a17d412c02eb06c3fb3e4b19ba3`；Migration `0005_wp0201_dataset_provider_registry`；补充 credential-safe Settings projection、GiST exclusion constraint 与真实 PostgreSQL 重叠拒绝测试；Run `33351050060` 三项阻断 Job 全绿 |
 | WP-0202 | Raw Ingestion + Provider Raw Schema Hardening | VERIFIED | [G012 / WP-0202 进度与验收记录](GOAL-G012-STATUS.md)；PR #22；merge commit `1572a3f7f4bbeedc4fdeaafd03011b6a453073fe`；Migration `0007_wp0202_raw_ingestion`；平台 283 passed、PostgreSQL 16 integration 46 passed；Run `33405263970` 三项阻断 Job 全绿；G013 新增 Migration `0008_wp0202_raw_schema_hardening`、Provider Raw Schema Registry 与协调限流，平台 288 passed/5 skipped、PostgreSQL 16 integration 47 passed；PR #25 head `41c101236047eaf68618dd3d239bead649f1011f`；Run `33531064869` Governance/Python/Web 全绿 |
-| WP-0203 | Canonical Normalization | IN_PROGRESS | [G014 / WP-0203 进度与验收记录](GOAL-G014-STATUS.md)；目标 migration `0009_wp0203_core_canonical_normalization`；PR #26 head `072484513b1f1a26d90bf6b33639fd8589af56a0`，ordinary merge commit `fbe34cbc0ee851ee99237a6b4e644abff5f48d66`；六份受控 Mapping、单引擎 Parquet、Security Master Provider Alias、Canonical 日历门禁和三数据集 PostgreSQL 纵向测试完成；平台 313 passed、5 skipped，PostgreSQL foundation/provider/canonical 16 passed，Run `33836754285` Governance/Python/Web 全绿；Goal G014 为 `COMPLETE / MERGED`，WP-0203 仍保持 `IN_PROGRESS`，进度 `9/45`，待 G015 扩展数据集后再 VERIFIED |
+| WP-0203 | Canonical Normalization + Extended Datasets | IN_PROGRESS | [G014 / WP-0203](GOAL-G014-STATUS.md) 已完成 Core；[G015 / WP-0203 扩展](GOAL-G015-STATUS.md) 新增 `0010_wp0203_extended_canonical_datasets`、四数据集、14 条 Provider Schema/Mapping 与质量血缘门禁；本地 PostgreSQL、契约生成、治理、Web 与 Run `33850545423` 已通过，PR #28 待 owner review/merge，进度 `9/45` |
 | WP-0204 | DataSnapshot与Capability Gate | NOT_STARTED | — |
 | WP-0205 | 16:00 Scheduler与补充源 | NOT_STARTED | — |
 | WP-0206 | P-DATA数据质量页面 | NOT_STARTED | — |

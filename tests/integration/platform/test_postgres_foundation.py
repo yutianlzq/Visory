@@ -17,7 +17,7 @@ from src.repositories.platform import (
 )
 
 
-HEAD_REVISION = "0009_wp0203_core_canonical_normalization"
+HEAD_REVISION = "0010_wp0203_extended_canonical_datasets"
 
 
 def _table_names(database: PostgresDatabase) -> tuple[str, ...]:
