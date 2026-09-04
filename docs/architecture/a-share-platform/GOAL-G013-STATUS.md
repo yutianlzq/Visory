@@ -30,5 +30,5 @@ Offline Raw Schema contract, Golden, export drift, platform regression (288 pass
 ## Risks and rollback
 
 - Risk: real Provider responses may omit type declarations; field-level classification remains available, while explicit type mismatches are blocking.
-- Delivery: head `766476d60bc3a1539dc8589fa2d830ed754b7117`, PR #25, CI Run `33531064869` (Governance/Python/Web all successful).
+- Delivery: head `766476d60bc3a1539dc8589fa2d830ed754b7117`, PR #25, ordinary merge commit `71328fd512400a0cc0a2c38c128fead14a9a57d4`, final CI Run `33578007314` (Governance/Python/Web all successful).
 - Rollback: use ordinary `git revert`; in an isolated database downgrade to `0007_wp0202_raw_ingestion`. Business files are never removed by downgrade.
