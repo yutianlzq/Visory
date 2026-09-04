@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from src.repositories.platform import PostgresDatabase, ProviderRegistryRepository
+from src.services.platform.extended_canonical import extended_dataset_contracts, extended_provider_raw_schema_records, extended_provider_canonical_mapping_records
 from src.schemas.platform import (
     DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderKind,
     ProviderCapabilityStatus, ProviderMergeMode, ProviderPolicy,
@@ -71,8 +72,7 @@ def _dataset_contracts() -> tuple[DatasetDefinition, ...]:
             null_semantics={"entity_key": "forbidden", "trade_date": "forbidden", "open": "nullable_when_not_traded", "high": "nullable_when_not_traded", "low": "nullable_when_not_traded", "close": "nullable_when_not_traded", "volume_shares": "nullable_when_not_traded", "amount_cny": "nullable_when_not_traded", "prev_close": "nullable_when_no_prior_session", "trading_status": "forbidden", "price_limit_up": "nullable_when_rule_unavailable", "price_limit_down": "nullable_when_rule_unavailable", "available_at": "forbidden"},
             partition_template="bar_1d_raw/{date}", quality_rule_ids=("identity_resolved", "ohlcv_consistent", "units_known"), owner_module="data_platform",
         ),
-    )
-
+    ) + extended_dataset_contracts()
 
 def default_provider_raw_schema_records(now: datetime | None = None) -> tuple[ProviderRawSchemaDefinition, ...]:
     """Return provider-native raw schemas; never derive these from DatasetDefinition."""
@@ -98,11 +98,10 @@ def default_provider_raw_schema_records(now: datetime | None = None) -> tuple[Pr
             field_types=field_types,
         )
         for provider_id, dataset_id, required_fields, optional_fields, field_types in definitions
-    )
-
+    ) + extended_provider_raw_schema_records()
 
 def default_provider_canonical_mapping_records(now: datetime | None = None) -> tuple[ProviderCanonicalMappingDefinition, ...]:
-    """Return the six explicit provider-to-canonical mappings used by WP-0203."""
+    """Return the explicit provider-to-canonical mappings for core and extended WP-0203 datasets."""
     created_at = now or DEFAULT_REGISTRY_TIMESTAMP
     definitions = (
         {
@@ -184,7 +183,7 @@ def default_provider_canonical_mapping_records(now: datetime | None = None) -> t
         }
         payload["mapping_hash"] = compute_provider_canonical_mapping_hash(payload)
         records.append(ProviderCanonicalMappingDefinition(**payload))
-    return tuple(records)
+    return tuple(records) + extended_provider_canonical_mapping_records(now)
 
 
 def default_registry_records(now: datetime | None = None):

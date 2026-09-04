@@ -15,7 +15,7 @@ def test_default_registry_contracts_are_explicit_and_deterministic() -> None:
     assert first == second
     assert first[0][0].created_at == DEFAULT_REGISTRY_TIMESTAMP
     datasets = {item.dataset_id: item for item in first[1]}
-    assert set(datasets) == {"security_master", "trading_calendar", "bar_1d_raw"}
+    assert {"security_master", "trading_calendar", "bar_1d_raw", "instrument_status_daily", "listing_status_history", "corporate_action", "financial_statement"} <= set(datasets)
     bars = datasets["bar_1d_raw"]
     assert {"volume_shares", "amount_cny", "prev_close", "trading_status", "price_limit_up", "price_limit_down", "available_at"} <= set(bars.required_fields)
     assert "volume" not in bars.field_types

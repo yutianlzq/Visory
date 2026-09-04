@@ -13,6 +13,7 @@ from .storage import StorageRef
 
 _HASH = r"^sha256:[0-9a-f]{64}$"
 _SEMVER = r"^[0-9]+\.[0-9]+\.[0-9]+$"
+_KNOWN_UNITS = frozenset({"identifier", "calendar_date", "enum", "boolean", "reason_code", "utc_instant", "iso_4217", "ratio", "cny_per_share", "revision", "statement_type", "line_item", "financial_value", "financial_unit", "text", "code", "shares", "shares_per_lot", "cny"})
 _IDENT = re.compile(r"^[a-z][a-z0-9._-]{0,63}$")
 _REASON = re.compile(r"^[A-Z][A-Z0-9_]{2,63}$")
 
@@ -118,6 +119,8 @@ class ProviderCanonicalMappingDefinition(PlatformContractModel):
             raise ValueError("target_field_types contains an unsupported type")
         if set(self.target_units) != set(self.target_fields):
             raise ValueError("target_units must exactly cover target fields")
+        if any(unit not in _KNOWN_UNITS for unit in self.target_units.values()):
+            raise ValueError("target_units contains an unsupported unit")
         if set(self.unit_multipliers) - set(self.target_fields) or set(self.enum_mappings) - set(self.target_fields) or set(self.null_semantics) - set(self.target_fields) or set(self.time_semantics) - set(self.target_fields):
             raise ValueError("mapping metadata references an undeclared target field")
         if self.mapping_hash != compute_provider_canonical_mapping_hash(self):
@@ -136,6 +139,14 @@ class CanonicalQualityReport(PlatformContractModel):
     identity_unresolved_count: int = Field(ge=0)
     identity_ambiguous_count: int = Field(ge=0)
     failure_reasons: tuple[str, ...] = ()
+    task_id: str | None = None
+    attempt_id: str | None = None
+    dataset_id: str | None = None
+    dataset_schema_version: Annotated[str | None, Field(pattern=_SEMVER)] = None
+    mapping_version: Annotated[str | None, Field(pattern=_SEMVER)] = None
+    mapping_hash: Annotated[str | None, Field(pattern=_HASH)] = None
+    provider_run_refs: tuple[str, ...] = ()
+    raw_object_refs: tuple[str, ...] = ()
     created_at: AwareDatetime
 
     @field_validator("quality_report_id")

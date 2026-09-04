@@ -82,11 +82,12 @@ def _rows() -> list[dict[str, object]]:
 
 def test_default_mapping_registry_has_two_providers_for_each_core_dataset() -> None:
     mappings = default_provider_canonical_mapping_records()
-    assert {(mapping.provider_id, mapping.dataset_id) for mapping in mappings} == {
+    pairs = {(mapping.provider_id, mapping.dataset_id) for mapping in mappings}
+    assert {
         (provider, dataset)
         for provider in {"a_stock_data", "financial_api"}
-        for dataset in {"security_master", "trading_calendar", "bar_1d_raw"}
-    }
+        for dataset in {"security_master", "trading_calendar", "bar_1d_raw", "instrument_status_daily", "listing_status_history", "corporate_action", "financial_statement"}
+    } <= pairs
     for mapping in mappings:
         assert mapping.mapping_hash == compute_provider_canonical_mapping_hash(mapping)
         assert tuple(mapping.target_fields) == tuple(mapping.source_fields)

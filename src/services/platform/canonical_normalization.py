@@ -232,7 +232,7 @@ class CanonicalNormalizer:
     ) -> dict[str, Any]:
         out: dict[str, Any] = {}
         identity_cache: dict[str, Any] = {}
-        if dataset_id in {"security_master", "bar_1d_raw"} and identity_resolver is None:
+        if dataset_id in {"security_master", "bar_1d_raw", "instrument_status_daily", "listing_status_history", "corporate_action", "financial_statement"} and identity_resolver is None:
             raise CanonicalNormalizationError(
                 "CANONICAL_IDENTITY_UNRESOLVED",
                 "Canonical security data requires the registered Identity Resolver.",
@@ -289,6 +289,10 @@ class CanonicalNormalizer:
                 raise CanonicalNormalizationError("CANONICAL_AVAILABLE_AT_FUTURE", "available_at cannot be in the future.", details={"field": target})
             out[target] = value
 
+        available_at = out.get("available_at")
+        published_at = out.get("published_at")
+        if published_at is not None and available_at is not None and published_at > available_at:
+            raise CanonicalNormalizationError("CANONICAL_DISCLOSURE_AFTER_AVAILABLE", "published_at cannot be later than available_at.")
         if dataset_id == "security_master":
             if identity_resolver is not None and (out.get("entity_key") is None or out.get("canonical_id") is None):
                 raise CanonicalNormalizationError("CANONICAL_IDENTITY_UNRESOLVED", "Identity result is incomplete.")
@@ -315,9 +319,35 @@ class CanonicalNormalizer:
                         "Daily bars cannot be published for a closed trading day.",
                         details={"market": market, "trade_date": trade_date.isoformat()},
                     )
+        elif dataset_id == "instrument_status_daily":
+            if out.get("instrument_status") == "SUSPENDED" and out.get("is_tradable"):
+                raise CanonicalNormalizationError("CANONICAL_STATUS_INCONSISTENT", "Suspended instruments cannot be tradable.")
+            if out.get("instrument_status") == "DELISTED" and out.get("is_tradable"):
+                raise CanonicalNormalizationError("CANONICAL_STATUS_INCONSISTENT", "Delisted instruments cannot be tradable.")
+        elif dataset_id == "listing_status_history":
+            start = date.fromisoformat(out["effective_from"])
+            end = out.get("effective_to")
+            if end is not None and date.fromisoformat(end) <= start:
+                raise CanonicalNormalizationError("CANONICAL_LISTING_INTERVAL_INVALID", "Listing interval must have a positive duration.")
+        elif dataset_id == "corporate_action":
+            for later in ("record_date", "payment_date"):
+                if out.get(later) is not None and date.fromisoformat(out[later]) < date.fromisoformat(out["ex_date"]):
+                    raise CanonicalNormalizationError("CANONICAL_ACTION_DATES_INVALID", "Corporate action dates are out of order.")
+            if out.get("ratio") is not None and Decimal(out["ratio"]) < 0:
+                raise CanonicalNormalizationError("CANONICAL_ACTION_AMOUNT_INVALID", "Corporate action ratio cannot be negative.")
+            if out.get("cash_amount") is not None and Decimal(out["cash_amount"]) < 0:
+                raise CanonicalNormalizationError("CANONICAL_ACTION_AMOUNT_INVALID", "Corporate action cash amount cannot be negative.")
+            if out.get("revision", 0) < 1:
+                raise CanonicalNormalizationError("CANONICAL_REVISION_INVALID", "Revision must be positive.")
+        elif dataset_id == "financial_statement":
+            allowed_units = {"CNY", "RMB", "USD", "EUR", "shares", "yuan", "thousand_cny", "million_cny", "billion_cny", "percent", "ratio", "per_share"}
+            if str(out.get("unit")) not in allowed_units:
+                raise CanonicalNormalizationError("CANONICAL_UNIT_UNKNOWN", "Financial statement unit is unknown.")
+            if out.get("revision", 0) < 1:
+                raise CanonicalNormalizationError("CANONICAL_REVISION_INVALID", "Revision must be positive.")
         return out
 
-    def normalize_rows(self, *, raw_object_id: str, provider_run_id: str, provider_id: str, dataset_id: str, dataset_schema_version: str, provider_policy_version: str, mapping: ProviderCanonicalMappingDefinition, rows: list[Mapping[str, Any]], partition_key: str, identity_resolver=None, is_trading_day: Callable[[str, date], bool] | None = None, market: str = "CN", revision: int = 1, supersedes_id: str | None = None) -> tuple[CanonicalPartition | None, CanonicalQualityReport, bytes]:
+    def normalize_rows(self, *, raw_object_id: str, provider_run_id: str, provider_id: str, dataset_id: str, dataset_schema_version: str, provider_policy_version: str, mapping: ProviderCanonicalMappingDefinition, rows: list[Mapping[str, Any]], partition_key: str, identity_resolver=None, is_trading_day: Callable[[str, date], bool] | None = None, market: str = "CN", revision: int = 1, supersedes_id: str | None = None, task_id: str | None = None, attempt_id: str | None = None) -> tuple[CanonicalPartition | None, CanonicalQualityReport, bytes]:
         now = self.clock()
         mapped: list[dict[str, Any]] = []
         failures: list[str] = []
@@ -340,6 +370,10 @@ class CanonicalNormalizer:
                     "security_master": ("entity_key",),
                     "trading_calendar": ("market", "trade_date"),
                     "bar_1d_raw": ("entity_key", "trade_date"),
+                    "instrument_status_daily": ("entity_key", "status_date"),
+                    "listing_status_history": ("entity_key", "effective_from"),
+                    "corporate_action": ("corporate_action_id", "revision"),
+                    "financial_statement": ("entity_key", "report_period", "statement_type", "line_item", "revision"),
                 }.get(dataset_id, mapping.target_fields[:1])
                 key = tuple(item.get(k) for k in key_fields)
                 if key in seen:
@@ -356,6 +390,17 @@ class CanonicalNormalizer:
                     unresolved += 1
                 if exc.error_code == "CANONICAL_IDENTITY_AMBIGUOUS":
                     ambiguous += 1
+        if dataset_id == "listing_status_history" and mapped:
+            by_entity: dict[str, list[dict[str, Any]]] = {}
+            for item in mapped:
+                by_entity.setdefault(str(item["entity_key"]), []).append(item)
+            for items in by_entity.values():
+                items.sort(key=lambda item: item["effective_from"])
+                for current, following in zip(items, items[1:]):
+                    end = current.get("effective_to")
+                    if end is None or following["effective_from"] < end:
+                        failures.append("CANONICAL_LISTING_INTERVAL_OVERLAP")
+                        break
         quality_status = QualityStatus.COMPLETE if not failures else QualityStatus.FAILED
         report = CanonicalQualityReport(
             quality_report_id=generate_resource_id(ResourceType.QUALITY_REPORT),
@@ -367,6 +412,14 @@ class CanonicalNormalizer:
             identity_unresolved_count=unresolved,
             identity_ambiguous_count=ambiguous,
             failure_reasons=tuple(sorted(set(failures))),
+            task_id=task_id,
+            attempt_id=attempt_id,
+            dataset_id=dataset_id,
+            dataset_schema_version=dataset_schema_version,
+            mapping_version=mapping.mapping_version,
+            mapping_hash=mapping.mapping_hash,
+            provider_run_refs=(provider_run_id,),
+            raw_object_refs=(raw_object_id,),
             created_at=now,
         )
         if failures:
@@ -808,7 +861,7 @@ class CanonicalNormalizationTaskWorker:
             ):
                 raise CanonicalNormalizationError("CANONICAL_MAPPING_BINDING_INVALID", "Canonical mapping does not match task requirements.")
             raw, content = self._load_verified_raw(requirements)
-            if identity_resolver is None and requirements.dataset_id in {"security_master", "bar_1d_raw"}:
+            if identity_resolver is None and requirements.dataset_id in {"security_master", "bar_1d_raw", "instrument_status_daily", "listing_status_history", "corporate_action", "financial_statement"}:
                 identity_bridge = CanonicalIdentityBridge(
                     self.database,
                     mapping=mapping,
@@ -852,6 +905,8 @@ class CanonicalNormalizationTaskWorker:
                     else None
                 ),
                 market=requirements.market,
+                task_id=lease.task.task_id,
+                attempt_id=lease.attempt.attempt_id,
             )
             if partition is None:
                 with self.database.transaction() as session:

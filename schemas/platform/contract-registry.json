@@ -846,7 +846,7 @@
     },
     {
       "business_key": "quality_report_id",
-      "compatibility": "quality failures remain auditable",
+      "compatibility": "quality failures remain auditable and traceable to task, mapping, ProviderRun and RawObject",
       "consumers": [
         "canonical partition",
         "operations"
@@ -864,12 +864,18 @@
       },
       "json_schema_file": "C-004.CanonicalQualityReport.schema.json",
       "lineage_fields": [
-        "canonical_partition_id"
+        "canonical_partition_id",
+        "task_id",
+        "attempt_id",
+        "dataset_id",
+        "provider_run_refs",
+        "raw_object_refs"
       ],
       "owner_module": "src.schemas.platform.canonical",
       "producer": "Canonical Normalizer",
       "quality_semantics": [
-        "failed quality blocks publication"
+        "failed quality blocks publication",
+        "mapping_hash and input refs make failures traceable"
       ],
       "resource_id_field": "quality_report_id",
       "retention_class": "AUDIT",
@@ -878,7 +884,10 @@
       "time_semantics": [
         "created_at"
       ],
-      "version_semantics": []
+      "version_semantics": [
+        "dataset_schema_version",
+        "mapping_version"
+      ]
     },
     {
       "business_key": "dataset_id + schema_version",
