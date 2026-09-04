@@ -25,10 +25,12 @@
 - `scripts/export_platform_contracts.py --check` 通过，生成契约与前端类型字节稳定。
 - `scripts/check_ai_assets.py`、`scripts/check_visory_baseline.py`、关键 Flake8 检查、变更文件 `py_compile` 和 `git diff --check` 通过。
 - Web `npm ci`、`npm run lint`、`npm run build` 通过。
+- GitHub Actions Run `33850545423` 的 Governance、Python、Web 三项阻断 Job 全部成功。
+- 已创建 PR #28（head `3fc955e8670253b4cdc77793a00d8bc1fe9f5549`），等待 owner review/merge；当前 PR 仍为 open。
 - 全量离线回归未宣称通过：仓库中与本次改动无关的环境敏感 Codex transport 测试此前失败并已停止；GitHub Actions 三项阻断 Job 尚未运行。
 
 ## 风险与回滚
 
 - 现有 Registry 默认记录数量由 6 扩展为 14；既有三核心数据集 Mapping 内容保持不变。
 - 回滚使用 `git revert` 目标提交并执行 Alembic downgrade；不会自动删除已发布业务文件。
-- 未经 PostgreSQL、GitHub Actions 三项阻断 Job 与 Legacy 全量回归验证前，不得标记 `VERIFIED` 或推进到 WP-0204。
+- 未经 Legacy 全量回归和 owner 合并确认，不得标记 `VERIFIED` 或推进到 WP-0204。
