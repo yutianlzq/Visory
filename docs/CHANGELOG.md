@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/yutianlzq/Visory/releases) page.
 
 ## [Unreleased]
+- [新功能] Visory-G014 / WP-0203 建立 Core Canonical Normalization：新增 ProviderCanonicalMappingDefinition、CanonicalPartition、CanonicalQualityReport 与 Canonical Normalization Task 契约、Migration `0009_wp0203_core_canonical_normalization`、Decimal/时区/身份/质量门禁和确定性 Parquet 分区发布；不实现 Snapshot、生产 Provider 或真实 /data。
 - [chore] 锁定 CI 已验证的 LiteLLM `1.98.0`，保持 Provider Cache 转发行为确定性。
 - [改进] WP-0202 增加独立 Provider Raw Schema Registry、字段类型漂移分类与 PostgreSQL 协调限流。
 - [新功能] Visory-G012 / WP-0202 建立 Raw Ingestion：新增 C-004 ProviderRun、RawObject、RawIngestionQuarantine 与受控 Adapter/离线 Transport、Migration `0007_wp0202_raw_ingestion`、staging/hash/fsync/原子 rename、Schema Drift Quarantine、只读 Orphan 识别及 Durable Task 纵向闭环；不连接生产 Provider、不写真实 /data、不实现 Canonical。

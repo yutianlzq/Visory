@@ -6,7 +6,7 @@ from src.repositories.platform import PostgresDatabase, ProviderRegistryReposito
 from src.schemas.platform import (
     DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderKind,
     ProviderCapabilityStatus, ProviderMergeMode, ProviderPolicy,
-    ProviderRawSchemaDefinition, build_provider_raw_schema_definition,
+    ProviderRawSchemaDefinition, ProviderCanonicalMappingDefinition, build_provider_raw_schema_definition, compute_provider_canonical_mapping_hash,
 )
 
 ADAPTER_REGISTRY: dict[str, str] = {
@@ -101,6 +101,92 @@ def default_provider_raw_schema_records(now: datetime | None = None) -> tuple[Pr
     )
 
 
+def default_provider_canonical_mapping_records(now: datetime | None = None) -> tuple[ProviderCanonicalMappingDefinition, ...]:
+    """Return the six explicit provider-to-canonical mappings used by WP-0203."""
+    created_at = now or DEFAULT_REGISTRY_TIMESTAMP
+    definitions = (
+        {
+            "provider_id": "a_stock_data", "dataset_id": "security_master",
+            "source_fields": {"entity_key": "ts_code", "canonical_id": "ts_code", "code": "ts_code", "exchange": "exchange_code", "asset_type": "asset_type", "name": "security_name", "list_date": "listed_on", "delist_date": "delisted_on", "board": "market_board", "currency": "currency_code", "lot_size": "lot_size", "valid_from": "listed_on", "valid_to": "delisted_on", "available_at": "as_of"},
+            "source_field_types": {"ts_code": "string", "exchange_code": "string", "asset_type": "string", "security_name": "string", "listed_on": "date", "delisted_on": "date", "market_board": "string", "currency_code": "string", "lot_size": "integer", "as_of": "timestamptz"},
+            "target_fields": ("entity_key", "canonical_id", "code", "exchange", "asset_type", "name", "list_date", "delist_date", "board", "currency", "lot_size", "valid_from", "valid_to", "available_at"),
+            "target_field_types": {"entity_key": "string", "canonical_id": "string", "code": "string", "exchange": "string", "asset_type": "string", "name": "string", "list_date": "date", "delist_date": "date", "board": "string", "currency": "string", "lot_size": "integer", "valid_from": "date", "valid_to": "date", "available_at": "timestamptz"},
+            "target_units": {"entity_key": "identifier", "canonical_id": "identifier", "code": "identifier", "exchange": "code", "asset_type": "enum", "name": "text", "list_date": "calendar_date", "delist_date": "calendar_date", "board": "enum", "currency": "iso_4217", "lot_size": "shares_per_lot", "valid_from": "calendar_date", "valid_to": "calendar_date", "available_at": "utc_instant"},
+            "enum_mappings": {"exchange": {"SSE": "SH", "SZSE": "SZ", "SH": "SH", "SZ": "SZ", "BSE": "BJ", "BJ": "BJ"}, "asset_type": {"EQUITY": "stock", "STOCK": "stock", "stock": "stock"}, "currency": {"CNY": "CNY", "RMB": "CNY"}},
+            "null_semantics": {"entity_key": "forbidden", "canonical_id": "forbidden", "code": "forbidden", "exchange": "forbidden", "asset_type": "forbidden", "name": "nullable_unknown", "list_date": "forbidden", "delist_date": "nullable_until_delisted", "board": "nullable_unknown", "currency": "forbidden", "lot_size": "forbidden", "valid_from": "nullable_unbounded_start", "valid_to": "nullable_unbounded_end", "available_at": "forbidden"},
+            "time_semantics": {"list_date": "listing_effective_date", "delist_date": "delisting_effective_date", "valid_from": "validity_start_date", "valid_to": "validity_end_date_exclusive", "available_at": "pit_usable_instant"},
+        },
+        {
+            "provider_id": "financial_api", "dataset_id": "security_master",
+            "source_fields": {"entity_key": "symbol", "canonical_id": "symbol", "code": "symbol", "exchange": "exchange_code", "asset_type": "asset_class", "name": "security_name", "list_date": "listed_on", "delist_date": "delisted_on", "board": "market_board", "currency": "currency_code", "lot_size": "lot_size", "valid_from": "listed_on", "valid_to": "delisted_on", "available_at": "observed_at"},
+            "source_field_types": {"symbol": "string", "exchange_code": "string", "asset_class": "string", "security_name": "string", "listed_on": "date", "delisted_on": "date", "market_board": "string", "currency_code": "string", "lot_size": "integer", "observed_at": "timestamptz"},
+            "target_fields": ("entity_key", "canonical_id", "code", "exchange", "asset_type", "name", "list_date", "delist_date", "board", "currency", "lot_size", "valid_from", "valid_to", "available_at"),
+            "target_field_types": {"entity_key": "string", "canonical_id": "string", "code": "string", "exchange": "string", "asset_type": "string", "name": "string", "list_date": "date", "delist_date": "date", "board": "string", "currency": "string", "lot_size": "integer", "valid_from": "date", "valid_to": "date", "available_at": "timestamptz"},
+            "target_units": {"entity_key": "identifier", "canonical_id": "identifier", "code": "identifier", "exchange": "code", "asset_type": "enum", "name": "text", "list_date": "calendar_date", "delist_date": "calendar_date", "board": "enum", "currency": "iso_4217", "lot_size": "shares_per_lot", "valid_from": "calendar_date", "valid_to": "calendar_date", "available_at": "utc_instant"},
+            "enum_mappings": {"exchange": {"NYSE": "SH", "SSE": "SH", "SZSE": "SZ", "SH": "SH", "SZ": "SZ", "BSE": "BJ", "BJ": "BJ"}, "asset_type": {"EQUITY": "stock", "COMMON_STOCK": "stock", "STOCK": "stock", "stock": "stock"}, "currency": {"CNY": "CNY", "RMB": "CNY"}},
+            "null_semantics": {"entity_key": "forbidden", "canonical_id": "forbidden", "code": "forbidden", "exchange": "forbidden", "asset_type": "forbidden", "name": "nullable_unknown", "list_date": "forbidden", "delist_date": "nullable_until_delisted", "board": "nullable_unknown", "currency": "forbidden", "lot_size": "forbidden", "valid_from": "nullable_unbounded_start", "valid_to": "nullable_unbounded_end", "available_at": "forbidden"},
+            "time_semantics": {"list_date": "listing_effective_date", "delist_date": "delisting_effective_date", "valid_from": "validity_start_date", "valid_to": "validity_end_date_exclusive", "available_at": "pit_usable_instant"},
+        },
+        {
+            "provider_id": "a_stock_data", "dataset_id": "trading_calendar",
+            "source_fields": {"market": "market_code", "trade_date": "cal_date", "is_open": "is_open", "session_open_at": "session_open", "session_close_at": "session_close", "available_at": "as_of"},
+            "source_field_types": {"market_code": "string", "cal_date": "date", "is_open": "boolean", "session_open": "timestamptz", "session_close": "timestamptz", "as_of": "timestamptz"},
+            "target_fields": ("market", "trade_date", "is_open", "session_open_at", "session_close_at", "available_at"),
+            "target_field_types": {"market": "string", "trade_date": "date", "is_open": "boolean", "session_open_at": "timestamptz", "session_close_at": "timestamptz", "available_at": "timestamptz"},
+            "target_units": {"market": "enum", "trade_date": "calendar_date", "is_open": "boolean", "session_open_at": "utc_instant", "session_close_at": "utc_instant", "available_at": "utc_instant"},
+            "enum_mappings": {"market": {"CN": "CN", "SH": "CN", "SZ": "CN"}},
+            "null_semantics": {"market": "forbidden", "trade_date": "forbidden", "is_open": "forbidden", "session_open_at": "nullable_when_closed", "session_close_at": "nullable_when_closed", "available_at": "forbidden"},
+            "time_semantics": {"trade_date": "exchange_session_date", "session_open_at": "session_open_instant", "session_close_at": "session_close_instant", "available_at": "pit_usable_instant"},
+        },
+        {
+            "provider_id": "financial_api", "dataset_id": "trading_calendar",
+            "source_fields": {"market": "market_code", "trade_date": "session_date", "is_open": "open_flag", "session_open_at": "session_open", "session_close_at": "session_close", "available_at": "available_at"},
+            "source_field_types": {"market_code": "string", "session_date": "date", "open_flag": "boolean", "session_open": "timestamptz", "session_close": "timestamptz", "available_at": "timestamptz"},
+            "target_fields": ("market", "trade_date", "is_open", "session_open_at", "session_close_at", "available_at"),
+            "target_field_types": {"market": "string", "trade_date": "date", "is_open": "boolean", "session_open_at": "timestamptz", "session_close_at": "timestamptz", "available_at": "timestamptz"},
+            "target_units": {"market": "enum", "trade_date": "calendar_date", "is_open": "boolean", "session_open_at": "utc_instant", "session_close_at": "utc_instant", "available_at": "utc_instant"},
+            "enum_mappings": {"market": {"CN": "CN", "SH": "CN", "SZ": "CN"}},
+            "null_semantics": {"market": "forbidden", "trade_date": "forbidden", "is_open": "forbidden", "session_open_at": "nullable_when_closed", "session_close_at": "nullable_when_closed", "available_at": "forbidden"},
+            "time_semantics": {"trade_date": "exchange_session_date", "session_open_at": "session_open_instant", "session_close_at": "session_close_instant", "available_at": "pit_usable_instant"},
+        },
+        {
+            "provider_id": "a_stock_data", "dataset_id": "bar_1d_raw",
+            "source_fields": {"entity_key": "ts_code", "trade_date": "trade_date", "open": "open_price", "high": "high_price", "low": "low_price", "close": "close_price", "volume_shares": "vol", "amount_cny": "amount", "prev_close": "pre_close", "trading_status": "trade_status", "price_limit_up": "limit_up", "price_limit_down": "limit_down", "available_at": "as_of"},
+            "source_field_types": {"ts_code": "string", "trade_date": "date", "open_price": "number", "high_price": "number", "low_price": "number", "close_price": "number", "vol": "number", "amount": "number", "pre_close": "number", "trade_status": "string", "limit_up": "number", "limit_down": "number", "as_of": "timestamptz"},
+            "target_fields": ("entity_key", "trade_date", "open", "high", "low", "close", "volume_shares", "amount_cny", "prev_close", "trading_status", "price_limit_up", "price_limit_down", "available_at"),
+            "target_field_types": {"entity_key": "string", "trade_date": "date", "open": "number", "high": "number", "low": "number", "close": "number", "volume_shares": "number", "amount_cny": "number", "prev_close": "number", "trading_status": "string", "price_limit_up": "number", "price_limit_down": "number", "available_at": "timestamptz"},
+            "target_units": {"entity_key": "identifier", "trade_date": "calendar_date", "open": "cny_per_share", "high": "cny_per_share", "low": "cny_per_share", "close": "cny_per_share", "volume_shares": "shares", "amount_cny": "cny", "prev_close": "cny_per_share", "trading_status": "enum", "price_limit_up": "cny_per_share", "price_limit_down": "cny_per_share", "available_at": "utc_instant"},
+            "unit_multipliers": {"open": "1", "high": "1", "low": "1", "close": "1", "volume_shares": "1", "amount_cny": "1", "prev_close": "1", "price_limit_up": "1", "price_limit_down": "1"},
+            "enum_mappings": {"trading_status": {"TRADE": "TRADED", "TRADED": "TRADED", "SUSPENDED": "SUSPENDED", "SUSPEND": "SUSPENDED", "NO_DATA": "NO_DATA", "NOT_LISTED": "NOT_LISTED"}},
+            "null_semantics": {"entity_key": "forbidden", "trade_date": "forbidden", "open": "nullable_when_not_traded", "high": "nullable_when_not_traded", "low": "nullable_when_not_traded", "close": "nullable_when_not_traded", "volume_shares": "nullable_when_not_traded", "amount_cny": "nullable_when_not_traded", "prev_close": "nullable_when_no_prior_session", "trading_status": "forbidden", "price_limit_up": "nullable_when_rule_unavailable", "price_limit_down": "nullable_when_rule_unavailable", "available_at": "forbidden"},
+            "time_semantics": {"trade_date": "exchange_session_date", "available_at": "pit_usable_instant"},
+        },
+        {
+            "provider_id": "financial_api", "dataset_id": "bar_1d_raw",
+            "source_fields": {"entity_key": "symbol", "trade_date": "trade_date", "open": "o", "high": "h", "low": "l", "close": "c", "volume_shares": "volume", "amount_cny": "turnover", "prev_close": "prev_close", "trading_status": "status", "price_limit_up": "upper_limit", "price_limit_down": "lower_limit", "available_at": "available_at"},
+            "source_field_types": {"symbol": "string", "trade_date": "date", "o": "number", "h": "number", "l": "number", "c": "number", "volume": "number", "turnover": "number", "prev_close": "number", "status": "string", "upper_limit": "number", "lower_limit": "number", "available_at": "timestamptz"},
+            "target_fields": ("entity_key", "trade_date", "open", "high", "low", "close", "volume_shares", "amount_cny", "prev_close", "trading_status", "price_limit_up", "price_limit_down", "available_at"),
+            "target_field_types": {"entity_key": "string", "trade_date": "date", "open": "number", "high": "number", "low": "number", "close": "number", "volume_shares": "number", "amount_cny": "number", "prev_close": "number", "trading_status": "string", "price_limit_up": "number", "price_limit_down": "number", "available_at": "timestamptz"},
+            "target_units": {"entity_key": "identifier", "trade_date": "calendar_date", "open": "cny_per_share", "high": "cny_per_share", "low": "cny_per_share", "close": "cny_per_share", "volume_shares": "shares", "amount_cny": "cny", "prev_close": "cny_per_share", "trading_status": "enum", "price_limit_up": "cny_per_share", "price_limit_down": "cny_per_share", "available_at": "utc_instant"},
+            "unit_multipliers": {"open": "1", "high": "1", "low": "1", "close": "1", "volume_shares": "1", "amount_cny": "1", "prev_close": "1", "price_limit_up": "1", "price_limit_down": "1"},
+            "enum_mappings": {"trading_status": {"TRADE": "TRADED", "TRADED": "TRADED", "SUSPENDED": "SUSPENDED", "SUSPEND": "SUSPENDED", "NO_DATA": "NO_DATA", "NOT_LISTED": "NOT_LISTED"}},
+            "null_semantics": {"entity_key": "forbidden", "trade_date": "forbidden", "open": "nullable_when_not_traded", "high": "nullable_when_not_traded", "low": "nullable_when_not_traded", "close": "nullable_when_not_traded", "volume_shares": "nullable_when_not_traded", "amount_cny": "nullable_when_not_traded", "prev_close": "nullable_when_no_prior_session", "trading_status": "forbidden", "price_limit_up": "nullable_when_rule_unavailable", "price_limit_down": "nullable_when_rule_unavailable", "available_at": "forbidden"},
+            "time_semantics": {"trade_date": "exchange_session_date", "available_at": "pit_usable_instant"},
+        },
+    )
+    records = []
+    for definition in definitions:
+        payload = {
+            "dataset_schema_version": "1.0.0",
+            "mapping_version": "1.0.0",
+            **definition,
+            "created_at": created_at,
+        }
+        payload["mapping_hash"] = compute_provider_canonical_mapping_hash(payload)
+        records.append(ProviderCanonicalMappingDefinition(**payload))
+    return tuple(records)
+
+
 def default_registry_records(now: datetime | None = None):
     # The default seed is a deterministic contract fixture. Runtime timestamps are not part of its business hash.
     effective_at = now or DEFAULT_REGISTRY_TIMESTAMP
@@ -121,9 +207,13 @@ def default_registry_records(now: datetime | None = None):
 
 
 class ProviderRegistryService:
-    def __init__(self, database: PostgresDatabase, repository: ProviderRegistryRepository | None = None):
+    def __init__(self, database: PostgresDatabase, repository: ProviderRegistryRepository | None = None, canonical_repository=None):
         self.database = database
         self.repository = repository or ProviderRegistryRepository()
+        if canonical_repository is None:
+            from src.repositories.platform.canonical import CanonicalRepository
+            canonical_repository = CanonicalRepository()
+        self.canonical_repository = canonical_repository
 
     def settings_projection(self):
         with self.database.transaction() as session:
@@ -137,6 +227,14 @@ class ProviderRegistryService:
             self.repository.ensure_capabilities(session, capabilities)
             self.repository.ensure_policies(session, policies)
             self.repository.ensure_provider_raw_schemas(session, default_provider_raw_schema_records())
+            for mapping in default_provider_canonical_mapping_records():
+                existing = self.canonical_repository.get_mapping(
+                    session, mapping.provider_id, mapping.dataset_id, mapping.dataset_schema_version, mapping.mapping_version
+                )
+                if existing is None:
+                    self.canonical_repository.add_mapping(session, mapping)
+                elif existing != mapping:
+                    raise ValueError("canonical mapping bootstrap conflict")
 
 
-__all__ = ["ADAPTER_REGISTRY", "DEFAULT_REGISTRY_TIMESTAMP", "ProviderRegistryService", "default_registry_records", "default_provider_raw_schema_records"]
+__all__ = ["ADAPTER_REGISTRY", "DEFAULT_REGISTRY_TIMESTAMP", "ProviderRegistryService", "default_registry_records", "default_provider_raw_schema_records", "default_provider_canonical_mapping_records"]

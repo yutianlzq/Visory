@@ -724,6 +724,163 @@
       ]
     },
     {
+      "business_key": "raw_object_id + mapping_version",
+      "compatibility": "only supported for task_type canonical_normalization",
+      "consumers": [
+        "canonical worker"
+      ],
+      "contract_id": "C-004/CanonicalNormalizationTaskRequirements",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/canonical-normalization-task-requirements.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.CanonicalNormalizationTaskRequirements.schema.json",
+      "lineage_fields": [
+        "raw_object_id",
+        "provider_run_id"
+      ],
+      "owner_module": "src.schemas.platform.canonical",
+      "producer": "Platform API client",
+      "quality_semantics": [
+        "raw lineage is explicit"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "durable Task requirements",
+      "time_semantics": [],
+      "version_semantics": [
+        "dataset_schema_version",
+        "mapping_version"
+      ]
+    },
+    {
+      "business_key": "task_id + attempt_id",
+      "compatibility": "failed normalization never exposes a partition",
+      "consumers": [
+        "task control",
+        "operations"
+      ],
+      "contract_id": "C-004/CanonicalNormalizationTaskResult",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/canonical-normalization-task-result.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.CanonicalNormalizationTaskResult.schema.json",
+      "lineage_fields": [
+        "canonical_partition",
+        "quality_report"
+      ],
+      "owner_module": "src.schemas.platform.canonical",
+      "producer": "Canonical Normalization Worker",
+      "quality_semantics": [
+        "published result requires partition"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "worker result",
+      "time_semantics": [],
+      "version_semantics": []
+    },
+    {
+      "business_key": "dataset_id + partition_key + revision",
+      "compatibility": "revisions are append-only and corrections supersede old partitions",
+      "consumers": [
+        "snapshot",
+        "feature",
+        "backtest"
+      ],
+      "contract_id": "C-004/CanonicalPartition",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/canonical-partition.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.CanonicalPartition.schema.json",
+      "lineage_fields": [
+        "provider_run_id",
+        "raw_object_id",
+        "storage_ref"
+      ],
+      "owner_module": "src.schemas.platform.canonical",
+      "producer": "Canonical Normalizer",
+      "quality_semantics": [
+        "quality_status",
+        "schema_hash",
+        "partition_hash"
+      ],
+      "resource_id_field": "canonical_partition_id",
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "append-only canonical Parquet partition",
+      "time_semantics": [
+        "available_from",
+        "available_to",
+        "created_at",
+        "published_at"
+      ],
+      "version_semantics": [
+        "dataset_schema_version",
+        "provider_policy_version",
+        "revision",
+        "revision_kind"
+      ]
+    },
+    {
+      "business_key": "quality_report_id",
+      "compatibility": "quality failures remain auditable",
+      "consumers": [
+        "canonical partition",
+        "operations"
+      ],
+      "contract_id": "C-004/CanonicalQualityReport",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/canonical-quality-report.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.CanonicalQualityReport.schema.json",
+      "lineage_fields": [
+        "canonical_partition_id"
+      ],
+      "owner_module": "src.schemas.platform.canonical",
+      "producer": "Canonical Normalizer",
+      "quality_semantics": [
+        "failed quality blocks publication"
+      ],
+      "resource_id_field": "quality_report_id",
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL canonical_quality_report",
+      "time_semantics": [
+        "created_at"
+      ],
+      "version_semantics": []
+    },
+    {
       "business_key": "dataset_id + schema_version",
       "compatibility": "dataset schema versions are immutable rows keyed by dataset_id + schema_version; capabilities and policies bind explicitly to one version",
       "consumers": [
@@ -767,6 +924,46 @@
       ],
       "version_semantics": [
         "schema_version"
+      ]
+    },
+    {
+      "business_key": "provider_id + dataset_id + mapping_version",
+      "compatibility": "mapping rows are immutable and versioned",
+      "consumers": [
+        "canonical worker",
+        "data quality"
+      ],
+      "contract_id": "C-004/ProviderCanonicalMappingDefinition",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/provider-canonical-mapping-definition.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.ProviderCanonicalMappingDefinition.schema.json",
+      "lineage_fields": [
+        "provider_id",
+        "dataset_id"
+      ],
+      "owner_module": "src.schemas.platform.canonical",
+      "producer": "Canonical Normalizer",
+      "quality_semantics": [
+        "mapping hash is deterministic"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL canonical_mapping_definition",
+      "time_semantics": [
+        "created_at"
+      ],
+      "version_semantics": [
+        "mapping_version",
+        "dataset_schema_version"
       ]
     },
     {

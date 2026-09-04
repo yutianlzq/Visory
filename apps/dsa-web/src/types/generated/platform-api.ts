@@ -427,7 +427,7 @@ export interface TaskCreateRequest {
   readonly requested_by: string;
   readonly requirements?: Readonly<Record<string, unknown>>;
   readonly task_schema_version?: string;
-  readonly task_type: "artifact_orphan_dry_run" | "raw_ingestion";
+  readonly task_type: "artifact_orphan_dry_run" | "raw_ingestion" | "canonical_normalization";
 }
 
 export interface TaskDetails {

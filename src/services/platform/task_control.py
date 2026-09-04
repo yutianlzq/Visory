@@ -505,7 +505,12 @@ class TaskControlService:
         if not worker_id.strip() or lease_seconds <= 0:
             raise ValueError("worker_id and positive lease_seconds are required")
         capabilities = tuple(sorted(set(worker_capabilities)))
-        supported_task_types = tuple(sorted(set(capabilities) & {"artifact_orphan_dry_run", "raw_ingestion"}))
+        supported_task_types = tuple(
+            sorted(
+                set(capabilities)
+                & {"artifact_orphan_dry_run", "raw_ingestion", "canonical_normalization"}
+            )
+        )
         if not supported_task_types:
             return None
         now = self._now()

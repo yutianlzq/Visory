@@ -1,3 +1,11 @@
+from .canonical import (
+    CanonicalNormalizationTaskRequirements,
+    CanonicalNormalizationTaskResult,
+    CanonicalPartition,
+    CanonicalQualityReport,
+    ProviderCanonicalMappingDefinition,
+    compute_provider_canonical_mapping_hash,
+)
 from .artifact import (
     ArtifactManifest,
     ArtifactPublishRequest,
@@ -90,6 +98,12 @@ from .task import (
 from .versioning import PublicationMetadata, RevisionMetadata, TaskStateMetadata
 
 __all__ = [
+    "CanonicalNormalizationTaskRequirements",
+    "CanonicalNormalizationTaskResult",
+    "CanonicalPartition",
+    "CanonicalQualityReport",
+    "ProviderCanonicalMappingDefinition",
+    "compute_provider_canonical_mapping_hash",
     "AliasType",
     "AttemptOutcome",
     "AliasVerificationStatus",

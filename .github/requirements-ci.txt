@@ -5,3 +5,5 @@
 flake8
 pytest
 pytest-timeout>=2.3.0
+
+pyarrow==18.1.0

@@ -1,0 +1,14 @@
+{
+  "contract_id": "C-004/CanonicalNormalizationTaskRequirements",
+  "payload": {
+    "provider_id": "a_stock_data",
+    "dataset_schema_version": "1.0.0",
+    "mapping_version": "1.0.0",
+    "provider_policy_version": "1.0.0",
+    "provider_run_id": "prun_019dbd74-2a00-7000-8000-000000000001",
+    "dataset_id": "bar_1d_raw",
+    "raw_object_id": "raw_019dbd74-2a00-7000-8000-000000000004",
+    "partition_key": "2026-08-31",
+    "provider_policy_id": "bar_1d_raw_v1"
+  }
+}

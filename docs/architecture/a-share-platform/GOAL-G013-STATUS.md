@@ -25,10 +25,10 @@ This Goal only hardens Provider Raw Schema and PostgreSQL coordinated rate limit
 
 ## Acceptance evidence
 
-Offline Raw Schema contract, Golden, export drift, platform regression (288 passed, 5 skipped), migration unit tests (8 passed), and real PostgreSQL integration (47 passed) are complete. Web lint and production build, governance/baseline checks, compile, and Flake8 also pass. GitHub Actions Run `33531064869` is green for Governance, Python, and Web on commit `41c101236047eaf68618dd3d239bead649f1011f`; PR #25 is open and awaiting owner merge. The broad repository offline suite was not used as a gate because it is blocked by unrelated environment-sensitive Codex transport tests. This Goal/WP is `VERIFIED`; WP-0203 remains not started.
+Offline Raw Schema contract, Golden, export drift, platform regression (288 passed, 5 skipped), migration unit tests (8 passed), and real PostgreSQL integration (47 passed) are complete. Web lint and production build, governance/baseline checks, compile, and Flake8 also pass. GitHub Actions final Run `33578007314` is green for Governance, Python, and Web on head `766476d60bc3a1539dc8589fa2d830ed754b7117`; PR #25 is merged as `71328fd512400a0cc0a2c38c128fead14a9a57d4`. The broad repository offline suite was not used as a gate because it is blocked by unrelated environment-sensitive Codex transport tests. This Goal/WP is `VERIFIED`; WP-0203 remains not started.
 
 ## Risks and rollback
 
 - Risk: real Provider responses may omit type declarations; field-level classification remains available, while explicit type mismatches are blocking.
-- Delivery: commit `41c101236047eaf68618dd3d239bead649f1011f`, PR #25, CI Run `33531064869` (Governance/Python/Web all successful).
+- Delivery: head `766476d60bc3a1539dc8589fa2d830ed754b7117`, PR #25, CI Run `33531064869` (Governance/Python/Web all successful).
 - Rollback: use ordinary `git revert`; in an isolated database downgrade to `0007_wp0202_raw_ingestion`. Business files are never removed by downgrade.

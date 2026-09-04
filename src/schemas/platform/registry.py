@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable
 
+from .canonical import CanonicalNormalizationTaskRequirements, CanonicalNormalizationTaskResult, CanonicalPartition, CanonicalQualityReport, ProviderCanonicalMappingDefinition
 from .artifact import (
     ArtifactManifest,
     ArtifactPublishResult,
@@ -764,6 +765,21 @@ PLATFORM_CONTRACTS = ContractRegistry(
             retention_class="AUDIT",
             compatibility="exactly one normal RawObject or quarantine record is returned",
             golden_payloads=_golden("success/raw-ingestion-publish-result.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-004/ProviderCanonicalMappingDefinition", owner_module="src.schemas.platform.canonical", producer="Canonical Normalizer", consumers=("canonical worker", "data quality"), schema_model=ProviderCanonicalMappingDefinition, schema_version="1.0.0", business_key="provider_id + dataset_id + mapping_version", resource_id_field=None, time_semantics=("created_at",), version_semantics=("mapping_version", "dataset_schema_version"), quality_semantics=("mapping hash is deterministic",), lineage_fields=("provider_id", "dataset_id"), storage_profile="PostgreSQL canonical_mapping_definition", retention_class="PINNED", compatibility="mapping rows are immutable and versioned", golden_payloads=_golden("success/provider-canonical-mapping-definition.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-004/CanonicalQualityReport", owner_module="src.schemas.platform.canonical", producer="Canonical Normalizer", consumers=("canonical partition", "operations"), schema_model=CanonicalQualityReport, schema_version="1.0.0", business_key="quality_report_id", resource_id_field="quality_report_id", time_semantics=("created_at",), version_semantics=(), quality_semantics=("failed quality blocks publication",), lineage_fields=("canonical_partition_id",), storage_profile="PostgreSQL canonical_quality_report", retention_class="AUDIT", compatibility="quality failures remain auditable", golden_payloads=_golden("success/canonical-quality-report.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-004/CanonicalPartition", owner_module="src.schemas.platform.canonical", producer="Canonical Normalizer", consumers=("snapshot", "feature", "backtest"), schema_model=CanonicalPartition, schema_version="1.0.0", business_key="dataset_id + partition_key + revision", resource_id_field="canonical_partition_id", time_semantics=("available_from", "available_to", "created_at", "published_at"), version_semantics=("dataset_schema_version", "provider_policy_version", "revision", "revision_kind"), quality_semantics=("quality_status", "schema_hash", "partition_hash"), lineage_fields=("provider_run_id", "raw_object_id", "storage_ref"), storage_profile="append-only canonical Parquet partition", retention_class="PINNED", compatibility="revisions are append-only and corrections supersede old partitions", golden_payloads=_golden("success/canonical-partition.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-004/CanonicalNormalizationTaskRequirements", owner_module="src.schemas.platform.canonical", producer="Platform API client", consumers=("canonical worker",), schema_model=CanonicalNormalizationTaskRequirements, schema_version="1.0.0", business_key="raw_object_id + mapping_version", resource_id_field=None, time_semantics=(), version_semantics=("dataset_schema_version", "mapping_version"), quality_semantics=("raw lineage is explicit",), lineage_fields=("raw_object_id", "provider_run_id"), storage_profile="durable Task requirements", retention_class="AUDIT", compatibility="only supported for task_type canonical_normalization", golden_payloads=_golden("success/canonical-normalization-task-requirements.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-004/CanonicalNormalizationTaskResult", owner_module="src.schemas.platform.canonical", producer="Canonical Normalization Worker", consumers=("task control", "operations"), schema_model=CanonicalNormalizationTaskResult, schema_version="1.0.0", business_key="task_id + attempt_id", resource_id_field=None, time_semantics=(), version_semantics=(), quality_semantics=("published result requires partition",), lineage_fields=("canonical_partition", "quality_report"), storage_profile="worker result", retention_class="AUDIT", compatibility="failed normalization never exposes a partition", golden_payloads=_golden("success/canonical-normalization-task-result.json"),
         ),
     )
 )
