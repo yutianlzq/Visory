@@ -1,0 +1,67 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "dataset_id": {
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "dataset_schema_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Dataset Schema Version",
+      "type": "string"
+    },
+    "mapping_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Mapping Version",
+      "type": "string"
+    },
+    "market": {
+      "default": "CN",
+      "title": "Market",
+      "type": "string"
+    },
+    "partition_key": {
+      "title": "Partition Key",
+      "type": "string"
+    },
+    "provider_id": {
+      "title": "Provider Id",
+      "type": "string"
+    },
+    "provider_policy_id": {
+      "title": "Provider Policy Id",
+      "type": "string"
+    },
+    "provider_policy_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Provider Policy Version",
+      "type": "string"
+    },
+    "provider_run_id": {
+      "title": "Provider Run Id",
+      "type": "string"
+    },
+    "raw_object_id": {
+      "title": "Raw Object Id",
+      "type": "string"
+    },
+    "requested_by": {
+      "default": "canonical_normalizer",
+      "title": "Requested By",
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider_id",
+    "dataset_id",
+    "dataset_schema_version",
+    "raw_object_id",
+    "provider_run_id",
+    "provider_policy_id",
+    "provider_policy_version",
+    "mapping_version",
+    "partition_key"
+  ],
+  "title": "CanonicalNormalizationTaskRequirements",
+  "type": "object"
+}

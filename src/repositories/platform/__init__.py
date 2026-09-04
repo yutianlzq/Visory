@@ -1,4 +1,5 @@
 from .artifact import ArtifactRepository, InMemoryArtifactRepository
+from .canonical import CanonicalRepository
 from .database import DatabaseHealth, PostgresDatabase, build_postgres_url, create_postgres_engine
 from .errors import DatabaseConfigurationError, DatabaseSecretError, PlatformDatabaseError
 from .identity import (
@@ -16,6 +17,7 @@ from .raw_ingestion import RawIngestionRepository
 
 __all__ = [
     "ArtifactRepository",
+    "CanonicalRepository",
     "InMemoryArtifactRepository",
     "AliasRegistrationOutcome",
     "AssetIdentityRepository",

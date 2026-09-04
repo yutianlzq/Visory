@@ -1,0 +1,358 @@
+{
+  "$defs": {
+    "CanonicalPartition": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical_partition_id": {
+          "title": "Canonical Partition Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "dataset_id": {
+          "title": "Dataset Id",
+          "type": "string"
+        },
+        "dataset_schema_version": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "title": "Dataset Schema Version",
+          "type": "string"
+        },
+        "distinct_entity_count": {
+          "minimum": 0,
+          "title": "Distinct Entity Count",
+          "type": "integer"
+        },
+        "max_available_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Available At"
+        },
+        "min_available_at": {
+          "format": "date-time",
+          "title": "Min Available At",
+          "type": "string"
+        },
+        "partition_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Partition Hash",
+          "type": "string"
+        },
+        "partition_key": {
+          "title": "Partition Key",
+          "type": "string"
+        },
+        "provider_policy_version": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "title": "Provider Policy Version",
+          "type": "string"
+        },
+        "provider_run_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Provider Run Refs",
+          "type": "array"
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published At"
+        },
+        "quality_report_id": {
+          "title": "Quality Report Id",
+          "type": "string"
+        },
+        "quality_status": {
+          "$ref": "#/$defs/QualityStatus"
+        },
+        "raw_object_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Raw Object Refs",
+          "type": "array"
+        },
+        "revision": {
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "revision_kind": {
+          "$ref": "#/$defs/RevisionKind",
+          "default": "INITIAL"
+        },
+        "row_count": {
+          "minimum": 0,
+          "title": "Row Count",
+          "type": "integer"
+        },
+        "schema_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Schema Hash",
+          "type": "string"
+        },
+        "storage_ref": {
+          "$ref": "#/$defs/StorageRef"
+        },
+        "supersedes_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Supersedes Id"
+        }
+      },
+      "required": [
+        "canonical_partition_id",
+        "dataset_id",
+        "dataset_schema_version",
+        "partition_key",
+        "revision",
+        "provider_policy_version",
+        "provider_run_refs",
+        "raw_object_refs",
+        "min_available_at",
+        "row_count",
+        "distinct_entity_count",
+        "storage_ref",
+        "partition_hash",
+        "schema_hash",
+        "quality_status",
+        "quality_report_id",
+        "created_at"
+      ],
+      "title": "CanonicalPartition",
+      "type": "object"
+    },
+    "CanonicalQualityReport": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical_partition_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Canonical Partition Id"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "duplicate_key_count": {
+          "minimum": 0,
+          "title": "Duplicate Key Count",
+          "type": "integer"
+        },
+        "failure_reasons": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Failure Reasons",
+          "type": "array"
+        },
+        "identity_ambiguous_count": {
+          "minimum": 0,
+          "title": "Identity Ambiguous Count",
+          "type": "integer"
+        },
+        "identity_unresolved_count": {
+          "minimum": 0,
+          "title": "Identity Unresolved Count",
+          "type": "integer"
+        },
+        "quality_report_id": {
+          "title": "Quality Report Id",
+          "type": "string"
+        },
+        "quality_status": {
+          "$ref": "#/$defs/QualityStatus"
+        },
+        "rejected_row_count": {
+          "minimum": 0,
+          "title": "Rejected Row Count",
+          "type": "integer"
+        },
+        "row_count": {
+          "minimum": 0,
+          "title": "Row Count",
+          "type": "integer"
+        },
+        "rule_results": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Rule Results",
+          "type": "object"
+        }
+      },
+      "required": [
+        "quality_report_id",
+        "quality_status",
+        "rule_results",
+        "row_count",
+        "rejected_row_count",
+        "duplicate_key_count",
+        "identity_unresolved_count",
+        "identity_ambiguous_count",
+        "created_at"
+      ],
+      "title": "CanonicalQualityReport",
+      "type": "object"
+    },
+    "QualityStatus": {
+      "enum": [
+        "COMPLETE",
+        "PARTIAL",
+        "FAILED",
+        "UNAVAILABLE",
+        "STALE"
+      ],
+      "title": "QualityStatus",
+      "type": "string"
+    },
+    "RevisionKind": {
+      "enum": [
+        "INITIAL",
+        "CORRECTION",
+        "REBUILD",
+        "MIGRATION"
+      ],
+      "title": "RevisionKind",
+      "type": "string"
+    },
+    "StorageBackend": {
+      "enum": [
+        "local_fs"
+      ],
+      "title": "StorageBackend",
+      "type": "string"
+    },
+    "StorageNamespace": {
+      "enum": [
+        "app"
+      ],
+      "title": "StorageNamespace",
+      "type": "string"
+    },
+    "StorageRef": {
+      "additionalProperties": false,
+      "properties": {
+        "content_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "media_type": {
+          "title": "Media Type",
+          "type": "string"
+        },
+        "relative_path": {
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "storage_backend": {
+          "$ref": "#/$defs/StorageBackend"
+        },
+        "storage_namespace": {
+          "$ref": "#/$defs/StorageNamespace"
+        }
+      },
+      "required": [
+        "storage_backend",
+        "storage_namespace",
+        "relative_path",
+        "content_hash",
+        "media_type",
+        "size_bytes"
+      ],
+      "title": "StorageRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "attempt_id": {
+      "title": "Attempt Id",
+      "type": "string"
+    },
+    "canonical_partition": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CanonicalPartition"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "failure_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Failure Code"
+    },
+    "published": {
+      "title": "Published",
+      "type": "boolean"
+    },
+    "quality_report": {
+      "$ref": "#/$defs/CanonicalQualityReport"
+    },
+    "task_id": {
+      "title": "Task Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "task_id",
+    "attempt_id",
+    "quality_report",
+    "published"
+  ],
+  "title": "CanonicalNormalizationTaskResult",
+  "type": "object"
+}

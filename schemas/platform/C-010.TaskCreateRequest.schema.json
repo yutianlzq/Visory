@@ -151,7 +151,8 @@
     "task_type": {
       "enum": [
         "artifact_orphan_dry_run",
-        "raw_ingestion"
+        "raw_ingestion",
+        "canonical_normalization"
       ],
       "title": "Task Type",
       "type": "string"

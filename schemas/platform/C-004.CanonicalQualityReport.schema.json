@@ -1,0 +1,95 @@
+{
+  "$defs": {
+    "QualityStatus": {
+      "enum": [
+        "COMPLETE",
+        "PARTIAL",
+        "FAILED",
+        "UNAVAILABLE",
+        "STALE"
+      ],
+      "title": "QualityStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "canonical_partition_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Canonical Partition Id"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "duplicate_key_count": {
+      "minimum": 0,
+      "title": "Duplicate Key Count",
+      "type": "integer"
+    },
+    "failure_reasons": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Failure Reasons",
+      "type": "array"
+    },
+    "identity_ambiguous_count": {
+      "minimum": 0,
+      "title": "Identity Ambiguous Count",
+      "type": "integer"
+    },
+    "identity_unresolved_count": {
+      "minimum": 0,
+      "title": "Identity Unresolved Count",
+      "type": "integer"
+    },
+    "quality_report_id": {
+      "title": "Quality Report Id",
+      "type": "string"
+    },
+    "quality_status": {
+      "$ref": "#/$defs/QualityStatus"
+    },
+    "rejected_row_count": {
+      "minimum": 0,
+      "title": "Rejected Row Count",
+      "type": "integer"
+    },
+    "row_count": {
+      "minimum": 0,
+      "title": "Row Count",
+      "type": "integer"
+    },
+    "rule_results": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Rule Results",
+      "type": "object"
+    }
+  },
+  "required": [
+    "quality_report_id",
+    "quality_status",
+    "rule_results",
+    "row_count",
+    "rejected_row_count",
+    "duplicate_key_count",
+    "identity_unresolved_count",
+    "identity_ambiguous_count",
+    "created_at"
+  ],
+  "title": "CanonicalQualityReport",
+  "type": "object"
+}

@@ -6,6 +6,7 @@ from typing import Any
 
 from pydantic.json_schema import models_json_schema
 
+from .canonical import CanonicalNormalizationTaskRequirements, CanonicalNormalizationTaskResult, CanonicalPartition, CanonicalQualityReport, ProviderCanonicalMappingDefinition
 from .artifact import (
     ArtifactManifest,
     ArtifactPublishResult,

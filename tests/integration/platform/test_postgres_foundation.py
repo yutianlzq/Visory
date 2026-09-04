@@ -17,7 +17,7 @@ from src.repositories.platform import (
 )
 
 
-HEAD_REVISION = "0008_wp0202_raw_schema_hardening"
+HEAD_REVISION = "0009_wp0203_core_canonical_normalization"
 
 
 def _table_names(database: PostgresDatabase) -> tuple[str, ...]:
@@ -54,6 +54,10 @@ def test_empty_database_upgrade_is_idempotent_and_reversible(isolated_postgres_d
         "artifact_registry",
         "asset_alias",
         "asset_identity",
+        "canonical_mapping_definition",
+        "canonical_partition",
+        "canonical_partition_lineage",
+        "canonical_quality_report",
         "dataset_definition",
         "identity_quarantine",
         "platform_task",

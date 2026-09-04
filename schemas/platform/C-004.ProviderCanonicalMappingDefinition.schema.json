@@ -1,0 +1,111 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "dataset_id": {
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "dataset_schema_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Dataset Schema Version",
+      "type": "string"
+    },
+    "enum_mappings": {
+      "additionalProperties": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "title": "Enum Mappings",
+      "type": "object"
+    },
+    "mapping_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Mapping Hash",
+      "type": "string"
+    },
+    "mapping_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Mapping Version",
+      "type": "string"
+    },
+    "null_semantics": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Null Semantics",
+      "type": "object"
+    },
+    "provider_id": {
+      "title": "Provider Id",
+      "type": "string"
+    },
+    "source_field_types": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Source Field Types",
+      "type": "object"
+    },
+    "source_fields": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Source Fields",
+      "type": "object"
+    },
+    "target_field_types": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Target Field Types",
+      "type": "object"
+    },
+    "target_fields": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Target Fields",
+      "type": "array"
+    },
+    "target_units": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Target Units",
+      "type": "object"
+    },
+    "time_semantics": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Time Semantics",
+      "type": "object"
+    },
+    "unit_multipliers": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Unit Multipliers",
+      "type": "object"
+    }
+  },
+  "required": [
+    "provider_id",
+    "dataset_id",
+    "dataset_schema_version",
+    "mapping_version",
+    "source_fields",
+    "target_fields",
+    "mapping_hash",
+    "created_at"
+  ],
+  "title": "ProviderCanonicalMappingDefinition",
+  "type": "object"
+}
