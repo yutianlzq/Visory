@@ -6,10 +6,13 @@ Last updated: 2026-09-04
 
 - Goal: `Visory-G014`
 - Work Package: `WP-0203 Core Canonical Normalization`
-- Status: `IN_PROGRESS`
+- Goal status: `COMPLETE / MERGED`
+- Work Package status: `IN_PROGRESS`
 - Fixed baseline: `71328fd512400a0cc0a2c38c128fead14a9a57d4`
 - Working branch: `goal/g014-wp-0203-core-canonical-normalization`
 - Progress: `9/45` (WP-0203 increments only after verification)
+- PR: #26
+- Merge commit: `fbe34cbc0ee851ee99237a6b4e644abff5f48d66`
 - Target migration: `0009_wp0203_core_canonical_normalization`, parent `0008_wp0202_raw_schema_hardening`
 
 ## Scope delivered
@@ -25,7 +28,7 @@ No DataSnapshot, certification pointers, production providers, real `/data`, WP-
 
 ## Verification
 
-Focused Canonical tests cover all six Provider×Dataset mappings, deterministic Parquet schema/order/hash, raw-boundary rejection with persisted QualityReport evidence, identity provisioning/resolution, missing-calendar rejection, cancel, Registry-transaction Orphan behavior, and lease-loss recovery with a new Attempt. PostgreSQL 16 integration covers all three datasets in a single Raw→Canonical chain plus migration isolation; the combined foundation/provider/canonical suite is 16 passed. The controlled engine is only `pyarrow==18.1.0`; missing the engine is a blocking `CANONICAL_PARQUET_ENGINE_UNAVAILABLE` error, never a JSONL fallback. Platform tests are 313 passed, 5 skipped; contract export, governance, baseline, Web lint/build, and `git diff --check` pass. GitHub Actions Run `33835586388` has Governance, Python, and Web all successful. Goal/WP remain `IN_PROGRESS` at `9/45`; WP-0203 is intentionally not VERIFIED until G015 expands datasets.
+Focused Canonical tests cover all six Provider×Dataset mappings, deterministic Parquet schema/order/hash, raw-boundary rejection with persisted QualityReport evidence, identity provisioning/resolution, missing-calendar rejection, cancel, Registry-transaction Orphan behavior, and lease-loss recovery with a new Attempt. PostgreSQL 16 integration covers all three datasets in a single Raw→Canonical chain plus migration isolation; the combined foundation/provider/canonical suite is 16 passed. The controlled engine is only `pyarrow==18.1.0`; missing the engine is a blocking `CANONICAL_PARQUET_ENGINE_UNAVAILABLE` error, never a JSONL fallback. Platform tests are 313 passed, 5 skipped; contract export, governance, baseline, Web lint/build, and `git diff --check` pass. GitHub Actions Run `33836754285` has Governance, Python, and Web all successful on the status-document head. PR #26 was merged by ordinary merge commit `fbe34cbc0ee851ee99237a6b4e644abff5f48d66`; the Goal is `COMPLETE / MERGED`, while WP-0203 remains `IN_PROGRESS` at `9/45` and is intentionally not VERIFIED until G015 expands datasets.
 
 ## Rollback
 
