@@ -25,7 +25,7 @@
 - `scripts/export_platform_contracts.py --check` 通过，生成契约与前端类型字节稳定。
 - `scripts/check_ai_assets.py`、`scripts/check_visory_baseline.py`、关键 Flake8 检查、变更文件 `py_compile` 和 `git diff --check` 通过。
 - Web `npm ci`、`npm run lint`、`npm run build` 通过。
-- GitHub Actions Run `33850545423` 的 Governance、Python、Web 三项阻断 Job 全部成功。
+- GitHub Actions Run `33851938418` 的 Governance、Python、Web 三项阻断 Job 全部成功。
 - PR #28 已按普通 merge commit 合入 main：head `7e813208c710cd9ae3d43be541935e46085174e1`，merge commit `76554416853314d6b3fe950f9d81a2c896320c27`。
 - 与本次改动直接相关的 Canonical、Provider、Migration、PostgreSQL 和 Legacy 回归均已通过；全仓离线套件中仅有与本次改动无关的环境敏感 Codex transport 测试未纳入通过声明。
 
