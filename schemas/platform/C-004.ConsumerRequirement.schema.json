@@ -1,0 +1,79 @@
+{
+  "$defs": {
+    "ConsumerKind": {
+      "enum": [
+        "PREVIEW",
+        "FORMAL_BACKTEST"
+      ],
+      "title": "ConsumerKind",
+      "type": "string"
+    },
+    "QualityStatus": {
+      "enum": [
+        "COMPLETE",
+        "PARTIAL",
+        "FAILED",
+        "UNAVAILABLE",
+        "STALE"
+      ],
+      "title": "QualityStatus",
+      "type": "string"
+    },
+    "SnapshotPublicationStatus": {
+      "enum": [
+        "PROVISIONAL",
+        "CERTIFIED",
+        "REJECTED"
+      ],
+      "title": "SnapshotPublicationStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "accepted_publication_statuses": {
+      "items": {
+        "$ref": "#/$defs/SnapshotPublicationStatus"
+      },
+      "title": "Accepted Publication Statuses",
+      "type": "array"
+    },
+    "allow_provisional": {
+      "default": false,
+      "title": "Allow Provisional",
+      "type": "boolean"
+    },
+    "consumer_id": {
+      "title": "Consumer Id",
+      "type": "string"
+    },
+    "consumer_kind": {
+      "$ref": "#/$defs/ConsumerKind"
+    },
+    "min_quality_status": {
+      "$ref": "#/$defs/QualityStatus",
+      "default": "COMPLETE"
+    },
+    "required_capabilities": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Required Capabilities",
+      "type": "array"
+    },
+    "requirement_version": {
+      "default": "1.0.0",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Requirement Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "consumer_id",
+    "consumer_kind",
+    "required_capabilities",
+    "accepted_publication_statuses"
+  ],
+  "title": "ConsumerRequirement",
+  "type": "object"
+}

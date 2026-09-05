@@ -57,6 +57,10 @@ from .enums import (
     RevisionKind,
     StorageBackend,
     StorageNamespace,
+    SnapshotCapabilityStatus,
+    SnapshotPublicationStatus,
+    ConsumerKind,
+    ConsumerRequirementStatus,
     TaskState,
     ProviderCapabilityStatus,
     ProviderKind,
@@ -81,6 +85,16 @@ from .raw_ingestion import (
     ensure_secret_free,
 )
 from .storage import StorageRef
+from .snapshot import (
+    CapabilityCertification,
+    ConsumerRequirement,
+    DataSnapshot,
+    SnapshotBuildTaskRequirements,
+    SnapshotBuildTaskResult,
+    SnapshotCurrentPointer,
+    SnapshotPartitionRef,
+    compute_snapshot_manifest_hash,
+)
 from .temporal import AvailabilityMetadata, PointInTimeWindow
 from .task import (
     TaskAttemptRecord,
@@ -179,7 +193,19 @@ __all__ = [
     "RevisionMetadata",
     "StorageBackend",
     "StorageNamespace",
+    "SnapshotCapabilityStatus",
+    "SnapshotPublicationStatus",
+    "ConsumerKind",
+    "ConsumerRequirementStatus",
     "StorageRef",
+    "CapabilityCertification",
+    "ConsumerRequirement",
+    "DataSnapshot",
+    "SnapshotBuildTaskRequirements",
+    "SnapshotBuildTaskResult",
+    "SnapshotCurrentPointer",
+    "SnapshotPartitionRef",
+    "compute_snapshot_manifest_hash",
     "TaskAttemptRecord",
     "TaskCancelRequest",
     "TaskCheckpointRecord",

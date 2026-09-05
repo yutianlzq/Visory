@@ -1,0 +1,12 @@
+{
+  "contract_id": "C-004/SnapshotCurrentPointer",
+  "payload": {
+    "capability_id": "identity_core",
+    "pointer_revision": 1,
+    "previous_snapshot_id": null,
+    "scope": "a_share",
+    "snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000007",
+    "trade_date": "2026-08-31",
+    "updated_at": "2026-08-31T08:00:00Z"
+  }
+}

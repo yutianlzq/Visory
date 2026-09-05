@@ -1,0 +1,11 @@
+{
+  "contract_id": "C-004/SnapshotBuildTaskResult",
+  "expected_error_fields": [],
+  "payload": {
+    "attempt_id": "attempt_019dbd74-2a00-7000-8000-00000000000a",
+    "capability_certifications": [],
+    "published": false,
+    "snapshot": null,
+    "task_id": "task_019dbd74-2a00-7000-8000-000000000009"
+  }
+}

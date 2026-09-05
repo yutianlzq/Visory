@@ -14,6 +14,7 @@ from .settings import PostgresSettings, read_secret_file
 from .task import TaskControlRepository
 from .provider import ProviderRegistryRepository
 from .raw_ingestion import RawIngestionRepository
+from .snapshot import SnapshotRepository
 
 __all__ = [
     "ArtifactRepository",
@@ -34,6 +35,7 @@ __all__ = [
     "TaskControlRepository",
     "ProviderRegistryRepository",
     "RawIngestionRepository",
+    "SnapshotRepository",
     "build_postgres_url",
     "create_postgres_engine",
     "downgrade_database",

@@ -1,0 +1,54 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "capability_id": {
+      "title": "Capability Id",
+      "type": "string"
+    },
+    "pointer_revision": {
+      "minimum": 1,
+      "title": "Pointer Revision",
+      "type": "integer"
+    },
+    "previous_snapshot_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Previous Snapshot Id"
+    },
+    "scope": {
+      "title": "Scope",
+      "type": "string"
+    },
+    "snapshot_id": {
+      "title": "Snapshot Id",
+      "type": "string"
+    },
+    "trade_date": {
+      "format": "date",
+      "title": "Trade Date",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "scope",
+    "trade_date",
+    "capability_id",
+    "snapshot_id",
+    "pointer_revision",
+    "updated_at"
+  ],
+  "title": "SnapshotCurrentPointer",
+  "type": "object"
+}

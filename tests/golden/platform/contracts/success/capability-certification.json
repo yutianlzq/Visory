@@ -1,0 +1,13 @@
+{
+  "contract_id": "C-004/CapabilityCertification",
+  "payload": {
+    "capability_id": "identity_core",
+    "capability_status": "CERTIFIED",
+    "certified_at": "2026-08-31T08:00:00Z",
+    "evidence_refs": [
+      "quality_019dbd74-2a00-7000-8000-000000000006"
+    ],
+    "reason_code": null,
+    "snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000007"
+  }
+}
