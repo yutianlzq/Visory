@@ -890,6 +890,143 @@
       ]
     },
     {
+      "business_key": "snapshot_id + capability_id",
+      "compatibility": "capability certification is independent, explicit, and never inferred from consumer success",
+      "consumers": [
+        "snapshot gate",
+        "formal consumers",
+        "operations"
+      ],
+      "contract_id": "C-004/CapabilityCertification",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/capability-certification.json",
+        "tests/golden/platform/contracts/rejected/capability-certified-with-reason.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.CapabilityCertification.schema.json",
+      "lineage_fields": [
+        "snapshot_id",
+        "evidence_refs"
+      ],
+      "owner_module": "src.schemas.platform.snapshot",
+      "producer": "Snapshot Capability Engine",
+      "quality_semantics": [
+        "capability_status",
+        "reason_code",
+        "evidence_refs"
+      ],
+      "resource_id_field": "snapshot_id",
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL capability_certification",
+      "time_semantics": [
+        "certified_at"
+      ],
+      "version_semantics": []
+    },
+    {
+      "business_key": "consumer_id",
+      "compatibility": "formal backtest consumers require CERTIFIED snapshots and backtest_core",
+      "consumers": [
+        "preview",
+        "formal backtest",
+        "research"
+      ],
+      "contract_id": "C-004/ConsumerRequirement",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/consumer-requirement-preview.json",
+        "tests/golden/platform/contracts/success/consumer-requirement-formal.json",
+        "tests/golden/platform/contracts/rejected/consumer-requirement-formal-provisional.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.ConsumerRequirement.schema.json",
+      "lineage_fields": [],
+      "owner_module": "src.schemas.platform.snapshot",
+      "producer": "Snapshot Consumer",
+      "quality_semantics": [
+        "required_capabilities",
+        "accepted_publication_statuses",
+        "min_quality_status",
+        "allow_provisional"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL consumer_requirement",
+      "time_semantics": [],
+      "version_semantics": [
+        "requirement_version"
+      ]
+    },
+    {
+      "business_key": "trade_date + cutoff_at + revision",
+      "compatibility": "snapshots are immutable and corrections append a new revision without replacing the superseded snapshot",
+      "consumers": [
+        "feature store",
+        "review",
+        "research",
+        "backtest"
+      ],
+      "contract_id": "C-004/DataSnapshot",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/data-snapshot.json",
+        "tests/golden/platform/contracts/correction/data-snapshot-correction.json",
+        "tests/golden/platform/contracts/rejected/data-snapshot-rejected-published.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.DataSnapshot.schema.json",
+      "lineage_fields": [
+        "provider_policy_id",
+        "security_master_ref",
+        "calendar_ref",
+        "canonical_partitions",
+        "supersedes_id"
+      ],
+      "owner_module": "src.schemas.platform.snapshot",
+      "producer": "Snapshot Gate Service",
+      "quality_semantics": [
+        "quality_status",
+        "publication_status",
+        "certified_capabilities",
+        "missing_capabilities"
+      ],
+      "resource_id_field": "snapshot_id",
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL data_snapshot plus deterministic manifest StorageRef binding",
+      "time_semantics": [
+        "trade_date",
+        "cutoff_at",
+        "available_at",
+        "created_at",
+        "published_at"
+      ],
+      "version_semantics": [
+        "manifest_version",
+        "provider_policy_version",
+        "revision",
+        "revision_kind"
+      ]
+    },
+    {
       "business_key": "dataset_id + schema_version",
       "compatibility": "dataset schema versions are immutable rows keyed by dataset_id + schema_version; capabilities and policies bind explicitly to one version",
       "consumers": [
@@ -1348,6 +1485,180 @@
       "version_semantics": [
         "dataset_schema_version",
         "provider_schema_version"
+      ]
+    },
+    {
+      "business_key": "trade_date + cutoff_at + provider_policy + canonical_partition_ids",
+      "compatibility": "only supported for task_type data_snapshot_build and keeps correction lineage explicit",
+      "consumers": [
+        "Snapshot Build Worker"
+      ],
+      "contract_id": "C-004/SnapshotBuildTaskRequirements",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/snapshot-build-task-requirements.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.SnapshotBuildTaskRequirements.schema.json",
+      "lineage_fields": [
+        "security_master_ref",
+        "calendar_ref",
+        "canonical_partition_ids",
+        "correction_of_snapshot_id"
+      ],
+      "owner_module": "src.schemas.platform.snapshot",
+      "producer": "Platform API client",
+      "quality_semantics": [
+        "requested_capabilities",
+        "publication_status"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "durable Task requirements without runtime filesystem paths",
+      "time_semantics": [
+        "trade_date",
+        "cutoff_at"
+      ],
+      "version_semantics": [
+        "provider_policy_version"
+      ]
+    },
+    {
+      "business_key": "task_id + attempt_id",
+      "compatibility": "failed builds never expose a snapshot and successful results include capability evidence",
+      "consumers": [
+        "task control",
+        "operations",
+        "snapshot consumers"
+      ],
+      "contract_id": "C-004/SnapshotBuildTaskResult",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/snapshot-build-task-result.json",
+        "tests/golden/platform/contracts/rejected/snapshot-build-task-result-unpublished-without-failure.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.SnapshotBuildTaskResult.schema.json",
+      "lineage_fields": [
+        "task_id",
+        "attempt_id",
+        "snapshot"
+      ],
+      "owner_module": "src.schemas.platform.snapshot",
+      "producer": "Snapshot Build Worker",
+      "quality_semantics": [
+        "published",
+        "requirement_status",
+        "failure_code",
+        "capability_certifications"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "worker result without arbitrary filesystem paths",
+      "time_semantics": [],
+      "version_semantics": []
+    },
+    {
+      "business_key": "scope + trade_date + capability_id",
+      "compatibility": "pointer updates are CAS-protected and preserve prior certified target for rollback",
+      "consumers": [
+        "current snapshot readers",
+        "feature store",
+        "backtest"
+      ],
+      "contract_id": "C-004/SnapshotCurrentPointer",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/snapshot-current-pointer.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.SnapshotCurrentPointer.schema.json",
+      "lineage_fields": [
+        "snapshot_id",
+        "previous_snapshot_id"
+      ],
+      "owner_module": "src.schemas.platform.snapshot",
+      "producer": "Snapshot Gate Service",
+      "quality_semantics": [
+        "compare-and-set update",
+        "certified capability target"
+      ],
+      "resource_id_field": "snapshot_id",
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL snapshot_current_pointer with row locking",
+      "time_semantics": [
+        "trade_date",
+        "updated_at"
+      ],
+      "version_semantics": [
+        "pointer_revision",
+        "previous_snapshot_id"
+      ]
+    },
+    {
+      "business_key": "canonical_partition_id + snapshot_id",
+      "compatibility": "references retain canonical lineage and content identity without copying runtime paths",
+      "consumers": [
+        "snapshot",
+        "capability engine"
+      ],
+      "contract_id": "C-004/SnapshotPartitionRef",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/snapshot-partition-ref.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.SnapshotPartitionRef.schema.json",
+      "lineage_fields": [
+        "provider_run_refs",
+        "raw_object_refs",
+        "quality_report_id",
+        "storage_ref"
+      ],
+      "owner_module": "src.schemas.platform.snapshot",
+      "producer": "Snapshot Gate Service",
+      "quality_semantics": [
+        "quality_status",
+        "partition_hash",
+        "schema_hash",
+        "row_count"
+      ],
+      "resource_id_field": "canonical_partition_id",
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "embedded immutable canonical partition reference",
+      "time_semantics": [
+        "min_available_at",
+        "max_available_at"
+      ],
+      "version_semantics": [
+        "dataset_schema_version",
+        "provider_policy_version",
+        "revision",
+        "revision_kind"
       ]
     },
     {

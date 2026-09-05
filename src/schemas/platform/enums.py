@@ -156,6 +156,29 @@ class ResourceType(PlatformStringEnum):
     RAW_INGESTION_QUARANTINE = "raw_ingestion_quarantine"
 
 
+class SnapshotPublicationStatus(PlatformStringEnum):
+    PROVISIONAL = "PROVISIONAL"
+    CERTIFIED = "CERTIFIED"
+    REJECTED = "REJECTED"
+
+
+class SnapshotCapabilityStatus(PlatformStringEnum):
+    CERTIFIED = "CERTIFIED"
+    UNAVAILABLE = "UNAVAILABLE"
+    DEGRADED = "DEGRADED"
+    UNVERIFIED = "UNVERIFIED"
+
+
+class ConsumerKind(PlatformStringEnum):
+    PREVIEW = "PREVIEW"
+    FORMAL_BACKTEST = "FORMAL_BACKTEST"
+
+
+class ConsumerRequirementStatus(PlatformStringEnum):
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+
+
 class RetentionClass(PlatformStringEnum):
     PINNED = "PINNED"
     AUDIT = "AUDIT"

@@ -1,0 +1,33 @@
+{
+  "contract_id": "C-004/SnapshotPartitionRef",
+  "payload": {
+    "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000005",
+    "dataset_id": "security_master",
+    "dataset_schema_version": "1.0.0",
+    "max_available_at": null,
+    "min_available_at": "2026-08-31T08:00:00Z",
+    "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "partition_key": "2026-08-31",
+    "provider_policy_version": "1.0.0",
+    "provider_run_refs": [
+      "prun_019dbd74-2a00-7000-8000-000000000001"
+    ],
+    "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000006",
+    "quality_status": "COMPLETE",
+    "raw_object_refs": [
+      "raw_019dbd74-2a00-7000-8000-000000000004"
+    ],
+    "revision": 1,
+    "revision_kind": "INITIAL",
+    "row_count": 1,
+    "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "storage_ref": {
+      "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "media_type": "application/vnd.apache.parquet",
+      "relative_path": "canonical/dataset=security_master/partition=2026-08-31/revision=1/cpart.parquet",
+      "size_bytes": 1,
+      "storage_backend": "local_fs",
+      "storage_namespace": "app"
+    }
+  }
+}

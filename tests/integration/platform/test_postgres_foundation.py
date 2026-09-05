@@ -17,7 +17,7 @@ from src.repositories.platform import (
 )
 
 
-HEAD_REVISION = "0010_wp0203_extended_canonical_datasets"
+HEAD_REVISION = "0011_wp0204_snapshot_foundation"
 
 
 def _table_names(database: PostgresDatabase) -> tuple[str, ...]:
@@ -58,6 +58,9 @@ def test_empty_database_upgrade_is_idempotent_and_reversible(isolated_postgres_d
         "canonical_partition",
         "canonical_partition_lineage",
         "canonical_quality_report",
+        "capability_certification",
+        "consumer_requirement",
+        "data_snapshot",
         "dataset_definition",
         "identity_quarantine",
         "platform_task",
@@ -69,12 +72,13 @@ def test_empty_database_upgrade_is_idempotent_and_reversible(isolated_postgres_d
         "provider_run",
         "raw_ingestion_quarantine",
         "raw_object",
+        "snapshot_current_pointer",
+        "snapshot_partition_ref",
         "task_attempt",
         "task_checkpoint",
         "task_command_idempotency",
         "task_state_event",
     )
-
     upgrade_database(database.engine)
     repeated = get_migration_status(database.engine)
     assert repeated == upgraded

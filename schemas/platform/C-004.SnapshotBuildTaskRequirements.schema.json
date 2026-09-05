@@ -1,0 +1,85 @@
+{
+  "$defs": {
+    "SnapshotPublicationStatus": {
+      "enum": [
+        "PROVISIONAL",
+        "CERTIFIED",
+        "REJECTED"
+      ],
+      "title": "SnapshotPublicationStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "calendar_ref": {
+      "title": "Calendar Ref",
+      "type": "string"
+    },
+    "canonical_partition_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Canonical Partition Ids",
+      "type": "array"
+    },
+    "correction_of_snapshot_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correction Of Snapshot Id"
+    },
+    "cutoff_at": {
+      "format": "date-time",
+      "title": "Cutoff At",
+      "type": "string"
+    },
+    "provider_policy_id": {
+      "title": "Provider Policy Id",
+      "type": "string"
+    },
+    "provider_policy_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Provider Policy Version",
+      "type": "string"
+    },
+    "publication_status": {
+      "$ref": "#/$defs/SnapshotPublicationStatus",
+      "default": "PROVISIONAL"
+    },
+    "requested_capabilities": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Requested Capabilities",
+      "type": "array"
+    },
+    "security_master_ref": {
+      "title": "Security Master Ref",
+      "type": "string"
+    },
+    "trade_date": {
+      "format": "date",
+      "title": "Trade Date",
+      "type": "string"
+    }
+  },
+  "required": [
+    "trade_date",
+    "cutoff_at",
+    "provider_policy_id",
+    "provider_policy_version",
+    "security_master_ref",
+    "calendar_ref",
+    "canonical_partition_ids",
+    "requested_capabilities"
+  ],
+  "title": "SnapshotBuildTaskRequirements",
+  "type": "object"
+}

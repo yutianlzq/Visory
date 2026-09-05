@@ -1,0 +1,18 @@
+{
+  "contract_id": "C-004/ConsumerRequirement",
+  "expected_error_fields": [],
+  "payload": {
+    "accepted_publication_statuses": [
+      "PROVISIONAL",
+      "CERTIFIED"
+    ],
+    "allow_provisional": true,
+    "consumer_id": "formal_backtest",
+    "consumer_kind": "FORMAL_BACKTEST",
+    "min_quality_status": "COMPLETE",
+    "required_capabilities": [
+      "backtest_core"
+    ],
+    "requirement_version": "1.0.0"
+  }
+}

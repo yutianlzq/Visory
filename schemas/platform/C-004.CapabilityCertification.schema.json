@@ -1,0 +1,75 @@
+{
+  "$defs": {
+    "SnapshotCapabilityStatus": {
+      "enum": [
+        "CERTIFIED",
+        "UNAVAILABLE",
+        "DEGRADED",
+        "UNVERIFIED"
+      ],
+      "title": "SnapshotCapabilityStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "capability_id": {
+      "title": "Capability Id",
+      "type": "string"
+    },
+    "capability_status": {
+      "$ref": "#/$defs/SnapshotCapabilityStatus"
+    },
+    "certified_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Certified At"
+    },
+    "evidence_refs": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence Refs",
+      "type": "array"
+    },
+    "reason_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reason Code"
+    },
+    "snapshot_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Snapshot Id"
+    }
+  },
+  "required": [
+    "capability_id",
+    "capability_status"
+  ],
+  "title": "CapabilityCertification",
+  "type": "object"
+}

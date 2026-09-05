@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/yutianlzq/Visory/releases) page.
 
 ## [Unreleased]
+- [新功能] Visory-G016 / WP-0204 建立不可变 DataSnapshot、Partition Manifest、Capability/Consumer Gate、Current Pointer 与 `0011_wp0204_snapshot_foundation`；补齐 PIT/血缘/Hash/Correction 语义并纳入确定性契约生成链，`backtest_core` 暂以 `BENCHMARK_DATASET_MISSING` 拒绝 Formal Backtest，不连接生产 Provider、不写真实 /data。
 - [新功能] Visory-G015 / WP-0203 扩展 Canonical 数据集：新增 instrument_status_daily、listing_status_history、corporate_action、financial_statement、14 条 Provider Raw Schema/Canonical Mapping、Migration `0010_wp0203_extended_canonical_datasets` 与质量报告血缘字段；补充 PIT、历史区间、公司行动、财务单位/revision 门禁，不连接生产 Provider、不写真实 /data。
 - [新功能] Visory-G014 / WP-0203 建立 Core Canonical Normalization：新增 ProviderCanonicalMappingDefinition、CanonicalPartition、CanonicalQualityReport 与 Canonical Normalization Task 契约、Migration `0009_wp0203_core_canonical_normalization`、Decimal/时区/身份/质量门禁和确定性 Parquet 分区发布；不实现 Snapshot、生产 Provider 或真实 /data。
 - [chore] 锁定 CI 已验证的 LiteLLM `1.98.0`，保持 Provider Cache 转发行为确定性。

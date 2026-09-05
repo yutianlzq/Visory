@@ -1,0 +1,19 @@
+{
+  "contract_id": "C-004/SnapshotBuildTaskRequirements",
+  "payload": {
+    "calendar_ref": "cpart_019dbd74-2a00-7000-8000-000000000005",
+    "canonical_partition_ids": [
+      "cpart_019dbd74-2a00-7000-8000-000000000005"
+    ],
+    "correction_of_snapshot_id": null,
+    "cutoff_at": "2026-08-31T08:00:00Z",
+    "provider_policy_id": "policy_core",
+    "provider_policy_version": "1.0.0",
+    "publication_status": "PROVISIONAL",
+    "requested_capabilities": [
+      "identity_core"
+    ],
+    "security_master_ref": "cpart_019dbd74-2a00-7000-8000-000000000005",
+    "trade_date": "2026-08-31"
+  }
+}

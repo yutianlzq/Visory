@@ -1,0 +1,17 @@
+{
+  "contract_id": "C-004/ConsumerRequirement",
+  "payload": {
+    "accepted_publication_statuses": [
+      "PROVISIONAL",
+      "CERTIFIED"
+    ],
+    "allow_provisional": true,
+    "consumer_id": "preview_consumer",
+    "consumer_kind": "PREVIEW",
+    "min_quality_status": "COMPLETE",
+    "required_capabilities": [
+      "identity_core"
+    ],
+    "requirement_version": "1.0.0"
+  }
+}
