@@ -2,12 +2,12 @@
 
 ## 状态
 
-- Goal：`IN_PROGRESS`
+- Goal：`COMPLETE / MERGED`
 - Work Package：`WP-0204`
 - 目标分支：`goal/g016-wp-0204-snapshot-foundation`
 - 基线：`main@b31171d75dabc1127aef69fdb9a2deab4f413e76`
 - Migration：`0011_wp0204_snapshot_foundation`，父版本 `0010_wp0203_extended_canonical_datasets`
-- 进度：`10/45`（WP-0204 尚未完成，`backtest_core` 不得标记为 `CERTIFIED`）
+- 进度：`10/45`（WP-0204 保持 `IN_PROGRESS`，`backtest_core` 不得标记为 `CERTIFIED`）
 
 ## 本次实现
 
@@ -25,11 +25,12 @@
 - 平台契约 Registry/Golden：`tests/platform/test_contract_registry.py`、`tests/platform/test_contract_golden_payloads.py`。
 - Snapshot 定向测试：`tests/platform/test_snapshot_foundation.py`。
 - 生成检查：`.venv\Scripts\python.exe scripts/export_platform_contracts.py --check`。
-- Alembic 当前 head：`0011_wp0204_snapshot_foundation`；PostgreSQL 16 空库升级、重复升级、降级和重新升级待本地一次性实例执行。
+- Alembic 当前 head：`0011_wp0204_snapshot_foundation`；PostgreSQL 16 空库升级、重复升级、降级和重新升级由 GitHub Actions Python Job 的隔离 PostgreSQL 服务验证通过。
 - 本地 Snapshot/Contract 定向验证：`102 passed`；Contract export `--check`、`check_ai_assets.py`、`check_visory_baseline.py`、目标文件 `flake8` 与 `git diff --check` 通过。
 - Web 验证：`npm ci`、`npm run lint`、`npm run build` 均通过（2026-09-05）。
 - 完整离线回归：`6603 passed, 85 failed, 65 skipped, 4 deselected`；失败集中在既有 Codex app-server/process、Docker shell、SQLite migration、intelligence/screening 等 Legacy/环境相关测试，未发现 Snapshot 定向失败；仍不能替代 CI。
-- PostgreSQL 16 集成、`0011` 空库 upgrade/downgrade/重复升级、Snapshot Repository/Pointer/Worker 真实事务验证及 GitHub CI 尚未执行；因此 WP 仍不能标记为 `VERIFIED`。
+- 本地 Windows 未配置 Docker/PostgreSQL，因此本地 PostgreSQL 集成仍未运行；GitHub Actions Run `33941401645` 的 Governance、Python deterministic gate、Web lint/build 三项阻断 Job 全部成功，包含隔离 PostgreSQL 集成。WP-0204 仍保持 `IN_PROGRESS`，尚未标记为 `VERIFIED`。
+- PR #30 已按普通 merge commit 合入 main：head `fb0f997cb51aecf364f37598ec7fd0c718780008`，merge commit `187550f434b64ea71d66452b748aba6943f8cb76`。
 
 ## 风险与回滚
 
@@ -40,4 +41,4 @@
 
 ## 下一步
 
-补齐一次性 PostgreSQL 16 实例上的 Migration/Repository/Pointer/Worker 集成与故障注入测试，分析并隔离 Legacy 全量回归失败，再等待 GitHub 三项阻断 CI 全绿；所有证据齐全后再创建 PR 并请求普通 merge。下一建议目标为 `G017 / WP-0204 Backtest Core Certification`。
+补齐本地一次性 PostgreSQL 16 实例（如环境可用）上的补充验证，保持 `backtest_core=UNAVAILABLE / BENCHMARK_DATASET_MISSING`，下一建议目标为 `G017 / WP-0204 Backtest Core Certification`。
