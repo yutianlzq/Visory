@@ -3,7 +3,10 @@
     "SnapshotCapabilityStatus": {
       "enum": [
         "CERTIFIED",
+        "PROVISIONAL",
+        "PARTIAL",
         "UNAVAILABLE",
+        "STALE",
         "DEGRADED",
         "UNVERIFIED"
       ],
@@ -54,21 +57,14 @@
       "title": "Reason Code"
     },
     "snapshot_id": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "title": "Snapshot Id"
+      "title": "Snapshot Id",
+      "type": "string"
     }
   },
   "required": [
     "capability_id",
-    "capability_status"
+    "capability_status",
+    "snapshot_id"
   ],
   "title": "CapabilityCertification",
   "type": "object"

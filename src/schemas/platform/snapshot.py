@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import date
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Annotated, Any
 
 from pydantic import AwareDatetime, Field, field_validator, model_validator
@@ -25,6 +26,7 @@ _HASH = r"^sha256:[0-9a-f]{64}$"
 _SEMVER = r"^[0-9]+\.[0-9]+\.[0-9]+$"
 _IDENT = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
 _REASON = re.compile(r"^[A-Z][A-Z0-9_]{2,63}$")
+_COVERAGE_RATIO_QUANTUM = Decimal("0.00001")
 
 
 def _resource(value: str | None, expected: ResourceType, name: str) -> str | None:
@@ -60,6 +62,20 @@ class SnapshotPartitionRef(PlatformContractModel):
     min_available_at: AwareDatetime
     max_available_at: AwareDatetime | None = None
     row_count: int = Field(ge=0)
+    coverage_ratio: Decimal = Field(default=Decimal("1.00000"), ge=Decimal("0.0"), le=Decimal("1.0"))
+    excluded_instrument_count: int = Field(default=0, ge=0)
+    quality_threshold_version: Annotated[str, Field(pattern=_SEMVER)] = "1.0.0"
+
+    @field_validator("coverage_ratio", mode="before")
+    @classmethod
+    def normalize_coverage_ratio(cls, value: Any) -> Decimal:
+        try:
+            parsed = Decimal(str(value))
+            if not parsed.is_finite():
+                raise ValueError("coverage_ratio must be finite")
+            return parsed.quantize(_COVERAGE_RATIO_QUANTUM, rounding=ROUND_HALF_UP)
+        except (InvalidOperation, TypeError, ValueError) as exc:
+            raise ValueError("coverage_ratio must be a finite decimal ratio") from exc
 
     @field_validator("canonical_partition_id")
     @classmethod
@@ -107,7 +123,23 @@ class SnapshotPartitionRef(PlatformContractModel):
         return self
 
     @classmethod
-    def from_partition(cls, partition: CanonicalPartition) -> "SnapshotPartitionRef":
+    def from_partition(cls, partition: CanonicalPartition, quality_report: Any | None = None) -> "SnapshotPartitionRef":
+        if quality_report is not None:
+            evidence_mismatches: list[str] = []
+            if quality_report.quality_report_id != partition.quality_report_id:
+                evidence_mismatches.append("quality_report_id")
+            if quality_report.canonical_partition_id != partition.canonical_partition_id:
+                evidence_mismatches.append("canonical_partition_id")
+            if quality_report.quality_status is not partition.quality_status:
+                evidence_mismatches.append("quality_status")
+            if quality_report.row_count != partition.row_count:
+                evidence_mismatches.append("row_count")
+            if quality_report.dataset_id is not None and quality_report.dataset_id != partition.dataset_id:
+                evidence_mismatches.append("dataset_id")
+            if quality_report.dataset_schema_version is not None and quality_report.dataset_schema_version != partition.dataset_schema_version:
+                evidence_mismatches.append("dataset_schema_version")
+            if evidence_mismatches:
+                raise ValueError("quality report evidence does not match canonical partition: " + ",".join(evidence_mismatches))
         return cls(
             canonical_partition_id=partition.canonical_partition_id,
             dataset_id=partition.dataset_id,
@@ -126,6 +158,9 @@ class SnapshotPartitionRef(PlatformContractModel):
             min_available_at=partition.min_available_at,
             max_available_at=partition.max_available_at,
             row_count=partition.row_count,
+            coverage_ratio=quality_report.coverage_ratio if quality_report is not None else Decimal("1.0"),
+            excluded_instrument_count=quality_report.excluded_instrument_count if quality_report is not None else 0,
+            quality_threshold_version=quality_report.quality_threshold_version if quality_report is not None else "1.0.0",
         )
 
 
@@ -135,7 +170,7 @@ class CapabilityCertification(PlatformContractModel):
     reason_code: str | None = None
     evidence_refs: tuple[str, ...] = ()
     certified_at: AwareDatetime | None = None
-    snapshot_id: str | None = None
+    snapshot_id: str
 
     @field_validator("capability_id")
     @classmethod
@@ -151,8 +186,8 @@ class CapabilityCertification(PlatformContractModel):
 
     @field_validator("snapshot_id")
     @classmethod
-    def validate_snapshot_id(cls, value: str | None) -> str | None:
-        return _resource(value, ResourceType.DATA_SNAPSHOT, "snapshot_id")
+    def validate_snapshot_id(cls, value: str) -> str:
+        return _resource(value, ResourceType.DATA_SNAPSHOT, "snapshot_id") or value
 
     @model_validator(mode="after")
     def validate_capability(self) -> "CapabilityCertification":
@@ -161,6 +196,8 @@ class CapabilityCertification(PlatformContractModel):
                 raise ValueError("certified capability requires certified_at and no failure reason")
         elif self.reason_code is None:
             raise ValueError("non-certified capability requires reason_code")
+        elif self.certified_at is not None:
+            raise ValueError("non-certified capability cannot have certified_at")
         return self
 
 
@@ -247,6 +284,11 @@ class DataSnapshot(PlatformContractModel):
     def validate_partition_refs(cls, value: str, info: Any) -> str:
         return _resource(value, ResourceType.CANONICAL_PARTITION, info.field_name) or value
 
+    @field_validator("supersedes_id")
+    @classmethod
+    def validate_supersedes_id(cls, value: str | None) -> str | None:
+        return _resource(value, ResourceType.DATA_SNAPSHOT, "supersedes_id")
+
     @field_validator("canonical_partitions")
     @classmethod
     def validate_partitions(cls, value: tuple[SnapshotPartitionRef, ...]) -> tuple[SnapshotPartitionRef, ...]:
@@ -279,8 +321,24 @@ class DataSnapshot(PlatformContractModel):
         if self.revision_kind is RevisionKind.CORRECTION:
             if self.supersedes_id is None:
                 raise ValueError("CORRECTION requires supersedes_id")
+            if self.revision < 2:
+                raise ValueError("corrected snapshot revision must be at least two")
         elif self.supersedes_id is not None:
             raise ValueError("only CORRECTION snapshots may supersede another snapshot")
+
+        refs_by_id = {item.canonical_partition_id: item for item in self.canonical_partitions}
+        if self.security_master_ref not in refs_by_id:
+            raise ValueError("security_master_ref must reference a partition in canonical_partitions")
+        if refs_by_id[self.security_master_ref].dataset_id != "security_master":
+            raise ValueError("security_master_ref must reference the security_master dataset")
+        if self.calendar_ref not in refs_by_id:
+            raise ValueError("calendar_ref must reference a partition in canonical_partitions")
+        if refs_by_id[self.calendar_ref].dataset_id != "trading_calendar":
+            raise ValueError("calendar_ref must reference the trading_calendar dataset")
+
+        partition_quality_refs = tuple(item.quality_report_id for item in self.canonical_partitions)
+        if set(self.quality_report_refs) != set(partition_quality_refs) or len(self.quality_report_refs) != len(partition_quality_refs):
+            raise ValueError("quality_report_refs must match the quality reports referenced by canonical_partitions")
         if set(self.certified_capabilities) & set(self.missing_capabilities):
             raise ValueError("certified and missing capabilities must be disjoint")
         if self.publication_status is SnapshotPublicationStatus.CERTIFIED and self.published_at is None:

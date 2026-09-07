@@ -165,6 +165,56 @@ class ProviderRegistryRepository:
                 raise ValueError(f"registry bootstrap conflict for provider_raw_schema_definition: {key}")
 
     @staticmethod
+    def get_provider(session: Session, provider_id: str) -> ProviderDefinition | None:
+        row = session.execute(
+            select(provider_definition).where(provider_definition.c.provider_id == provider_id)
+        ).mappings().one_or_none()
+        return _definition(row) if row is not None else None
+
+    @staticmethod
+    def get_dataset(
+        session: Session,
+        dataset_id: str,
+        schema_version: str,
+    ) -> DatasetDefinition | None:
+        row = session.execute(
+            select(dataset_definition).where(
+                dataset_definition.c.dataset_id == dataset_id,
+                dataset_definition.c.schema_version == schema_version,
+            )
+        ).mappings().one_or_none()
+        return _dataset(row) if row is not None else None
+
+    @staticmethod
+    def get_capability(
+        session: Session,
+        provider_id: str,
+        dataset_id: str,
+        schema_version: str,
+        market: str,
+        frequency: str,
+    ) -> ProviderCapability | None:
+        row = session.execute(
+            select(provider_capability).where(
+                provider_capability.c.provider_id == provider_id,
+                provider_capability.c.dataset_id == dataset_id,
+                provider_capability.c.dataset_schema_version == schema_version,
+                provider_capability.c.market == market,
+                provider_capability.c.frequency == frequency,
+            )
+        ).mappings().one_or_none()
+        return _capability(row) if row is not None else None
+
+    @staticmethod
+    def get_policy(session: Session, provider_policy_id: str) -> ProviderPolicy | None:
+        row = session.execute(
+            select(provider_policy).where(
+                provider_policy.c.provider_policy_id == provider_policy_id
+            )
+        ).mappings().one_or_none()
+        return _policy(row) if row is not None else None
+
+    @staticmethod
     def get_provider_raw_schema(
         session: Session,
         provider_id: str,

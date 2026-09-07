@@ -164,7 +164,10 @@ class SnapshotPublicationStatus(PlatformStringEnum):
 
 class SnapshotCapabilityStatus(PlatformStringEnum):
     CERTIFIED = "CERTIFIED"
+    PROVISIONAL = "PROVISIONAL"
+    PARTIAL = "PARTIAL"
     UNAVAILABLE = "UNAVAILABLE"
+    STALE = "STALE"
     DEGRADED = "DEGRADED"
     UNVERIFIED = "UNVERIFIED"
 
@@ -218,7 +221,6 @@ class OrphanAction(PlatformStringEnum):
     RECOVER_REGISTRATION = "RECOVER_REGISTRATION"
 
 
-
 class ProviderRunOutcome(PlatformStringEnum):
     SUCCEEDED = "SUCCEEDED"
     DEGRADED = "DEGRADED"
@@ -236,6 +238,8 @@ class RawSchemaDriftClassification(PlatformStringEnum):
 class RawCompression(PlatformStringEnum):
     NONE = "NONE"
     GZIP = "GZIP"
+
+
 class ProviderKind(PlatformStringEnum):
     AGGREGATOR = "AGGREGATOR"
     DIRECT = "DIRECT"

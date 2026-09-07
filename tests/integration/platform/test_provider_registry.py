@@ -22,7 +22,7 @@ def test_provider_registry_round_trip_and_controlled_adapter(isolated_postgres_d
             repo.add_policy(session, record)
         projection = repo.settings_projection(session)
     assert [item.provider_id for item in projection.providers] == ["a_stock_data", "financial_api"]
-    assert [item.dataset_id for item in projection.datasets] == ["bar_1d_raw", "corporate_action", "financial_statement", "instrument_status_daily", "listing_status_history", "security_master", "trading_calendar"]
+    assert [item.dataset_id for item in projection.datasets] == ["bar_1d_raw", "benchmark_index_1d", "corporate_action", "financial_statement", "instrument_status_daily", "listing_status_history", "security_master", "trading_calendar"]
     assert projection.policies[0].primary_provider_id == "a_stock_data"
 
 

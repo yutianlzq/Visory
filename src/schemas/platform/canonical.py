@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from decimal import Decimal
 from typing import Annotated
 
 from pydantic import AwareDatetime, Field, field_validator, model_validator
@@ -13,7 +14,7 @@ from .storage import StorageRef
 
 _HASH = r"^sha256:[0-9a-f]{64}$"
 _SEMVER = r"^[0-9]+\.[0-9]+\.[0-9]+$"
-_KNOWN_UNITS = frozenset({"identifier", "calendar_date", "enum", "boolean", "reason_code", "utc_instant", "iso_4217", "ratio", "cny_per_share", "revision", "statement_type", "line_item", "financial_value", "financial_unit", "text", "code", "shares", "shares_per_lot", "cny"})
+_KNOWN_UNITS = frozenset({"identifier", "calendar_date", "enum", "boolean", "reason_code", "utc_instant", "iso_4217", "ratio", "cny_per_share", "index_points", "revision", "statement_type", "line_item", "financial_value", "financial_unit", "text", "code", "shares", "shares_per_lot", "cny"})
 _IDENT = re.compile(r"^[a-z][a-z0-9._-]{0,63}$")
 _REASON = re.compile(r"^[A-Z][A-Z0-9_]{2,63}$")
 
@@ -138,6 +139,9 @@ class CanonicalQualityReport(PlatformContractModel):
     duplicate_key_count: int = Field(ge=0)
     identity_unresolved_count: int = Field(ge=0)
     identity_ambiguous_count: int = Field(ge=0)
+    coverage_ratio: Decimal = Field(default=Decimal("1.0"), ge=Decimal("0.0"), le=Decimal("1.0"))
+    excluded_instrument_count: int = Field(default=0, ge=0)
+    quality_threshold_version: Annotated[str, Field(pattern=_SEMVER)] = "1.0.0"
     failure_reasons: tuple[str, ...] = ()
     task_id: str | None = None
     attempt_id: str | None = None
@@ -233,6 +237,11 @@ class CanonicalPartition(PlatformContractModel):
     def validate_quality_report(cls, value: str) -> str:
         return _resource(value, ResourceType.QUALITY_REPORT, "quality_report_id") or value
 
+    @field_validator("supersedes_id")
+    @classmethod
+    def validate_supersedes_id(cls, value: str | None) -> str | None:
+        return _resource(value, ResourceType.CANONICAL_PARTITION, "supersedes_id")
+
     @field_validator("dataset_id")
     @classmethod
     def validate_dataset(cls, value: str) -> str:
@@ -244,8 +253,15 @@ class CanonicalPartition(PlatformContractModel):
             raise ValueError("max_available_at must not precede min_available_at")
         if self.published_at is not None and self.published_at < self.created_at:
             raise ValueError("published_at must not precede created_at")
-        if self.revision_kind is RevisionKind.CORRECTION and self.supersedes_id is None:
-            raise ValueError("CORRECTION requires supersedes_id")
+        if self.partition_hash != self.storage_ref.content_hash:
+            raise ValueError("partition_hash must match storage_ref.content_hash")
+        if self.revision_kind is RevisionKind.CORRECTION:
+            if self.supersedes_id is None:
+                raise ValueError("CORRECTION requires supersedes_id")
+            if self.revision < 2:
+                raise ValueError("corrected partition revision must be at least two")
+        elif self.supersedes_id is not None:
+            raise ValueError("only CORRECTION partitions may supersede another partition")
         return self
 
     @property

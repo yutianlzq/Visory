@@ -13,6 +13,7 @@ from src.artifacts.hashing import compute_bytes_hash
 from src.artifacts.namespace import StorageNamespaceResolver, fsync_directory
 from src.schemas.platform import (
     ArtifactPublishRequest,
+    BenchmarkIndexBar,
     ArtifactVisibility,
     CanonicalNormalizationTaskRequirements,
     CanonicalNormalizationTaskResult,
@@ -44,6 +45,44 @@ from src.schemas.platform import (
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
+
+
+_BENCHMARK_CANONICAL_ID = re.compile(r"^index:[a-z][a-z0-9_-]{0,15}:[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
+_BENCHMARK_SUFFIXED_CODE = re.compile(r"^(?P<code>[0-9]{6})[._-](?P<market>[A-Za-z]{2})$")
+_BENCHMARK_PREFIXED_CODE = re.compile(r"^(?P<market>[A-Za-z]{2})(?P<code>[0-9]{6})$")
+
+
+def _normalize_benchmark_id(value: Any) -> str:
+    """Normalize an explicitly scoped provider index code without guessing bare codes."""
+    if value is None:
+        raise CanonicalNormalizationError(
+            "CANONICAL_BENCHMARK_ID_INVALID",
+            "Benchmark index identity is required.",
+        )
+    text = str(value).strip()
+    if _BENCHMARK_CANONICAL_ID.fullmatch(text):
+        _, market, code = text.split(":", 2)
+        return f"index:{market.lower()}:{code.upper()}"
+
+    suffixed = _BENCHMARK_SUFFIXED_CODE.fullmatch(text.upper())
+    prefixed = _BENCHMARK_PREFIXED_CODE.fullmatch(text.upper())
+    if suffixed:
+        code = f"{suffixed.group('code')}.{suffixed.group('market')}"
+    elif prefixed:
+        code = f"{prefixed.group('code')}.{prefixed.group('market')}"
+    else:
+        raise CanonicalNormalizationError(
+            "CANONICAL_BENCHMARK_ID_INVALID",
+            "Benchmark index identity must include an explicit exchange-scoped code.",
+            details={"value": text},
+        )
+    if code.rsplit(".", 1)[1] not in {"SH", "SZ", "BJ"}:
+        raise CanonicalNormalizationError(
+            "CANONICAL_BENCHMARK_ID_INVALID",
+            "Benchmark index identity must use an A-share exchange suffix.",
+            details={"value": text},
+        )
+    return f"index:cn:{code}"
 
 def _dec(value: Any) -> Decimal | None:
     if value is None or value == "":
@@ -177,8 +216,7 @@ def _parquet_content(rows: list[Mapping[str, Any]], columns: tuple[str, ...], fi
         for field in columns:
             value = row.get(field)
             target_type = field_types[field]
-            if value is not None and target_type == "date":
-                value = date.fromisoformat(value)
+            if value is not None and target_type == "date" and isinstance(value, str):                value = date.fromisoformat(value)
             elif value is not None and target_type == "number":
                 value = Decimal(value)
                 if value.as_tuple().exponent < -12 or len(value.as_tuple().digits) > 38:
@@ -284,6 +322,8 @@ class CanonicalNormalizer:
                 value = resolved[target]
                 if value is None:
                     raise CanonicalNormalizationError("CANONICAL_IDENTITY_UNRESOLVED", "Identity result lacks required field.", details={"field": target})
+            if dataset_id == "benchmark_index_1d" and target == "benchmark_id":
+                value = _normalize_benchmark_id(value)
             value = _convert_target_value(value, mapping.target_field_types[target], field=target)
             if target == "available_at" and value is not None and now is not None and value > now:
                 raise CanonicalNormalizationError("CANONICAL_AVAILABLE_AT_FUTURE", "available_at cannot be in the future.", details={"field": target})
@@ -304,6 +344,24 @@ class CanonicalNormalizer:
                 raise CanonicalNormalizationError("CANONICAL_CALENDAR_INVALID", "Open calendar sessions require ordered bounds.")
             if is_open is False and (opened is not None or closed is not None):
                 raise CanonicalNormalizationError("CANONICAL_CALENDAR_INVALID", "Closed calendar sessions cannot have session bounds.")
+        elif dataset_id == "benchmark_index_1d":
+            try:
+                benchmark = BenchmarkIndexBar.model_validate(out)
+            except Exception as exc:
+                raise CanonicalNormalizationError(
+                    "CANONICAL_BENCHMARK_CONTRACT_INVALID",
+                    "Canonical benchmark row does not satisfy the independent index contract.",
+                ) from exc
+            out.update(benchmark.model_dump(mode="python"))
+            if is_trading_day is not None:
+                raw_trade_date = out["trade_date"]
+                trade_date = raw_trade_date if isinstance(raw_trade_date, date) else date.fromisoformat(raw_trade_date)
+                if not is_trading_day(market, trade_date):
+                    raise CanonicalNormalizationError(
+                        "CANONICAL_NON_TRADING_DAY",
+                        "Benchmark daily data cannot be published for a closed trading day.",
+                        details={"market": market, "trade_date": trade_date.isoformat()},
+                    )
         elif dataset_id == "bar_1d_raw":
             numeric_fields = ("open", "high", "low", "close", "prev_close", "price_limit_up", "price_limit_down", "volume_shares", "amount_cny")
             prices = [Decimal(out[key]) for key in ("open", "high", "low", "close") if out.get(key) is not None]
@@ -370,6 +428,7 @@ class CanonicalNormalizer:
                     "security_master": ("entity_key",),
                     "trading_calendar": ("market", "trade_date"),
                     "bar_1d_raw": ("entity_key", "trade_date"),
+                    "benchmark_index_1d": ("benchmark_id", "trade_date"),
                     "instrument_status_daily": ("entity_key", "status_date"),
                     "listing_status_history": ("entity_key", "effective_from"),
                     "corporate_action": ("corporate_action_id", "revision"),
@@ -901,7 +960,7 @@ class CanonicalNormalizationTaskWorker:
                         storage_resolver=self.normalizer.resolver,
                         repository=self.repository,
                     )
-                    if requirements.dataset_id == "bar_1d_raw"
+                    if requirements.dataset_id in {"bar_1d_raw", "benchmark_index_1d"}
                     else None
                 ),
                 market=requirements.market,

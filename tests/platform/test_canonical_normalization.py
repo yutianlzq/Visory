@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from datetime import date, datetime, timezone
 from types import SimpleNamespace
 from pathlib import Path
@@ -431,3 +432,154 @@ def test_all_provider_dataset_mappings_convert_representative_rows(
         mapping.target_fields,
         mapping.target_field_types,
     )
+
+@pytest.mark.parametrize(
+    ("provider_id", "row"),
+    [
+        (
+            "a_stock_data",
+            {
+                "index_code": "000300.SH",
+                "asset_type": "INDEX",
+                "trade_date": "2026-01-02",
+                "open": "3900",
+                "high": "3950",
+                "low": "3880",
+                "close": "3940",
+                "return_type": "TOTAL_RETURN",
+                "index_name": "CSI 300",
+                "total_return_close": "3980",
+                "available_at": NOW.isoformat(),
+            },
+        ),
+        (
+            "financial_api",
+            {
+                "benchmark": "SH000300",
+                "asset_type": "index",
+                "session_date": "2026-01-02",
+                "o": "3900",
+                "h": "3950",
+                "l": "3880",
+                "c": "3940",
+                "return_kind": "TOTAL_RETURN",
+                "name": "CSI 300",
+                "total_return": "3980",
+                "available_at": NOW.isoformat(),
+            },
+        ),
+    ],
+)
+def test_benchmark_mappings_enforce_independent_index_contract(
+    tmp_path: Path,
+    provider_id: str,
+    row: dict[str, object],
+) -> None:
+    mapping = next(
+        item
+        for item in default_provider_canonical_mapping_records()
+        if item.provider_id == provider_id and item.dataset_id == "benchmark_index_1d"
+    )
+    normalizer = CanonicalNormalizer(tmp_path, clock=lambda: NOW)
+    partition, report, content = normalizer.normalize_rows(
+        raw_object_id=generate_resource_id(ResourceType.RAW_OBJECT),
+        provider_run_id=generate_resource_id(ResourceType.PROVIDER_RUN),
+        provider_id=provider_id,
+        dataset_id="benchmark_index_1d",
+        dataset_schema_version="1.0.0",
+        provider_policy_version="1.0.0",
+        mapping=mapping,
+        rows=[row],
+        partition_key="2026-01-02",
+        is_trading_day=lambda _market, _day: True,
+    )
+
+    assert partition is not None
+    assert report.quality_status is QualityStatus.COMPLETE
+    assert content
+
+    import pyarrow.parquet as pq
+
+    import pyarrow as pa
+
+    normalized = pq.read_table(pa.BufferReader(content)).to_pylist()[0]
+    assert normalized["benchmark_id"] == "index:cn:000300.SH"
+    assert normalized["asset_type"] == "index"
+    assert normalized["return_type"] == "TOTAL_RETURN"
+    assert normalized["total_return_close"] == Decimal("3980")
+
+
+def test_benchmark_normalization_rejects_ambiguous_bare_provider_code(tmp_path: Path) -> None:
+    mapping = next(
+        item
+        for item in default_provider_canonical_mapping_records()
+        if item.provider_id == "a_stock_data" and item.dataset_id == "benchmark_index_1d"
+    )
+    row = {
+        "index_code": "000300",
+        "asset_type": "INDEX",
+        "trade_date": "2026-01-02",
+        "open": "3900",
+        "high": "3950",
+        "low": "3880",
+        "close": "3940",
+        "return_type": "PRICE",
+        "index_name": "CSI 300",
+        "total_return_close": None,
+        "available_at": NOW.isoformat(),
+    }
+
+    partition, report, content = CanonicalNormalizer(tmp_path, clock=lambda: NOW).normalize_rows(
+        raw_object_id=generate_resource_id(ResourceType.RAW_OBJECT),
+        provider_run_id=generate_resource_id(ResourceType.PROVIDER_RUN),
+        provider_id="a_stock_data",
+        dataset_id="benchmark_index_1d",
+        dataset_schema_version="1.0.0",
+        provider_policy_version="1.0.0",
+        mapping=mapping,
+        rows=[row],
+        partition_key="2026-01-02",
+        is_trading_day=lambda _market, _day: True,
+    )
+
+    assert partition is None
+    assert content == b""
+    assert report.failure_reasons == ("CANONICAL_BENCHMARK_ID_INVALID",)
+
+
+def test_benchmark_normalization_rejects_non_trading_day(tmp_path: Path) -> None:
+    mapping = next(
+        item
+        for item in default_provider_canonical_mapping_records()
+        if item.provider_id == "a_stock_data" and item.dataset_id == "benchmark_index_1d"
+    )
+    row = {
+        "index_code": "000300.SH",
+        "asset_type": "INDEX",
+        "trade_date": "2026-01-02",
+        "open": "3900",
+        "high": "3950",
+        "low": "3880",
+        "close": "3940",
+        "return_type": "PRICE",
+        "index_name": "CSI 300",
+        "total_return_close": None,
+        "available_at": NOW.isoformat(),
+    }
+
+    partition, report, content = CanonicalNormalizer(tmp_path, clock=lambda: NOW).normalize_rows(
+        raw_object_id=generate_resource_id(ResourceType.RAW_OBJECT),
+        provider_run_id=generate_resource_id(ResourceType.PROVIDER_RUN),
+        provider_id="a_stock_data",
+        dataset_id="benchmark_index_1d",
+        dataset_schema_version="1.0.0",
+        provider_policy_version="1.0.0",
+        mapping=mapping,
+        rows=[row],
+        partition_key="2026-01-02",
+        is_trading_day=lambda _market, _day: False,
+    )
+
+    assert partition is None
+    assert content == b""
+    assert report.failure_reasons == ("CANONICAL_NON_TRADING_DAY",)

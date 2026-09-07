@@ -81,6 +81,21 @@
       "title": "Canonical Partition Id",
       "type": "string"
     },
+    "coverage_ratio": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "default": "1.00000",
+      "title": "Coverage Ratio"
+    },
     "dataset_id": {
       "title": "Dataset Id",
       "type": "string"
@@ -89,6 +104,12 @@
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
       "title": "Dataset Schema Version",
       "type": "string"
+    },
+    "excluded_instrument_count": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Excluded Instrument Count",
+      "type": "integer"
     },
     "max_available_at": {
       "anyOf": [
@@ -135,6 +156,12 @@
     },
     "quality_status": {
       "$ref": "#/$defs/QualityStatus"
+    },
+    "quality_threshold_version": {
+      "default": "1.0.0",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Quality Threshold Version",
+      "type": "string"
     },
     "raw_object_refs": {
       "items": {

@@ -8,7 +8,8 @@
         "capability_status": "CERTIFIED",
         "certified_at": "2026-08-31T08:00:00Z",
         "evidence_refs": [
-          "quality_019dbd74-2a00-7000-8000-000000000006"
+          "quality_019dbd74-2a00-7000-8000-000000000006",
+          "quality_019dbd74-2a00-7000-8000-000000000011"
         ],
         "reason_code": null,
         "snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000007"
@@ -18,67 +19,104 @@
     "published": true,
     "requirement_status": "ACCEPTED",
     "snapshot": {
-      "available_at": "2026-08-31T08:00:00Z",
-      "calendar_ref": "cpart_019dbd74-2a00-7000-8000-000000000005",
+      "snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000007",
+      "trade_date": "2026-08-31",
+      "cutoff_at": "2026-08-31T08:00:00Z",
+      "provider_policy_id": "policy_core",
+      "provider_policy_version": "1.0.0",
+      "security_master_ref": "cpart_019dbd74-2a00-7000-8000-000000000005",
+      "calendar_ref": "cpart_019dbd74-2a00-7000-8000-000000000010",
       "canonical_partitions": [
         {
           "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000005",
           "dataset_id": "security_master",
           "dataset_schema_version": "1.0.0",
-          "max_available_at": null,
-          "min_available_at": "2026-08-31T08:00:00Z",
-          "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-          "partition_key": "2026-08-31",
           "provider_policy_version": "1.0.0",
+          "partition_key": "2026-08-31",
+          "revision": 1,
+          "revision_kind": "INITIAL",
+          "storage_ref": {
+            "storage_backend": "local_fs",
+            "storage_namespace": "app",
+            "relative_path": "canonical/dataset=security_master/partition=2026-08-31/revision=1/cpart.parquet",
+            "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            "media_type": "application/vnd.apache.parquet",
+            "size_bytes": 1
+          },
+          "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000006",
+          "quality_status": "COMPLETE",
           "provider_run_refs": [
             "prun_019dbd74-2a00-7000-8000-000000000001"
           ],
-          "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000006",
-          "quality_status": "COMPLETE",
           "raw_object_refs": [
             "raw_019dbd74-2a00-7000-8000-000000000004"
           ],
+          "min_available_at": "2026-08-31T08:00:00Z",
+          "max_available_at": null,
+          "row_count": 1,
+          "coverage_ratio": "1.00000",
+          "excluded_instrument_count": 0,
+          "quality_threshold_version": "1.0.0"
+        },
+        {
+          "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000010",
+          "dataset_id": "trading_calendar",
+          "dataset_schema_version": "1.0.0",
+          "provider_policy_version": "1.0.0",
+          "partition_key": "2026-08-31",
           "revision": 1,
           "revision_kind": "INITIAL",
-          "row_count": 1,
-          "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
           "storage_ref": {
-            "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-            "media_type": "application/vnd.apache.parquet",
-            "relative_path": "canonical/dataset=security_master/partition=2026-08-31/revision=1/cpart.parquet",
-            "size_bytes": 1,
             "storage_backend": "local_fs",
-            "storage_namespace": "app"
-          }
+            "storage_namespace": "app",
+            "relative_path": "canonical/dataset=trading_calendar/partition=2026-08-31/revision=1/cpart.parquet",
+            "content_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+            "media_type": "application/vnd.apache.parquet",
+            "size_bytes": 1
+          },
+          "partition_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "schema_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000011",
+          "quality_status": "COMPLETE",
+          "provider_run_refs": [
+            "prun_019dbd74-2a00-7000-8000-000000000012"
+          ],
+          "raw_object_refs": [
+            "raw_019dbd74-2a00-7000-8000-000000000013"
+          ],
+          "min_available_at": "2026-08-31T08:00:00Z",
+          "max_available_at": null,
+          "row_count": 1,
+          "coverage_ratio": "1.00000",
+          "excluded_instrument_count": 0,
+          "quality_threshold_version": "1.0.0"
         }
       ],
+      "quality_report_refs": [
+        "quality_019dbd74-2a00-7000-8000-000000000006",
+        "quality_019dbd74-2a00-7000-8000-000000000011"
+      ],
+      "quality_status": "COMPLETE",
+      "publication_status": "PROVISIONAL",
       "certified_capabilities": [
         "identity_core"
       ],
-      "content_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
-      "created_at": "2026-08-31T08:00:00Z",
-      "cutoff_at": "2026-08-31T08:00:00Z",
-      "manifest_hash": "sha256:22cc98d0a8a1d297762c702febd39348ff7fd49419560ee501b76526329d5fe3",
-      "manifest_version": "1.0.0",
       "missing_capabilities": [
         "calendar_core",
         "financial_research",
         "backtest_core"
       ],
-      "provider_policy_id": "policy_core",
-      "provider_policy_version": "1.0.0",
-      "publication_status": "PROVISIONAL",
-      "published_at": null,
-      "quality_report_refs": [
-        "quality_019dbd74-2a00-7000-8000-000000000006"
-      ],
-      "quality_status": "COMPLETE",
       "revision": 1,
       "revision_kind": "INITIAL",
-      "security_master_ref": "cpart_019dbd74-2a00-7000-8000-000000000005",
-      "snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000007",
       "supersedes_id": null,
-      "trade_date": "2026-08-31"
+      "available_at": "2026-08-31T08:00:00Z",
+      "created_at": "2026-08-31T08:00:00Z",
+      "published_at": null,
+      "manifest_hash": "sha256:55bd041996834bd20bd1810891852bd2eb43c5dde43b9139b1d54218d4f9f2f4",
+      "content_hash": "sha256:3d19f74c8c02ff72b08c4a1f8d48070eae1ae75a7ebb27ad277f65adf2205e8a",
+      "manifest_version": "1.0.0"
     },
     "task_id": "task_019dbd74-2a00-7000-8000-000000000009"
   }
