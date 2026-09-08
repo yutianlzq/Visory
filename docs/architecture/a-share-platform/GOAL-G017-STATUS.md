@@ -1,10 +1,10 @@
 # Visory-G017 / WP-0204 Backtest Core Capability Certification
 
-- 最后更新：2026-09-07
+- 最后更新：2026-09-08
 - 基线：`main@dfd76d61912c9cd15ebda4aebaa66de60d96e2b4`
 - 工作分支：`goal/g017-wp0204-backtest-core`
-- 状态：`IN_PROGRESS`（本地实现和验证已完成；PR/远端 CI 尚未创建）
-- 进度：`10/45`（WP-0204 只有在远端合入并取得最终 CI 证据后才更新为 `11/45`）
+- 状态：`COMPLETE / MERGED`（代码能力门禁已通过本地与远端 Exit Gate；生产 backtest_core 数据仍未认证）
+- 进度：`11/45`
 
 ## 本轮交付
 
@@ -46,9 +46,17 @@
 - `git diff --check`：通过。
 - 完整离线测试 `.venv\Scripts\python.exe -m pytest -m "not network" --timeout=120 -o timeout_method=thread -o faulthandler_timeout=300 --durations=30 --durations-min=0.5`：`6646 passed, 71 skipped, 4 deselected, 83 failed`；失败集中在既有 Codex/Agent transport/process、Docker、SQLite、本地 CLI 和环境敏感用例，未发现 WP-0204 平台或 PostgreSQL 集成测试失败，不将其误报为本 Goal 回归。
 
+## 远端 Exit Gate 证据
+
+- PR：[#32](https://github.com/yutianlzq/Visory/pull/32)，标题 `feat: certify backtest core snapshot capability`，目标 `main`。
+- 实现提交：`6d28889b11e128f7d963acab469218c5c7955a8a`。
+- CI Run：`34176102715`；Governance and repository boundaries、Python deterministic gate、Web lint and build 全部 `success`。
+- 合并：以普通 merge commit 合入，merge commit 为 `38bb737067e4e89bf766fb1b73023c3193cfa8ea`；合并后最终 `main` SHA 为 `38bb737067e4e89bf766fb1b73023c3193cfa8ea`。
+- 结论：`backtest_core` 代码能力门禁 `VERIFIED`；生产 `backtest_core` 数据 `NOT CERTIFIED`。
+
 ## 本地认证与生产认证的区别
 
-本轮“认证通过”是指本地契约测试、真实 PostgreSQL 16 集成和确定性门禁证明代码可以判定并拒绝不合格 Snapshot；它不代表生产数据已经接入，也不代表生产 `CERTIFIED` 数据已经发布。生产认证仍需要真实 Provider/Secret、生产数据库和真实 `/data` 存储、生产运行观察及 GitHub PR 三项阻断 Job 的最终 CI 证据。WP-0204 在这些证据缺失时必须保持 `IN_PROGRESS`，不得把 `backtest_core` 或 WP 标记为生产 `CERTIFIED/VERIFIED`。
+本轮代码能力“认证通过”由本地契约测试、真实 PostgreSQL 16 集成、确定性门禁和 GitHub PR 三项阻断 Job 共同证明：代码可以判定并拒绝不合格 Snapshot，`backtest_core` 代码能力门禁状态为 `VERIFIED`，WP-0204 状态为 `VERIFIED`。这不代表生产数据已经接入，也不代表生产 `CERTIFIED` 数据已经发布；生产认证仍需要真实 Provider/Secret、生产数据库和真实 `/data` 存储及生产运行观察。生产 `backtest_core` 数据状态保持 `NOT CERTIFIED`。
 
 ## 未验证与风险
 
@@ -57,7 +65,7 @@
 - 未连接真实 Provider，不写生产数据库、生产 Secret 或真实 `/data`。
 - Capability `STALE` 使用固定 7 天新鲜度窗口；如平台 SLA 后续收紧，应在独立策略版本中调整。
 - `SnapshotCapabilityStatus` 为兼容既有 Capability/Provider 契约仍保留 `DEGRADED`、`UNVERIFIED`；G017 的 `SnapshotCapabilityEngine` 对 `backtest_core` 只产生并明确判定 `CERTIFIED`、`PROVISIONAL`、`PARTIAL`、`UNAVAILABLE`、`STALE`。
-- GitHub PR/Actions 尚未创建或运行，因此本地证据不足以完成 WP `VERIFIED` Exit Gate。
+- 远端 Exit Gate 已完成：PR #32；实现提交 `6d28889b11e128f7d963acab469218c5c7955a8a`；Run `34176102715` 的 Governance、Python deterministic gate、Web lint/build 三项阻断 Job 全部成功；普通 merge commit `38bb737067e4e89bf766fb1b73023c3193cfa8ea`；最终 `main` SHA `38bb737067e4e89bf766fb1b73023c3193cfa8ea`。
 
 ## 明确未实现项
 
