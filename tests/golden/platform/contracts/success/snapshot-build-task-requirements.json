@@ -1,9 +1,10 @@
 {
   "contract_id": "C-004/SnapshotBuildTaskRequirements",
   "payload": {
-    "calendar_ref": "cpart_019dbd74-2a00-7000-8000-000000000005",
+    "calendar_ref": "cpart_019dbd74-2a00-7000-8000-000000000010",
     "canonical_partition_ids": [
-      "cpart_019dbd74-2a00-7000-8000-000000000005"
+      "cpart_019dbd74-2a00-7000-8000-000000000005",
+      "cpart_019dbd74-2a00-7000-8000-000000000010"
     ],
     "correction_of_snapshot_id": null,
     "cutoff_at": "2026-08-31T08:00:00Z",

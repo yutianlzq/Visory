@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Any
-from sqlalchemy import BigInteger, Column, DateTime, Integer, MetaData, String, Table, select, insert
+from sqlalchemy import BigInteger, Column, DateTime, Integer, MetaData, Numeric, String, Table, select, insert
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
 from src.schemas.platform import CanonicalPartition, CanonicalQualityReport, ProviderCanonicalMappingDefinition, StorageBackend, StorageNamespace, StorageRef
@@ -22,7 +22,7 @@ canonical_quality_report = Table(
     Column("quality_status", String(16), nullable=False), Column("rule_results", JSONB, nullable=False),
     Column("row_count", BigInteger, nullable=False), Column("rejected_row_count", BigInteger, nullable=False),
     Column("duplicate_key_count", BigInteger, nullable=False), Column("identity_unresolved_count", BigInteger, nullable=False),
-    Column("identity_ambiguous_count", BigInteger, nullable=False), Column("failure_reasons", JSONB, nullable=False),
+    Column("identity_ambiguous_count", BigInteger, nullable=False), Column("coverage_ratio", Numeric(6, 5), nullable=False), Column("excluded_instrument_count", BigInteger, nullable=False), Column("quality_threshold_version", String(32), nullable=False), Column("failure_reasons", JSONB, nullable=False),
     Column("task_id", String(64)), Column("attempt_id", String(64)), Column("dataset_id", String(64)),
     Column("dataset_schema_version", String(32)), Column("mapping_version", String(32)), Column("mapping_hash", String(71)),
     Column("provider_run_refs", JSONB, nullable=False, server_default="[]"), Column("raw_object_refs", JSONB, nullable=False, server_default="[]"),

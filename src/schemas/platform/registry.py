@@ -18,6 +18,7 @@ from .asset_identity import (
     IdentityQuarantineRecord,
 )
 from .base import PlatformContractModel
+from .benchmark import BenchmarkIndexBar
 from .provider import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy
 from .provider_raw_schema import ProviderRawSchemaDefinition
 from .raw_ingestion import ProviderRun, RawIngestionPublishResult, RawIngestionQuarantine, RawIngestionTaskRequirements, RawObject
@@ -483,6 +484,24 @@ PLATFORM_CONTRACTS = ContractRegistry(
         ),
         ContractRegistration(
             contract_id="C-004/ProviderPolicy", owner_module="src.schemas.platform.provider", producer="Provider Policy Registry", consumers=("ingestion", "snapshot"), schema_model=ProviderPolicy, schema_version="1.0.0", business_key="dataset_id + dataset_schema_version + policy_version", resource_id_field=None, time_semantics=("effective_from", "effective_to"), version_semantics=("dataset_schema_version", "policy_version"), quality_semantics=("merge mode and field authority are explicit",), lineage_fields=("primary_provider_id", "supplemental_provider_ids"), storage_profile="PostgreSQL provider_policy", retention_class="PINNED", compatibility="policies are immutable versions with effective intervals", golden_payloads=_golden("success/provider-policy.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-004/BenchmarkIndexBar",
+            owner_module="src.schemas.platform.benchmark",
+            producer="Benchmark Canonical Normalizer",
+            consumers=("snapshot capability gate", "formal backtest"),
+            schema_model=BenchmarkIndexBar,
+            schema_version="1.0.0",
+            business_key="benchmark_id + trade_date",
+            resource_id_field=None,
+            time_semantics=("trade_date", "available_at"),
+            version_semantics=("return_type",),
+            quality_semantics=("asset_type is index", "OHLC is consistent", "PIT available_at is explicit"),
+            lineage_fields=("benchmark_id",),
+            storage_profile="canonical benchmark_index_1d partition",
+            retention_class="PINNED",
+            compatibility="benchmark rows are independent from stock bar_1d_raw and cannot be coerced to stock entities",
+            golden_payloads=_golden("success/benchmark-index-bar.json", "rejected/benchmark-index-bar-stock.json"),
         ),
         ContractRegistration(
             contract_id="C-004/DatasetDefinition", owner_module="src.schemas.platform.provider", producer="Dataset Registry", consumers=("canonical", "ingestion", "settings"), schema_model=DatasetDefinition, schema_version="1.0.0", business_key="dataset_id + schema_version", resource_id_field=None, time_semantics=("time_semantics",), version_semantics=("schema_version",), quality_semantics=("every declared field has explicit type, unit, null and time semantics", "primary keys are required fields; required/optional sets disjoint",), lineage_fields=("owner_module",), storage_profile="PostgreSQL dataset_definition", retention_class="PINNED", compatibility="dataset schema versions are immutable rows keyed by dataset_id + schema_version; capabilities and policies bind explicitly to one version", golden_payloads=_golden("success/dataset-definition.json", "success/dataset-definition-security_master.json", "success/dataset-definition-trading_calendar.json", "success/dataset-definition-bar_1d_raw.json", "rejected/dataset-definition-security_master.json", "rejected/dataset-definition-trading_calendar.json", "rejected/dataset-definition-bar_1d_raw.json"),

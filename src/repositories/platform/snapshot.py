@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
-from sqlalchemy import BigInteger, Boolean, Column, Date, DateTime, Integer, MetaData, String, Table, insert, select, update
+from sqlalchemy import BigInteger, Boolean, Column, Date, DateTime, Integer, MetaData, Numeric, String, Table, insert, select, update
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
 
@@ -44,6 +44,9 @@ snapshot_partition_ref = Table(
     Column("quality_report_id", String(64), nullable=False), Column("quality_status", String(16), nullable=False),
     Column("provider_run_refs", JSONB, nullable=False), Column("raw_object_refs", JSONB, nullable=False),
     Column("min_available_at", DateTime(timezone=True), nullable=False), Column("max_available_at", DateTime(timezone=True)), Column("row_count", BigInteger, nullable=False),
+    # Persistence-only ordinal; the public SnapshotPartitionRef contract remains unchanged.
+    Column("partition_order", Integer, nullable=False),
+    Column("coverage_ratio", Numeric(6, 5), nullable=False), Column("excluded_instrument_count", BigInteger, nullable=False), Column("quality_threshold_version", String(32), nullable=False),
 )
 capability_certification = Table(
     "capability_certification", metadata,
@@ -83,12 +86,17 @@ def _snapshot_values(record: DataSnapshot, *, task_id: str | None = None, attemp
 
 def _snapshot_values_from_row(row: Any) -> dict[str, Any]:
     value = dict(row)
+    # task_id/attempt_id are persistence-only lineage columns and are not part
+    # of the immutable DataSnapshot contract. Do not pass them to the strict
+    # contract model (extra="forbid").
+    value.pop("task_id", None)
+    value.pop("attempt_id", None)
     for key in ("quality_report_refs", "certified_capabilities", "missing_capabilities"):
         value[key] = tuple(value.get(key) or ())
     return value
 
 
-def _partition_values(record: SnapshotPartitionRef, snapshot_id: str) -> dict[str, Any]:
+def _partition_values(record: SnapshotPartitionRef, snapshot_id: str, partition_order: int) -> dict[str, Any]:
     ref = record.storage_ref
     return {
         "snapshot_id": snapshot_id, "canonical_partition_id": record.canonical_partition_id, "dataset_id": record.dataset_id,
@@ -98,12 +106,17 @@ def _partition_values(record: SnapshotPartitionRef, snapshot_id: str) -> dict[st
         "partition_hash": record.partition_hash, "schema_hash": record.schema_hash, "quality_report_id": record.quality_report_id,
         "quality_status": record.quality_status.value, "provider_run_refs": list(record.provider_run_refs), "raw_object_refs": list(record.raw_object_refs),
         "min_available_at": record.min_available_at, "max_available_at": record.max_available_at, "row_count": record.row_count,
+        "partition_order": partition_order,
+        "coverage_ratio": record.coverage_ratio, "excluded_instrument_count": record.excluded_instrument_count, "quality_threshold_version": record.quality_threshold_version,
     }
 
 
 def _partition(row: Any) -> SnapshotPartitionRef:
     from src.schemas.platform import StorageBackend, StorageNamespace, StorageRef, RevisionKind
     value = dict(row)
+    # Join-table metadata belongs to persistence, not the immutable partition ref contract.
+    value.pop("snapshot_id", None)
+    value.pop("partition_order", None)
     value["revision_kind"] = RevisionKind(value["revision_kind"])
     value["quality_status"] = QualityStatus(value["quality_status"])
     value["provider_run_refs"] = tuple(value["provider_run_refs"] or ())
@@ -133,17 +146,28 @@ class SnapshotRepository:
     @staticmethod
     def add_snapshot(session: Session, record: DataSnapshot, *, task_id: str | None = None, attempt_id: str | None = None) -> None:
         session.execute(insert(data_snapshot).values(**_snapshot_values(record, task_id=task_id, attempt_id=attempt_id)))
-        for ref in record.canonical_partitions:
-            session.execute(insert(snapshot_partition_ref).values(**_partition_values(ref, record.snapshot_id)))
+        for partition_order, ref in enumerate(record.canonical_partitions):
+            session.execute(
+                insert(snapshot_partition_ref).values(
+                    **_partition_values(ref, record.snapshot_id, partition_order)
+                )
+            )
 
     @staticmethod
-    def get_snapshot(session: Session, snapshot_id: str, *, include_partitions: bool = True) -> DataSnapshot | None:
-        row = session.execute(select(data_snapshot).where(data_snapshot.c.snapshot_id == snapshot_id)).mappings().one_or_none()
+    def get_snapshot(session: Session, snapshot_id: str, *, include_partitions: bool = True, for_update: bool = False) -> DataSnapshot | None:
+        statement = select(data_snapshot).where(data_snapshot.c.snapshot_id == snapshot_id)
+        if for_update:
+            statement = statement.with_for_update()
+        row = session.execute(statement).mappings().one_or_none()
         if row is None:
             return None
         value = _snapshot_values_from_row(row)
         if include_partitions:
-            parts = session.execute(select(snapshot_partition_ref).where(snapshot_partition_ref.c.snapshot_id == snapshot_id).order_by(snapshot_partition_ref.c.dataset_id, snapshot_partition_ref.c.partition_key, snapshot_partition_ref.c.revision)).mappings()
+            parts = session.execute(
+                select(snapshot_partition_ref)
+                .where(snapshot_partition_ref.c.snapshot_id == snapshot_id)
+                .order_by(snapshot_partition_ref.c.partition_order)
+            ).mappings()
             value["canonical_partitions"] = tuple(_partition(item) for item in parts)
         else:
             value["canonical_partitions"] = ()

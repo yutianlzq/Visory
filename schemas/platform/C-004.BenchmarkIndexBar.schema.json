@@ -1,0 +1,110 @@
+{
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "return_type": {
+            "const": "TOTAL_RETURN"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "total_return_close": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "total_return_close"
+        ]
+      }
+    }
+  ],
+  "description": "独立指数基准日线契约；不得解析为股票实体。",
+  "properties": {
+    "asset_type": {
+      "title": "Asset Type",
+      "type": "string"
+    },
+    "available_at": {
+      "format": "date-time",
+      "title": "Available At",
+      "type": "string"
+    },
+    "benchmark_id": {
+      "pattern": "^index:[a-z][a-z0-9_-]{0,15}:[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
+      "title": "Benchmark Id",
+      "type": "string"
+    },
+    "close": {
+      "minimum": 0,
+      "title": "Close",
+      "type": "number"
+    },
+    "high": {
+      "minimum": 0,
+      "title": "High",
+      "type": "number"
+    },
+    "index_name": {
+      "anyOf": [
+        {
+          "maxLength": 255,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Index Name"
+    },
+    "low": {
+      "minimum": 0,
+      "title": "Low",
+      "type": "number"
+    },
+    "open": {
+      "minimum": 0,
+      "title": "Open",
+      "type": "number"
+    },
+    "return_type": {
+      "title": "Return Type",
+      "type": "string"
+    },
+    "total_return_close": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Total Return Close"
+    },
+    "trade_date": {
+      "format": "date",
+      "title": "Trade Date",
+      "type": "string"
+    }
+  },
+  "required": [
+    "benchmark_id",
+    "asset_type",
+    "trade_date",
+    "open",
+    "high",
+    "low",
+    "close",
+    "return_type",
+    "available_at"
+  ],
+  "title": "BenchmarkIndexBar",
+  "type": "object"
+}

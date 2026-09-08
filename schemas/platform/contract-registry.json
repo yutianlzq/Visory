@@ -724,6 +724,48 @@
       ]
     },
     {
+      "business_key": "benchmark_id + trade_date",
+      "compatibility": "benchmark rows are independent from stock bar_1d_raw and cannot be coerced to stock entities",
+      "consumers": [
+        "snapshot capability gate",
+        "formal backtest"
+      ],
+      "contract_id": "C-004/BenchmarkIndexBar",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/benchmark-index-bar.json",
+        "tests/golden/platform/contracts/rejected/benchmark-index-bar-stock.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.BenchmarkIndexBar.schema.json",
+      "lineage_fields": [
+        "benchmark_id"
+      ],
+      "owner_module": "src.schemas.platform.benchmark",
+      "producer": "Benchmark Canonical Normalizer",
+      "quality_semantics": [
+        "asset_type is index",
+        "OHLC is consistent",
+        "PIT available_at is explicit"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "canonical benchmark_index_1d partition",
+      "time_semantics": [
+        "trade_date",
+        "available_at"
+      ],
+      "version_semantics": [
+        "return_type"
+      ]
+    },
+    {
       "business_key": "raw_object_id + mapping_version",
       "compatibility": "only supported for task_type canonical_normalization",
       "consumers": [

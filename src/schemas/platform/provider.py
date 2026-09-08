@@ -9,7 +9,7 @@ from .base import PlatformContractModel
 from .enums import ProviderCapabilityStatus, ProviderKind, ProviderMergeMode
 
 _SEMVER = r"^[0-9]+\.[0-9]+\.[0-9]+$"
-_KNOWN_UNITS = frozenset({"identifier", "calendar_date", "enum", "boolean", "reason_code", "utc_instant", "iso_4217", "ratio", "cny_per_share", "revision", "statement_type", "line_item", "financial_value", "financial_unit", "text", "code", "shares", "shares_per_lot", "cny"})
+_KNOWN_UNITS = frozenset({"identifier", "calendar_date", "enum", "boolean", "reason_code", "utc_instant", "iso_4217", "ratio", "cny_per_share", "index_points", "revision", "statement_type", "line_item", "financial_value", "financial_unit", "text", "code", "shares", "shares_per_lot", "cny"})
 _ID = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
 _CAPABILITY_STATUSES = ("AVAILABLE", "DEGRADED", "UNAVAILABLE", "UNVERIFIED")
 _MERGE_MODES = ("REPLACE_PARTITION", "APPEND_DISJOINT", "ENRICH_FIELDS", "COMPARE_ONLY")
@@ -205,6 +205,14 @@ class DatasetDefinition(PlatformContractModel):
             raise ValueError("enum_domains references an undeclared field")
         if any(not values for values in self.enum_domains.values()):
             raise ValueError("enum_domains must not contain empty enum domains")
+        if self.dataset_id == "benchmark_index_1d":
+            required_benchmark_fields = {"benchmark_id", "asset_type", "trade_date", "open", "high", "low", "close", "return_type", "available_at"}
+            if not required_benchmark_fields <= required:
+                raise ValueError("benchmark_index_1d is missing a formal contract field")
+            if self.enum_domains.get("asset_type") != ("index",):
+                raise ValueError("benchmark_index_1d asset_type must be index")
+            if self.enum_domains.get("return_type") != ("PRICE", "TOTAL_RETURN"):
+                raise ValueError("benchmark_index_1d return_type must distinguish PRICE and TOTAL_RETURN")
         if self.dataset_id == "bar_1d_raw":
             forbidden = {"volume", "turnover"} & declared
             if forbidden:

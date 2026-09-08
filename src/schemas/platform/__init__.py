@@ -1,3 +1,4 @@
+from .benchmark import BenchmarkIndexBar
 from .canonical import (
     CanonicalNormalizationTaskRequirements,
     CanonicalNormalizationTaskResult,
@@ -112,6 +113,7 @@ from .task import (
 from .versioning import PublicationMetadata, RevisionMetadata, TaskStateMetadata
 
 __all__ = [
+    "BenchmarkIndexBar",
     "CanonicalNormalizationTaskRequirements",
     "CanonicalNormalizationTaskResult",
     "CanonicalPartition",
