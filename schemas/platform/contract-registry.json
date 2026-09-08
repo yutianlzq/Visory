@@ -1880,6 +1880,49 @@
       ]
     },
     {
+      "business_key": "schedule_version + trade_date + phase",
+      "compatibility": "phase additions are additive; correction lineage remains append-only",
+      "consumers": [
+        "Task Control Application Service",
+        "Operations web client"
+      ],
+      "contract_id": "C-010/DailySchedulePhaseTaskRequirements",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/daily-schedule-phase-task-requirements.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.DailySchedulePhaseTaskRequirements.schema.json",
+      "lineage_fields": [
+        "dependency_task_ids",
+        "correction_of_snapshot_id"
+      ],
+      "owner_module": "src.schemas.platform.scheduler",
+      "producer": "Daily Scheduler Service",
+      "quality_semantics": [
+        "primary_provider_id",
+        "supplemental_provider_ids",
+        "quality_gaps"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "durable Task requirements; scheduler timestamps use Asia/Shanghai",
+      "time_semantics": [
+        "scheduled_at",
+        "formal_deadline_at"
+      ],
+      "version_semantics": [
+        "schedule_version",
+        "revision_kind"
+      ]
+    },
+    {
       "business_key": "task_id + cancel command",
       "compatibility": "cancellation is cooperative for running tasks",
       "consumers": [

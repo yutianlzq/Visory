@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime, time
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -64,6 +64,23 @@ def test_schedule_day_skips_non_trading_day_without_creating_tasks() -> None:
     assert result.skip_reason == "NON_TRADING_DAY"
     assert result.submissions == ()
     assert task_control.calls == []
+
+
+def test_schedule_day_creates_the_full_chain_and_routine_correction_audit() -> None:
+    task_control = FakeTaskControl()
+    service = DailySchedulerService(task_control, trading_day_resolver=lambda _: True)
+
+    result = service.schedule_day(TRADE_DATE, schedule_version="1.0.0", now=NOW)
+
+    assert result.skipped is False
+    assert [submission.phase for submission in result.submissions] == list(DailySchedulePhase)
+    assert len(task_control.calls) == len(DailySchedulePhase)
+    assert result.submissions[-1].requirements.revision_kind.value == "INITIAL"
+    assert result.submissions[-1].requirements.correction_of_snapshot_id is None
+    assert all(
+        submission.requirements.dependency_task_ids == (() if index == 0 else (result.submissions[index - 1].task_id,))
+        for index, submission in enumerate(result.submissions)
+    )
 
 
 def test_idempotency_key_is_stable_and_dependencies_are_explicit() -> None:
@@ -175,4 +192,4 @@ def test_correction_requirements_always_point_to_new_snapshot_lineage() -> None:
     assert requirements.correction_of_snapshot_id == "ds_00000000-0000-7000-8000-000000000001"
     assert requirements.phase is DailySchedulePhase.CORRECTION_AUDIT
     assert requirements.revision_kind == "CORRECTION"
-    assert requirements.snapshot_publication_status == "CORRECTION"
+    assert requirements.snapshot_publication_status == "PROVISIONAL"

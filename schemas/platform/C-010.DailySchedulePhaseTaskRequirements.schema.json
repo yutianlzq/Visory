@@ -1,0 +1,161 @@
+{
+  "$defs": {
+    "DailySchedulePhase": {
+      "enum": [
+        "PREFLIGHT",
+        "CORE_INGESTION",
+        "NORMALIZATION_QUALITY",
+        "PROVISIONAL_SNAPSHOT",
+        "SUPPLEMENTAL_DECISION",
+        "BACKTEST_CORE_CERTIFICATION",
+        "REVIEW_CAPABILITY_TARGET",
+        "FORMAL_DEADLINE",
+        "CORRECTION_AUDIT"
+      ],
+      "title": "DailySchedulePhase",
+      "type": "string"
+    },
+    "RevisionKind": {
+      "enum": [
+        "INITIAL",
+        "CORRECTION",
+        "REBUILD",
+        "MIGRATION"
+      ],
+      "title": "RevisionKind",
+      "type": "string"
+    },
+    "SnapshotPublicationStatus": {
+      "enum": [
+        "PROVISIONAL",
+        "CERTIFIED",
+        "REJECTED"
+      ],
+      "title": "SnapshotPublicationStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Secret-free durable task input for one daily scheduler phase.",
+  "properties": {
+    "blocked_reason_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Blocked Reason Code"
+    },
+    "correction_of_snapshot_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correction Of Snapshot Id"
+    },
+    "degradation_reasons": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Degradation Reasons",
+      "type": "array"
+    },
+    "dependency_task_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Dependency Task Ids",
+      "type": "array"
+    },
+    "failure_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Failure Code"
+    },
+    "formal_deadline_at": {
+      "format": "date-time",
+      "title": "Formal Deadline At",
+      "type": "string"
+    },
+    "phase": {
+      "$ref": "#/$defs/DailySchedulePhase"
+    },
+    "primary_provider_id": {
+      "default": "a_stock_data",
+      "title": "Primary Provider Id",
+      "type": "string"
+    },
+    "quality_gaps": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Quality Gaps",
+      "type": "array"
+    },
+    "revision_kind": {
+      "$ref": "#/$defs/RevisionKind",
+      "default": "INITIAL"
+    },
+    "schedule_version": {
+      "title": "Schedule Version",
+      "type": "string"
+    },
+    "scheduled_at": {
+      "format": "date-time",
+      "title": "Scheduled At",
+      "type": "string"
+    },
+    "snapshot_publication_status": {
+      "$ref": "#/$defs/SnapshotPublicationStatus",
+      "default": "PROVISIONAL"
+    },
+    "supplemental_provider_ids": {
+      "default": [
+        "financial_api"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "title": "Supplemental Provider Ids",
+      "type": "array"
+    },
+    "timezone": {
+      "default": "Asia/Shanghai",
+      "title": "Timezone",
+      "type": "string"
+    },
+    "trade_date": {
+      "format": "date",
+      "title": "Trade Date",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schedule_version",
+    "trade_date",
+    "phase",
+    "scheduled_at",
+    "formal_deadline_at"
+  ],
+  "title": "DailySchedulePhaseTaskRequirements",
+  "type": "object"
+}
