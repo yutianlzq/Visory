@@ -12,6 +12,7 @@ from src.artifacts.hashing import compute_bytes_hash
 from src.artifacts.namespace import StorageNamespaceResolver
 from src.repositories.platform import PostgresDatabase, upgrade_database
 from src.schemas.platform import (
+    AttemptOutcome,
     PriorityClass,
     StorageBackend,
     StorageNamespace,
@@ -58,6 +59,23 @@ def _request(**updates: object) -> TaskCreateRequest:
     return TaskCreateRequest(**values)
 
 
+def _daily_schedule_request(*, max_attempts: int = 2) -> TaskCreateRequest:
+    return _request(
+        task_type="daily_schedule_phase",
+        requested_by="scheduler:daily",
+        request_source="integration_test",
+        requirements={
+            "schedule_version": "1.0.0",
+            "trade_date": "2026-08-30",
+            "phase": "PREFLIGHT",
+            "scheduled_at": "2026-08-30T15:50:00+08:00",
+            "formal_deadline_at": "2026-08-30T19:00:00+08:00",
+        },
+        max_attempts=max_attempts,
+    )
+
+
+
 @pytest.fixture
 def task_database(isolated_postgres_database: PostgresDatabase) -> PostgresDatabase:
     upgrade_database(isolated_postgres_database.engine)
@@ -87,6 +105,31 @@ def test_idempotent_command_and_concurrent_duplicates_create_one_task(task_datab
         assert connection.execute(text("SELECT count(*) FROM platform_task")).scalar_one() == 1
         assert connection.execute(text("SELECT count(*) FROM task_command_idempotency")).scalar_one() == 1
         assert connection.execute(text("SELECT count(*) FROM task_state_event")).scalar_one() == 2
+
+
+def test_scheduler_phase_uses_durable_lease_recovery(task_database: PostgresDatabase) -> None:
+    clock = MutableClock(NOW)
+    service = TaskControlService(task_database, clock=clock)
+    task = service.create_task(_daily_schedule_request(), idempotency_key="daily-schedule-lease-recovery")
+
+    first = service.lease_next(
+        worker_id="scheduler-worker-old",
+        worker_capabilities=("daily_schedule_phase",),
+        lease_seconds=10,
+    )
+    assert first is not None and first.task.task_id == task.task_id
+    clock.advance(seconds=11)
+
+    second = service.lease_next(
+        worker_id="scheduler-worker-new",
+        worker_capabilities=("daily_schedule_phase",),
+        lease_seconds=30,
+    )
+
+    assert second is not None and second.task.task_id == task.task_id
+    assert second.attempt.attempt_number == 2
+    assert service.get_task(task.task_id).attempts[0].attempt_outcome is AttemptOutcome.LEASE_LOST
+
 
 
 def test_concurrent_workers_claim_once_and_heartbeat_requires_current_lease(task_database: PostgresDatabase) -> None:

@@ -47,10 +47,12 @@ def _request(dataset_id: str, *, key: str = "raw-key", max_attempts: int = 2) ->
     )
 
 
-def _response(dataset_id: str, *, extra_field: str | None = None) -> ProviderFetchResponse:
+def _response_for_provider(
+    provider_id: str, dataset_id: str, *, extra_field: str | None = None
+) -> ProviderFetchResponse:
     schema = next(
         item for item in default_provider_raw_schema_records()
-        if item.provider_id == "a_stock_data" and item.dataset_id == dataset_id
+        if item.provider_id == provider_id and item.dataset_id == dataset_id
     )
     fields = tuple(schema.required_fields) + ((extra_field,) if extra_field else ())
     field_types = dict(schema.field_types)
@@ -61,13 +63,17 @@ def _response(dataset_id: str, *, extra_field: str | None = None) -> ProviderFet
         content=json.dumps(payload, sort_keys=True).encode("utf-8"),
         media_type="application/json",
         compression=RawCompression.NONE,
-        actual_upstream="fixture.a-stock-data",
+        actual_upstream=f"fixture.{provider_id}",
         observed_at=NOW,
         source_published_at=None,
         raw_schema_fields=fields,
         raw_schema_field_types=field_types,
         row_count=1,
     )
+
+
+def _response(dataset_id: str, *, extra_field: str | None = None) -> ProviderFetchResponse:
+    return _response_for_provider("a_stock_data", dataset_id, extra_field=extra_field)
 
 
 @pytest.fixture
@@ -104,6 +110,31 @@ def test_raw_ingestion_vertical_success_for_all_initial_datasets(raw_runtime, da
     with database.transaction() as session:
         assert RawIngestionRepository().get_raw_object(session, result.raw_object.raw_object_id) == result.raw_object
         assert RawIngestionRepository().get_provider_run(session, result.provider_run.provider_run_id) == result.provider_run
+
+
+def test_declared_financial_api_supplemental_provider_is_allowed(raw_runtime) -> None:
+    database, task_control, publisher = raw_runtime
+    requirements = _requirements("security_master")
+    requirements["provider_id"] = "financial_api"
+    task = task_control.create_task(
+        _request("security_master").model_copy(update={"requirements": requirements}),
+        idempotency_key="raw-financial-api-supplemental",
+    )
+    lease = task_control.lease_next(worker_id="raw-worker", worker_capabilities=("raw_ingestion",))
+    assert lease is not None and lease.task.task_id == task.task_id
+    worker = RawIngestionTaskWorker(
+        task_control,
+        database,
+        publisher,
+        FakeProviderTransport({("financial_api", "security_master"): _response_for_provider("financial_api", "security_master")}),
+        clock=lambda: NOW,
+    )
+
+    result = worker.execute(lease)
+
+    assert result.raw_object is not None
+    assert result.raw_object.provider_id == "financial_api"
+    assert task_control.get_task(task.task_id).task.task_state is TaskState.SUCCEEDED
 
 
 def test_additive_schema_drift_is_quarantined_and_task_is_degraded(raw_runtime) -> None:

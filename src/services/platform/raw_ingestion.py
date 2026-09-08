@@ -587,10 +587,11 @@ class RawIngestionTaskWorker:
             policy = self.repository.get_policy(session, requirements.provider_policy_id)
             if provider is None or dataset is None or policy is None:
                 raise RawIngestionError("RAW_REGISTRY_CONFIGURATION_INVALID", "Raw ingestion registry configuration is unavailable.")
+            declared_provider_ids = {policy.primary_provider_id, *policy.supplemental_provider_ids}
             if (
                 policy.dataset_id != requirements.dataset_id
                 or policy.dataset_schema_version != requirements.dataset_schema_version
-                or policy.primary_provider_id != requirements.provider_id
+                or requirements.provider_id not in declared_provider_ids
             ):
                 raise RawIngestionError("RAW_POLICY_BINDING_INVALID", "Raw ingestion policy binding is invalid.")
             capability = self.repository.get_capability(

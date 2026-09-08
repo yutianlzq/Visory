@@ -1,0 +1,21 @@
+{
+  "contract_id": "C-010/DailySchedulePhaseTaskRequirements",
+  "payload": {
+    "schedule_version": "1.0.0",
+    "trade_date": "2026-09-08",
+    "phase": "PREFLIGHT",
+    "scheduled_at": "2026-09-08T15:50:00+08:00",
+    "timezone": "Asia/Shanghai",
+    "formal_deadline_at": "2026-09-08T19:00:00+08:00",
+    "dependency_task_ids": [],
+    "primary_provider_id": "a_stock_data",
+    "supplemental_provider_ids": ["financial_api"],
+    "snapshot_publication_status": "PROVISIONAL",
+    "revision_kind": "INITIAL",
+    "correction_of_snapshot_id": null,
+    "quality_gaps": [],
+    "degradation_reasons": [],
+    "blocked_reason_code": null,
+    "failure_code": null
+  }
+}

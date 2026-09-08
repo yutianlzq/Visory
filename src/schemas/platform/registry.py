@@ -34,6 +34,7 @@ from .snapshot import (
 from .hashing import DEFAULT_HASH_PROFILE, HashProfile
 from .identity import EntityIdentity
 from .resources import ResourceRef
+from .scheduler import DailySchedulePhaseTaskRequirements
 from .storage import StorageRef
 from .temporal import AvailabilityMetadata, PointInTimeWindow
 from .task import (
@@ -721,6 +722,24 @@ PLATFORM_CONTRACTS = ContractRegistry(
             retention_class="AUDIT",
             compatibility="same idempotency key and canonical payload returns the original task",
             golden_payloads=_golden("success/task-create-request.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-010/DailySchedulePhaseTaskRequirements",
+            owner_module="src.schemas.platform.scheduler",
+            producer="Daily Scheduler Service",
+            consumers=("Task Control Application Service", "Operations web client"),
+            schema_model=DailySchedulePhaseTaskRequirements,
+            schema_version="1.0.0",
+            business_key="schedule_version + trade_date + phase",
+            resource_id_field=None,
+            time_semantics=("scheduled_at", "formal_deadline_at"),
+            version_semantics=("schedule_version", "revision_kind"),
+            quality_semantics=("primary_provider_id", "supplemental_provider_ids", "quality_gaps"),
+            lineage_fields=("dependency_task_ids", "correction_of_snapshot_id"),
+            storage_profile="durable Task requirements; scheduler timestamps use Asia/Shanghai",
+            retention_class="AUDIT",
+            compatibility="phase additions are additive; correction lineage remains append-only",
+            golden_payloads=_golden("success/daily-schedule-phase-task-requirements.json"),
         ),
         ContractRegistration(
             contract_id="C-010/TaskCancelRequest",

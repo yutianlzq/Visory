@@ -508,7 +508,7 @@ class TaskControlService:
         supported_task_types = tuple(
             sorted(
                 set(capabilities)
-                & {"artifact_orphan_dry_run", "raw_ingestion", "canonical_normalization"}
+                & {"artifact_orphan_dry_run", "raw_ingestion", "canonical_normalization", "data_snapshot_build", "daily_schedule_phase"}
             )
         )
         if not supported_task_types:

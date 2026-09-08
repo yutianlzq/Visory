@@ -4,7 +4,7 @@ Visory 是面向个人使用的 A 股研究、策略验证与复盘平台。项�
 
 ### Visory 平台状态
 
-当前数据平台推进至 WP-0201 Dataset/Provider Registry（已完成），首批登记 `a-stock-data` 核心源、`Financial-API` 补充源，以及 `security_master`、`trading_calendar`、`bar_1d_raw` 数据集；本阶段仅提供控制面只读投影，不连接真实数据源；Settings 页面只展示凭据是否配置，不暴露引用或密钥。
+当前目标架构已完成 `11/45` 个 implemented work packages，最近完成 `WP-0204` Snapshot/Capability 与 `backtest_core` 代码门禁；首批登记 `a-stock-data` 核心源、`Financial-API` 补充源，以及 `security_master`、`trading_calendar`、`bar_1d_raw`、`benchmark_index_1d` 数据集；当前仍不连接真实 Provider、不写真实 `/data`，Settings 页面只展示凭据是否配置，不暴露引用或密钥。
 
 ## 当前状态
 

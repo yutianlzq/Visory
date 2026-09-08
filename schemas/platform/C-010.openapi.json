@@ -2407,7 +2407,9 @@
             "enum": [
               "artifact_orphan_dry_run",
               "raw_ingestion",
-              "canonical_normalization"
+              "canonical_normalization",
+              "data_snapshot_build",
+              "daily_schedule_phase"
             ],
             "title": "Task Type",
             "type": "string"
