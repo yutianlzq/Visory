@@ -80,7 +80,7 @@ export default function DataQualityPage() {
     try {
       const result = await platformDataQualityApi.get({ trade_date: tradeDate });
       setProjection(result);
-      setSelectedDatasetId((current) => result.datasets?.some((item) => `${item.dataset_id}:${item.partition_key}` === current) ? current : result.datasets?.[0] ? `${result.datasets[0].dataset_id}:${result.datasets[0].partition_key}` : null);
+      setSelectedDatasetKey((current: string | null) => result.datasets?.some((item) => `${item.dataset_id}:${item.partition_key}` === current) ? current : result.datasets?.[0] ? `${result.datasets[0].dataset_id}:${result.datasets[0].partition_key}` : null);
     } catch (cause) {
       setProjection(null);
       setError(formatDataQualityError(cause));
