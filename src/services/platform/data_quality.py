@@ -696,6 +696,7 @@ class DataQualityService:
                 requested_capabilities=tuple(dict.fromkeys(snapshot.certified_capabilities + snapshot.missing_capabilities)) or DATA_QUALITY_CAPABILITIES,
                 publication_status=snapshot.publication_status,
                 correction_of_snapshot_id=snapshot.snapshot_id if action.action == "correction" else None,
+                reason_code=action.reason_code,
             )
             request = TaskCreateRequest(
                 task_type="data_snapshot_build",

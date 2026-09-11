@@ -53,6 +53,20 @@
       "$ref": "#/$defs/SnapshotPublicationStatus",
       "default": "PROVISIONAL"
     },
+    "reason_code": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reason Code"
+    },
     "requested_capabilities": {
       "items": {
         "type": "string"

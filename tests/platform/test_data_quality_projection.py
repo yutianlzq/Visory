@@ -231,6 +231,7 @@ def test_controlled_correction_only_creates_data_snapshot_build_task():
     assert request.request_source == "data_quality:correction"
     assert request.requirements["correction_of_snapshot_id"] == snapshot.snapshot_id
     assert request.requirements["trade_date"] == snapshot.trade_date
+    assert request.requirements["reason_code"] == "QUALITY_RECHECK_REQUESTED"
     assert "storage_ref" not in request.requirements
     assert "canonical" not in service.__class__.__module__.lower()
 
