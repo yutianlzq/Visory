@@ -423,10 +423,7 @@ class DataQualityService:
         method = getattr(self.task_repository, "list_schedule_tasks", None)
         if method is None:
             return {}
-        try:
-            rows = method(session, trade_date)
-        except AttributeError:
-            return {}
+        rows = method(session, trade_date)
         return {str(getattr(task, "requirements", {}).get("phase")): task for task in rows}
 
     def _timeline(self, session: Any, snapshot: DataSnapshot) -> tuple[DataQualityTimelineStage, ...]:

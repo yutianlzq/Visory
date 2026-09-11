@@ -414,8 +414,21 @@ class TaskControlRepository:
 
     @staticmethod
     def list_schedule_tasks(session: Session, trade_date: date) -> tuple[TaskRecord, ...]:
-        records, _, _ = TaskControlRepository.list_tasks(session, task_type="daily_schedule_phase", limit=500)
-        return tuple(task for task in records if str(task.requirements.get("trade_date")) == trade_date.isoformat())
+        """Return the newest recorded schedule task for each phase on a trade date."""
+        rows = session.execute(
+            select(platform_task)
+            .where(
+                platform_task.c.task_type == "daily_schedule_phase",
+                platform_task.c.requirements["trade_date"].astext == trade_date.isoformat(),
+            )
+            .order_by(platform_task.c.created_at.desc(), platform_task.c.task_id.desc())
+        ).mappings().all()
+        latest: dict[str, TaskRecord] = {}
+        for row in rows:
+            record = _task_record(row)
+            phase = str(record.requirements.get("phase"))
+            latest.setdefault(phase, record)
+        return tuple(latest.values())
 
     @staticmethod
     def list_tasks(

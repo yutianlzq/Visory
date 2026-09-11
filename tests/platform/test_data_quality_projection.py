@@ -130,6 +130,7 @@ def test_projection_contains_snapshot_capabilities_lineage_timeline_and_secret_f
         canonical_repository=FakeCanonicalRepository(),
         raw_repository=FakeRawRepository(),
         provider_repository=FakeProviderRepository(),
+        task_repository=FakeTimelineRepository(),
         task_control_service=None,
     )
 
