@@ -1,0 +1,23 @@
+{
+  "contract_id": "C-010/DataQualityDiff",
+  "payload": {
+    "added_partitions": [],
+    "affected_consumers": [],
+    "affected_tasks": [
+      "task_019dbd74-2a00-7000-8000-000000000201"
+    ],
+    "base_snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000006",
+    "capability_changes": [],
+    "provider_switches": [],
+    "quality_changes": [],
+    "removed_partitions": [],
+    "revised_partitions": [
+      {
+        "dataset_id": "security_master",
+        "partition_key": "2026-08-31",
+        "revision": 1
+      }
+    ],
+    "target_snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000007"
+  }
+}

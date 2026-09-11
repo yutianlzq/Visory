@@ -36,6 +36,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'backtest', labelKey: 'layout.nav.backtest', to: '/backtest', icon: BarChart3 },
   { key: 'alerts', labelKey: 'layout.nav.alerts', to: '/alerts', icon: Bell },
   { key: 'usage', labelKey: 'layout.nav.usage', to: '/usage', icon: Gauge },
+  { key: 'data-quality', labelKey: 'layout.nav.dataQuality', to: '/data-quality', icon: Activity },
   { key: 'operations-tasks', labelKey: 'layout.nav.operationsTasks', to: '/operations/tasks', icon: ListTodo },
   { key: 'settings', labelKey: 'layout.nav.settings', to: '/settings', icon: Settings2 },
 ];

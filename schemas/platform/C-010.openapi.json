@@ -538,6 +538,879 @@
         "title": "AttemptOutcome",
         "type": "string"
       },
+      "DataQualityActionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "recheck",
+              "rebuild",
+              "correction"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Idempotency Key"
+          },
+          "reason_code": {
+            "default": "QUALITY_RECHECK_REQUESTED",
+            "title": "Reason Code",
+            "type": "string"
+          },
+          "requested_by": {
+            "title": "Requested By",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Snapshot Id"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "trade_date",
+          "requested_by"
+        ],
+        "title": "DataQualityActionRequest",
+        "type": "object"
+      },
+      "DataQualityActionResult": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "recheck",
+              "rebuild",
+              "correction"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "correction_of_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Correction Of Snapshot Id"
+          },
+          "message": {
+            "default": "受控任务已创建，未直接修改 Canonical 数据。",
+            "title": "Message",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Snapshot Id"
+          },
+          "task_id": {
+            "title": "Task Id",
+            "type": "string"
+          },
+          "task_type": {
+            "const": "data_snapshot_build",
+            "default": "data_snapshot_build",
+            "title": "Task Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id",
+          "action"
+        ],
+        "title": "DataQualityActionResult",
+        "type": "object"
+      },
+      "DataQualityCapability": {
+        "additionalProperties": false,
+        "properties": {
+          "capability_id": {
+            "title": "Capability Id",
+            "type": "string"
+          },
+          "capability_status": {
+            "$ref": "#/components/schemas/SnapshotCapabilityStatus"
+          },
+          "dataset_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Dataset Ids",
+            "type": "array"
+          },
+          "evidence_refs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "provider_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Provider Ids",
+            "type": "array"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reason Code"
+          }
+        },
+        "required": [
+          "capability_id",
+          "capability_status"
+        ],
+        "title": "DataQualityCapability",
+        "type": "object"
+      },
+      "DataQualityDataset": {
+        "additionalProperties": false,
+        "properties": {
+          "canonical_partitions": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DataQualityEvidence"
+            },
+            "title": "Canonical Partitions",
+            "type": "array"
+          },
+          "conflict_count": {
+            "minimum": 0,
+            "title": "Conflict Count",
+            "type": "integer"
+          },
+          "correction_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Correction Snapshot Id"
+          },
+          "coverage_ratio": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Coverage Ratio",
+            "type": "number"
+          },
+          "dataset_id": {
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "dataset_schema_version": {
+            "title": "Dataset Schema Version",
+            "type": "string"
+          },
+          "freshness_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Freshness At"
+          },
+          "partition_key": {
+            "title": "Partition Key",
+            "type": "string"
+          },
+          "provider_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Provider Ids",
+            "type": "array"
+          },
+          "provider_runs": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DataQualityEvidence"
+            },
+            "title": "Provider Runs",
+            "type": "array"
+          },
+          "quality_reports": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DataQualityEvidence"
+            },
+            "title": "Quality Reports",
+            "type": "array"
+          },
+          "quality_status": {
+            "$ref": "#/components/schemas/QualityStatus"
+          },
+          "quarantines": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DataQualityEvidence"
+            },
+            "title": "Quarantines",
+            "type": "array"
+          },
+          "raw_objects": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DataQualityEvidence"
+            },
+            "title": "Raw Objects",
+            "type": "array"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "revision_kind": {
+            "$ref": "#/components/schemas/RevisionKind"
+          },
+          "row_count": {
+            "minimum": 0,
+            "title": "Row Count",
+            "type": "integer"
+          },
+          "snapshot_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Snapshot Ids",
+            "type": "array"
+          },
+          "trade_date_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Trade Date From"
+          },
+          "trade_date_to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Trade Date To"
+          }
+        },
+        "required": [
+          "dataset_id",
+          "dataset_schema_version",
+          "partition_key",
+          "coverage_ratio",
+          "row_count",
+          "conflict_count",
+          "quality_status",
+          "revision",
+          "revision_kind"
+        ],
+        "title": "DataQualityDataset",
+        "type": "object"
+      },
+      "DataQualityDiff": {
+        "additionalProperties": false,
+        "properties": {
+          "added_partitions": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Added Partitions",
+            "type": "array"
+          },
+          "affected_consumers": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Affected Consumers",
+            "type": "array"
+          },
+          "affected_tasks": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Affected Tasks",
+            "type": "array"
+          },
+          "base_snapshot_id": {
+            "title": "Base Snapshot Id",
+            "type": "string"
+          },
+          "capability_changes": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Capability Changes",
+            "type": "array"
+          },
+          "provider_switches": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Provider Switches",
+            "type": "array"
+          },
+          "quality_changes": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Quality Changes",
+            "type": "array"
+          },
+          "removed_partitions": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Removed Partitions",
+            "type": "array"
+          },
+          "revised_partitions": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Revised Partitions",
+            "type": "array"
+          },
+          "target_snapshot_id": {
+            "title": "Target Snapshot Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "base_snapshot_id",
+          "target_snapshot_id"
+        ],
+        "title": "DataQualityDiff",
+        "type": "object"
+      },
+      "DataQualityEvidence": {
+        "additionalProperties": false,
+        "properties": {
+          "dataset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Dataset Id"
+          },
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "provider_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider Id"
+          },
+          "quality_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QualityStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "resource_type": {
+            "title": "Resource Type",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Revision"
+          },
+          "revision_kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RevisionKind"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "resource_id",
+          "resource_type"
+        ],
+        "title": "DataQualityEvidence",
+        "type": "object"
+      },
+      "DataQualityProjection": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilities": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DataQualityCapability"
+            },
+            "title": "Capabilities",
+            "type": "array"
+          },
+          "current_pointers": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Current Pointers",
+            "type": "array"
+          },
+          "cutoff_at": {
+            "format": "date-time",
+            "title": "Cutoff At",
+            "type": "string"
+          },
+          "data_as_of": {
+            "format": "date-time",
+            "title": "Data As Of",
+            "type": "string"
+          },
+          "datasets": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DataQualityDataset"
+            },
+            "title": "Datasets",
+            "type": "array"
+          },
+          "missing_capabilities": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Capabilities",
+            "type": "array"
+          },
+          "publication_status": {
+            "$ref": "#/components/schemas/SnapshotPublicationStatus"
+          },
+          "quality_status": {
+            "$ref": "#/components/schemas/QualityStatus"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "revision_kind": {
+            "$ref": "#/components/schemas/RevisionKind"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "supersedes_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Supersedes Id"
+          },
+          "task_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Task Ids",
+            "type": "array"
+          },
+          "timeline": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DataQualityTimelineStage"
+            },
+            "title": "Timeline",
+            "type": "array"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          },
+          "warnings": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "trade_date",
+          "data_as_of",
+          "snapshot_id",
+          "publication_status",
+          "quality_status",
+          "cutoff_at",
+          "revision",
+          "revision_kind"
+        ],
+        "title": "DataQualityProjection",
+        "type": "object"
+      },
+      "DataQualityQuery": {
+        "additionalProperties": false,
+        "description": "Bounded filters for the P-DATA read projection.",
+        "properties": {
+          "capability": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Capability"
+          },
+          "dataset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Dataset"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider"
+          },
+          "quality_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QualityStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Snapshot Id"
+          },
+          "trade_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Trade Date"
+          }
+        },
+        "title": "DataQualityQuery",
+        "type": "object"
+      },
+      "DataQualityQueryResult": {
+        "additionalProperties": false,
+        "description": "Named response contract for the data-quality projection endpoint.",
+        "properties": {
+          "capabilities": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DataQualityCapability"
+            },
+            "title": "Capabilities",
+            "type": "array"
+          },
+          "current_pointers": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Current Pointers",
+            "type": "array"
+          },
+          "cutoff_at": {
+            "format": "date-time",
+            "title": "Cutoff At",
+            "type": "string"
+          },
+          "data_as_of": {
+            "format": "date-time",
+            "title": "Data As Of",
+            "type": "string"
+          },
+          "datasets": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DataQualityDataset"
+            },
+            "title": "Datasets",
+            "type": "array"
+          },
+          "missing_capabilities": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Capabilities",
+            "type": "array"
+          },
+          "publication_status": {
+            "$ref": "#/components/schemas/SnapshotPublicationStatus"
+          },
+          "quality_status": {
+            "$ref": "#/components/schemas/QualityStatus"
+          },
+          "revision": {
+            "minimum": 1,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "revision_kind": {
+            "$ref": "#/components/schemas/RevisionKind"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "supersedes_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Supersedes Id"
+          },
+          "task_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Task Ids",
+            "type": "array"
+          },
+          "timeline": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DataQualityTimelineStage"
+            },
+            "title": "Timeline",
+            "type": "array"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          },
+          "warnings": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "trade_date",
+          "data_as_of",
+          "snapshot_id",
+          "publication_status",
+          "quality_status",
+          "cutoff_at",
+          "revision",
+          "revision_kind"
+        ],
+        "title": "DataQualityQueryResult",
+        "type": "object"
+      },
+      "DataQualityTimelineStage": {
+        "additionalProperties": false,
+        "properties": {
+          "local_time": {
+            "format": "time",
+            "title": "Local Time",
+            "type": "string"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reason Code"
+          },
+          "stage_id": {
+            "title": "Stage Id",
+            "type": "string"
+          },
+          "stage_status": {
+            "title": "Stage Status",
+            "type": "string"
+          },
+          "task_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Task Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "stage_id",
+          "local_time",
+          "stage_status"
+        ],
+        "title": "DataQualityTimelineStage",
+        "type": "object"
+      },
       "DatasetDefinition": {
         "additionalProperties": false,
         "properties": {
@@ -1630,6 +2503,17 @@
         "title": "ProviderSettingsProvider",
         "type": "object"
       },
+      "QualityStatus": {
+        "enum": [
+          "COMPLETE",
+          "PARTIAL",
+          "FAILED",
+          "UNAVAILABLE",
+          "STALE"
+        ],
+        "title": "QualityStatus",
+        "type": "string"
+      },
       "QuarantineStatus": {
         "enum": [
           "OPEN",
@@ -2012,6 +2896,38 @@
           "QUARANTINE"
         ],
         "title": "RetentionClass",
+        "type": "string"
+      },
+      "RevisionKind": {
+        "enum": [
+          "INITIAL",
+          "CORRECTION",
+          "REBUILD",
+          "MIGRATION"
+        ],
+        "title": "RevisionKind",
+        "type": "string"
+      },
+      "SnapshotCapabilityStatus": {
+        "enum": [
+          "CERTIFIED",
+          "PROVISIONAL",
+          "PARTIAL",
+          "UNAVAILABLE",
+          "STALE",
+          "DEGRADED",
+          "UNVERIFIED"
+        ],
+        "title": "SnapshotCapabilityStatus",
+        "type": "string"
+      },
+      "SnapshotPublicationStatus": {
+        "enum": [
+          "PROVISIONAL",
+          "CERTIFIED",
+          "REJECTED"
+        ],
+        "title": "SnapshotPublicationStatus",
         "type": "string"
       },
       "StorageBackend": {
@@ -3058,6 +3974,172 @@
           }
         },
         "summary": "Resolve an asset identity without guessing"
+      }
+    },
+    "/api/platform/v1/data-quality": {
+      "get": {
+        "operationId": "getDataQuality",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "trade_date",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "snapshot_id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "capability",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dataset",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "provider",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "$ref": "#/components/schemas/QualityStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformSuccessEnvelope"
+                }
+              }
+            },
+            "description": "P-DATA snapshot, capability and lineage projection"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformErrorEnvelope"
+                }
+              }
+            },
+            "description": "No matching snapshot or quality evidence"
+          }
+        },
+        "summary": "Read the data-quality projection"
+      }
+    },
+    "/api/platform/v1/data-quality/actions": {
+      "post": {
+        "operationId": "createDataQualityAction",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataQualityActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformSuccessEnvelope"
+                }
+              }
+            },
+            "description": "Controlled data_snapshot_build task created"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformErrorEnvelope"
+                }
+              }
+            },
+            "description": "Idempotency key required"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformErrorEnvelope"
+                }
+              }
+            },
+            "description": "Idempotency conflict"
+          }
+        },
+        "summary": "Create a controlled data-quality task"
+      }
+    },
+    "/api/platform/v1/data-quality/compare": {
+      "get": {
+        "operationId": "compareDataQualitySnapshots",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "snapshot_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "base_snapshot_id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformSuccessEnvelope"
+                }
+              }
+            },
+            "description": "Snapshot revision and provider comparison"
+          }
+        },
+        "summary": "Compare data-quality snapshots"
       }
     },
     "/api/platform/v1/datasets": {

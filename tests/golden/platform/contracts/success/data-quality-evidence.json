@@ -1,0 +1,13 @@
+{
+  "contract_id": "C-010/DataQualityEvidence",
+  "payload": {
+    "dataset_id": "security_master",
+    "details": {
+      "row_count": 5000,
+      "run_outcome": "SUCCEEDED"
+    },
+    "provider_id": "a_stock_data",
+    "resource_id": "prun_019dbd74-2a00-7000-8000-000000000101",
+    "resource_type": "provider_run"
+  }
+}

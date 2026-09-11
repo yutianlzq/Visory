@@ -1,0 +1,10 @@
+{
+  "contract_id": "C-010/DataQualityActionRequest",
+  "payload": {
+    "action": "recheck",
+    "reason_code": "QUALITY_RECHECK_REQUESTED",
+    "requested_by": "owner:data-quality",
+    "snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000007",
+    "trade_date": "2026-08-31"
+  }
+}

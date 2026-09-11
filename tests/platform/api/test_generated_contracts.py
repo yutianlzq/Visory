@@ -28,6 +28,9 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "/api/platform/v1/provider-registry",
         "/api/platform/v1/providers",
         "/api/platform/v1/datasets",
+        "/api/platform/v1/data-quality",
+        "/api/platform/v1/data-quality/compare",
+        "/api/platform/v1/data-quality/actions",
         "/api/platform/v1/tasks",
         "/api/platform/v1/tasks/events",
         "/api/platform/v1/tasks/{task_id}",
@@ -50,7 +53,22 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "AssetResolutionRequest",
         "AssetResolutionResult",
         "AssetType",
+        "DataQualityActionRequest",
+        "DataQualityActionResult",
+        "DataQualityCapability",
+        "DataQualityDataset",
+        "DataQualityDiff",
+        "DataQualityEvidence",
+        "DataQualityProjection",
+        "DataQualityQuery",
+        "DataQualityQueryResult",
+        "DataQualityTimelineStage",
         "IdentityStatus",
+        "QualityStatus",
+        "RevisionKind",
+        "SnapshotCapabilityStatus",
+        "SnapshotPublicationStatus",
+
         "OrphanAction",
         "OrphanCandidate",
         "OrphanDryRunResult",
@@ -154,6 +172,9 @@ def test_generated_frontend_types_are_strict_and_cover_c010_fields() -> None:
     assert "export interface ProviderRun" in generated
     assert "export interface RawObject" in generated
     assert "export interface RawIngestionQuarantine" in generated
+    assert "export interface DataQualityQueryResult" in generated
+    assert "export interface DataQualityDiff" in generated
+    assert "export interface DataQualityActionRequest" in generated
     assert "export interface TaskRecord" in generated
     assert "export interface TaskAttemptRecord" in generated
     assert "export interface TaskCheckpointRecord" in generated

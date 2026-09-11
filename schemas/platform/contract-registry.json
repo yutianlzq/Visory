@@ -1923,6 +1923,410 @@
       ]
     },
     {
+      "business_key": "HTTP Idempotency-Key + canonical request",
+      "compatibility": "actions only create data_snapshot_build tasks and never edit Canonical data",
+      "consumers": [
+        "Task Control Application Service"
+      ],
+      "contract_id": "C-010/DataQualityActionRequest",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/data-quality-action-request.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.DataQualityActionRequest.schema.json",
+      "lineage_fields": [
+        "snapshot_id",
+        "requested_by"
+      ],
+      "owner_module": "src.schemas.platform.data_quality",
+      "producer": "P-DATA web client",
+      "quality_semantics": [
+        "action",
+        "reason_code"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "secret-free C-010 request; Idempotency-Key remains an HTTP header",
+      "time_semantics": [
+        "trade_date"
+      ],
+      "version_semantics": [
+        "snapshot_id"
+      ]
+    },
+    {
+      "business_key": "task_id",
+      "compatibility": "task_type remains data_snapshot_build",
+      "consumers": [
+        "P-DATA web client",
+        "operations"
+      ],
+      "contract_id": "C-010/DataQualityActionResult",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/data-quality-action-result.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.DataQualityActionResult.schema.json",
+      "lineage_fields": [
+        "task_id",
+        "snapshot_id",
+        "correction_of_snapshot_id"
+      ],
+      "owner_module": "src.schemas.platform.data_quality",
+      "producer": "Data Quality Application Service",
+      "quality_semantics": [
+        "action",
+        "task_type"
+      ],
+      "resource_id_field": "task_id",
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "C-010 response with logical task and snapshot IDs",
+      "time_semantics": [],
+      "version_semantics": [
+        "snapshot_id",
+        "correction_of_snapshot_id"
+      ]
+    },
+    {
+      "business_key": "capability_id",
+      "compatibility": "the eight capability identifiers and stable statuses remain explicit",
+      "consumers": [
+        "P-DATA web client"
+      ],
+      "contract_id": "C-010/DataQualityCapability",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/data-quality-capability.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.DataQualityCapability.schema.json",
+      "lineage_fields": [
+        "evidence_refs",
+        "dataset_ids",
+        "provider_ids"
+      ],
+      "owner_module": "src.schemas.platform.data_quality",
+      "producer": "Data Quality Application Service",
+      "quality_semantics": [
+        "capability_status",
+        "reason_code"
+      ],
+      "resource_id_field": null,
+      "retention_class": "TEMP",
+      "schema_version": "1.0.0",
+      "storage_profile": "C-010 response projection",
+      "time_semantics": [],
+      "version_semantics": []
+    },
+    {
+      "business_key": "dataset_id + partition_key + revision",
+      "compatibility": "new evidence collections are additive and immutable source records are never edited",
+      "consumers": [
+        "P-DATA web client"
+      ],
+      "contract_id": "C-010/DataQualityDataset",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/data-quality-dataset.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.DataQualityDataset.schema.json",
+      "lineage_fields": [
+        "snapshot_ids",
+        "provider_runs",
+        "raw_objects",
+        "canonical_partitions",
+        "quality_reports",
+        "quarantines"
+      ],
+      "owner_module": "src.schemas.platform.data_quality",
+      "producer": "Data Quality Application Service",
+      "quality_semantics": [
+        "coverage_ratio",
+        "conflict_count",
+        "quality_status"
+      ],
+      "resource_id_field": null,
+      "retention_class": "TEMP",
+      "schema_version": "1.0.0",
+      "storage_profile": "secret-free read projection",
+      "time_semantics": [
+        "trade_date_from",
+        "trade_date_to",
+        "freshness_at"
+      ],
+      "version_semantics": [
+        "dataset_schema_version",
+        "revision",
+        "revision_kind"
+      ]
+    },
+    {
+      "business_key": "base_snapshot_id + target_snapshot_id",
+      "compatibility": "partition comparisons are keyed by dataset_id and partition_key",
+      "consumers": [
+        "P-DATA web client",
+        "operations"
+      ],
+      "contract_id": "C-010/DataQualityDiff",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/data-quality-diff.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.DataQualityDiff.schema.json",
+      "lineage_fields": [
+        "affected_consumers",
+        "affected_tasks"
+      ],
+      "owner_module": "src.schemas.platform.data_quality",
+      "producer": "Data Quality Application Service",
+      "quality_semantics": [
+        "quality_changes",
+        "capability_changes",
+        "provider_switches"
+      ],
+      "resource_id_field": null,
+      "retention_class": "TEMP",
+      "schema_version": "1.0.0",
+      "storage_profile": "computed C-010 response projection",
+      "time_semantics": [],
+      "version_semantics": [
+        "base_snapshot_id",
+        "target_snapshot_id"
+      ]
+    },
+    {
+      "business_key": "resource_id",
+      "compatibility": "details may add sanitized diagnostic fields only",
+      "consumers": [
+        "P-DATA web client"
+      ],
+      "contract_id": "C-010/DataQualityEvidence",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/data-quality-evidence.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.DataQualityEvidence.schema.json",
+      "lineage_fields": [
+        "resource_id",
+        "dataset_id",
+        "provider_id"
+      ],
+      "owner_module": "src.schemas.platform.data_quality",
+      "producer": "Data Quality Application Service",
+      "quality_semantics": [
+        "quality_status"
+      ],
+      "resource_id_field": "resource_id",
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "secret-free logical evidence; no storage_ref, relative_path, credentials or raw payload",
+      "time_semantics": [],
+      "version_semantics": [
+        "revision",
+        "revision_kind"
+      ]
+    },
+    {
+      "business_key": "snapshot_id",
+      "compatibility": "new fields are additive and full logical resource IDs stay copyable",
+      "consumers": [
+        "P-DATA web client"
+      ],
+      "contract_id": "C-010/DataQualityProjection",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/data-quality-projection.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.DataQualityProjection.schema.json",
+      "lineage_fields": [
+        "current_pointers",
+        "datasets",
+        "timeline",
+        "task_ids"
+      ],
+      "owner_module": "src.schemas.platform.data_quality",
+      "producer": "Data Quality Application Service",
+      "quality_semantics": [
+        "publication_status",
+        "quality_status",
+        "capabilities",
+        "missing_capabilities"
+      ],
+      "resource_id_field": "snapshot_id",
+      "retention_class": "TEMP",
+      "schema_version": "1.0.0",
+      "storage_profile": "secret-free C-010 projection; no physical storage locations",
+      "time_semantics": [
+        "trade_date",
+        "data_as_of",
+        "cutoff_at"
+      ],
+      "version_semantics": [
+        "revision",
+        "revision_kind",
+        "supersedes_id"
+      ]
+    },
+    {
+      "business_key": "trade_date or snapshot_id plus bounded filters",
+      "compatibility": "filters are additive and unmatched filters return stable errors",
+      "consumers": [
+        "Data Quality Application Service"
+      ],
+      "contract_id": "C-010/DataQualityQuery",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/data-quality-query.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.DataQualityQuery.schema.json",
+      "lineage_fields": [
+        "snapshot_id"
+      ],
+      "owner_module": "src.schemas.platform.data_quality",
+      "producer": "P-DATA web client",
+      "quality_semantics": [
+        "quality_status"
+      ],
+      "resource_id_field": null,
+      "retention_class": "TEMP",
+      "schema_version": "1.0.0",
+      "storage_profile": "C-010 query parameters without paths or secrets",
+      "time_semantics": [
+        "trade_date"
+      ],
+      "version_semantics": []
+    },
+    {
+      "business_key": "snapshot_id",
+      "compatibility": "response additions remain optional or backward compatible",
+      "consumers": [
+        "P-DATA web client"
+      ],
+      "contract_id": "C-010/DataQualityQueryResult",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/data-quality-query-result.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.DataQualityQueryResult.schema.json",
+      "lineage_fields": [
+        "datasets",
+        "timeline",
+        "task_ids"
+      ],
+      "owner_module": "src.schemas.platform.data_quality",
+      "producer": "Data Quality Application Service",
+      "quality_semantics": [
+        "publication_status",
+        "quality_status",
+        "warnings"
+      ],
+      "resource_id_field": "snapshot_id",
+      "retention_class": "TEMP",
+      "schema_version": "1.0.0",
+      "storage_profile": "C-010 endpoint result without credentials or physical paths",
+      "time_semantics": [
+        "trade_date",
+        "data_as_of",
+        "cutoff_at"
+      ],
+      "version_semantics": [
+        "revision",
+        "revision_kind",
+        "supersedes_id"
+      ]
+    },
+    {
+      "business_key": "stage_id",
+      "compatibility": "stage identifiers and Asia/Shanghai target times remain stable",
+      "consumers": [
+        "P-DATA web client"
+      ],
+      "contract_id": "C-010/DataQualityTimelineStage",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/data-quality-timeline-stage.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.DataQualityTimelineStage.schema.json",
+      "lineage_fields": [
+        "task_ids"
+      ],
+      "owner_module": "src.schemas.platform.data_quality",
+      "producer": "Data Quality Application Service",
+      "quality_semantics": [
+        "stage_status",
+        "reason_code"
+      ],
+      "resource_id_field": null,
+      "retention_class": "TEMP",
+      "schema_version": "1.0.0",
+      "storage_profile": "C-010 response projection",
+      "time_semantics": [
+        "local_time"
+      ],
+      "version_semantics": []
+    },
+    {
       "business_key": "task_id + cancel command",
       "compatibility": "cancellation is cooperative for running tasks",
       "consumers": [

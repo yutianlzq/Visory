@@ -1,0 +1,11 @@
+{
+  "contract_id": "C-010/DataQualityTimelineStage",
+  "payload": {
+    "local_time": "17:10:00",
+    "stage_id": "BACKTEST_CORE_CERTIFICATION",
+    "stage_status": "COMPLETE",
+    "task_ids": [
+      "task_019dbd74-2a00-7000-8000-000000000201"
+    ]
+  }
+}

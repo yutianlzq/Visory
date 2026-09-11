@@ -36,6 +36,19 @@ from .asset_identity import (
     normalize_alias_value,
 )
 from .base import PlatformContractModel
+from .data_quality import (
+    DATA_QUALITY_CAPABILITIES,
+    DataQualityActionRequest,
+    DataQualityActionResult,
+    DataQualityCapability,
+    DataQualityDataset,
+    DataQualityDiff,
+    DataQualityEvidence,
+    DataQualityProjection,
+    DataQualityQuery,
+    DataQualityQueryResult,
+    DataQualityTimelineStage,
+)
 from .enums import (
     AliasType,
     AttemptOutcome,
@@ -121,6 +134,17 @@ from .versioning import PublicationMetadata, RevisionMetadata, TaskStateMetadata
 
 __all__ = [
     "BenchmarkIndexBar",
+    "DATA_QUALITY_CAPABILITIES",
+    "DataQualityActionRequest",
+    "DataQualityActionResult",
+    "DataQualityCapability",
+    "DataQualityDataset",
+    "DataQualityDiff",
+    "DataQualityEvidence",
+    "DataQualityProjection",
+    "DataQualityQuery",
+    "DataQualityQueryResult",
+    "DataQualityTimelineStage",
     "CanonicalNormalizationTaskRequirements",
     "DAILY_SCHEDULE_TIMEZONE",
     "DailySchedulePhase",

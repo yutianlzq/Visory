@@ -15,6 +15,18 @@ from .artifact import (
     OrphanDryRunResult,
 )
 from .asset_identity import AssetResolutionCandidate, AssetResolutionRequest, AssetResolutionResult
+from .data_quality import (
+    DataQualityActionRequest,
+    DataQualityActionResult,
+    DataQualityCapability,
+    DataQualityDataset,
+    DataQualityDiff,
+    DataQualityEvidence,
+    DataQualityProjection,
+    DataQualityQuery,
+    DataQualityQueryResult,
+    DataQualityTimelineStage,
+)
 from .task import (
     TaskAttemptRecord,
     TaskCancelRequest,
@@ -64,6 +76,16 @@ _API_MODELS = (
     AssetResolutionCandidate,
     AssetResolutionRequest,
     AssetResolutionResult,
+    DataQualityActionRequest,
+    DataQualityActionResult,
+    DataQualityCapability,
+    DataQualityDataset,
+    DataQualityDiff,
+    DataQualityEvidence,
+    DataQualityProjection,
+    DataQualityQuery,
+    DataQualityQueryResult,
+    DataQualityTimelineStage,
     TaskAttemptRecord,
     TaskCancelRequest,
     TaskCheckpointRecord,
@@ -149,6 +171,48 @@ def render_platform_openapi() -> dict[str, Any]:
                         },
                     },
                     "summary": "Resolve an asset identity without guessing",
+                }
+            },
+            "/api/platform/v1/data-quality": {
+                "get": {
+                    "operationId": "getDataQuality",
+                    "parameters": [
+                        {"name": "trade_date", "in": "query", "schema": {"type": "string", "format": "date"}},
+                        {"name": "snapshot_id", "in": "query", "schema": {"type": "string"}},
+                        {"name": "capability", "in": "query", "schema": {"type": "string"}},
+                        {"name": "dataset", "in": "query", "schema": {"type": "string"}},
+                        {"name": "provider", "in": "query", "schema": {"type": "string"}},
+                        {"name": "status", "in": "query", "schema": {"$ref": "#/components/schemas/QualityStatus"}},
+                    ],
+                    "responses": {
+                        "200": {"description": "P-DATA snapshot, capability and lineage projection", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}},
+                        "404": {"description": "No matching snapshot or quality evidence", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformErrorEnvelope"}}}},
+                    },
+                    "summary": "Read the data-quality projection",
+                }
+            },
+            "/api/platform/v1/data-quality/compare": {
+                "get": {
+                    "operationId": "compareDataQualitySnapshots",
+                    "parameters": [
+                        {"name": "snapshot_id", "in": "query", "required": True, "schema": {"type": "string"}},
+                        {"name": "base_snapshot_id", "in": "query", "schema": {"type": "string"}},
+                    ],
+                    "responses": {"200": {"description": "Snapshot revision and provider comparison", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}},
+                    "summary": "Compare data-quality snapshots",
+                }
+            },
+            "/api/platform/v1/data-quality/actions": {
+                "post": {
+                    "operationId": "createDataQualityAction",
+                    "parameters": [{"name": "Idempotency-Key", "in": "header", "required": True, "schema": {"type": "string"}}],
+                    "requestBody": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/DataQualityActionRequest"}}}, "required": True},
+                    "responses": {
+                        "200": {"description": "Controlled data_snapshot_build task created", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}},
+                        "400": {"description": "Idempotency key required", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformErrorEnvelope"}}}},
+                        "409": {"description": "Idempotency conflict", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformErrorEnvelope"}}}},
+                    },
+                    "summary": "Create a controlled data-quality task",
                 }
             },
             "/api/platform/v1/tasks": {

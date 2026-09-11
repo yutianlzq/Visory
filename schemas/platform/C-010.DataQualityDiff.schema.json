@@ -1,0 +1,90 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "added_partitions": {
+      "default": [],
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Added Partitions",
+      "type": "array"
+    },
+    "affected_consumers": {
+      "default": [],
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Affected Consumers",
+      "type": "array"
+    },
+    "affected_tasks": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Affected Tasks",
+      "type": "array"
+    },
+    "base_snapshot_id": {
+      "title": "Base Snapshot Id",
+      "type": "string"
+    },
+    "capability_changes": {
+      "default": [],
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Capability Changes",
+      "type": "array"
+    },
+    "provider_switches": {
+      "default": [],
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Provider Switches",
+      "type": "array"
+    },
+    "quality_changes": {
+      "default": [],
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Quality Changes",
+      "type": "array"
+    },
+    "removed_partitions": {
+      "default": [],
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Removed Partitions",
+      "type": "array"
+    },
+    "revised_partitions": {
+      "default": [],
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Revised Partitions",
+      "type": "array"
+    },
+    "target_snapshot_id": {
+      "title": "Target Snapshot Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "base_snapshot_id",
+    "target_snapshot_id"
+  ],
+  "title": "DataQualityDiff",
+  "type": "object"
+}

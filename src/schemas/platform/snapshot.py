@@ -392,6 +392,7 @@ class SnapshotBuildTaskRequirements(PlatformContractModel):
     requested_capabilities: tuple[str, ...]
     publication_status: SnapshotPublicationStatus = SnapshotPublicationStatus.PROVISIONAL
     correction_of_snapshot_id: str | None = None
+    reason_code: Annotated[str, Field(pattern=r"^[A-Z][A-Z0-9_]*$", max_length=128)] | None = None
 
     @field_validator("provider_policy_id")
     @classmethod

@@ -100,6 +100,137 @@ export type AssetType = "stock" | "index" | "etf" | "convertible_bond" | "fund" 
 
 export type AttemptOutcome = "SUCCEEDED" | "DEGRADED" | "FAILED" | "CANCELLED" | "BLOCKED" | "LEASE_LOST";
 
+export interface DataQualityActionRequest {
+  readonly action: "recheck" | "rebuild" | "correction";
+  readonly idempotency_key?: string | null;
+  readonly reason_code?: string;
+  readonly requested_by: string;
+  readonly snapshot_id?: string | null;
+  readonly trade_date: string;
+}
+
+export interface DataQualityActionResult {
+  readonly action: "recheck" | "rebuild" | "correction";
+  readonly correction_of_snapshot_id?: string | null;
+  readonly message?: string;
+  readonly snapshot_id?: string | null;
+  readonly task_id: string;
+  readonly task_type?: "data_snapshot_build";
+}
+
+export interface DataQualityCapability {
+  readonly capability_id: string;
+  readonly capability_status: SnapshotCapabilityStatus;
+  readonly dataset_ids?: ReadonlyArray<string>;
+  readonly evidence_refs?: ReadonlyArray<string>;
+  readonly provider_ids?: ReadonlyArray<string>;
+  readonly reason_code?: string | null;
+}
+
+export interface DataQualityDataset {
+  readonly canonical_partitions?: ReadonlyArray<DataQualityEvidence>;
+  readonly conflict_count: number;
+  readonly correction_snapshot_id?: string | null;
+  readonly coverage_ratio: number;
+  readonly dataset_id: string;
+  readonly dataset_schema_version: string;
+  readonly freshness_at?: string | null;
+  readonly partition_key: string;
+  readonly provider_ids?: ReadonlyArray<string>;
+  readonly provider_runs?: ReadonlyArray<DataQualityEvidence>;
+  readonly quality_reports?: ReadonlyArray<DataQualityEvidence>;
+  readonly quality_status: QualityStatus;
+  readonly quarantines?: ReadonlyArray<DataQualityEvidence>;
+  readonly raw_objects?: ReadonlyArray<DataQualityEvidence>;
+  readonly revision: number;
+  readonly revision_kind: RevisionKind;
+  readonly row_count: number;
+  readonly snapshot_ids?: ReadonlyArray<string>;
+  readonly trade_date_from?: string | null;
+  readonly trade_date_to?: string | null;
+}
+
+export interface DataQualityDiff {
+  readonly added_partitions?: ReadonlyArray<Readonly<Record<string, unknown>>>;
+  readonly affected_consumers?: ReadonlyArray<Readonly<Record<string, unknown>>>;
+  readonly affected_tasks?: ReadonlyArray<string>;
+  readonly base_snapshot_id: string;
+  readonly capability_changes?: ReadonlyArray<Readonly<Record<string, unknown>>>;
+  readonly provider_switches?: ReadonlyArray<Readonly<Record<string, unknown>>>;
+  readonly quality_changes?: ReadonlyArray<Readonly<Record<string, unknown>>>;
+  readonly removed_partitions?: ReadonlyArray<Readonly<Record<string, unknown>>>;
+  readonly revised_partitions?: ReadonlyArray<Readonly<Record<string, unknown>>>;
+  readonly target_snapshot_id: string;
+}
+
+export interface DataQualityEvidence {
+  readonly dataset_id?: string | null;
+  readonly details?: Readonly<Record<string, unknown>>;
+  readonly provider_id?: string | null;
+  readonly quality_status?: QualityStatus | null;
+  readonly resource_id: string;
+  readonly resource_type: string;
+  readonly revision?: number | null;
+  readonly revision_kind?: RevisionKind | null;
+}
+
+export interface DataQualityProjection {
+  readonly capabilities?: ReadonlyArray<DataQualityCapability>;
+  readonly current_pointers?: ReadonlyArray<Readonly<Record<string, unknown>>>;
+  readonly cutoff_at: string;
+  readonly data_as_of: string;
+  readonly datasets?: ReadonlyArray<DataQualityDataset>;
+  readonly missing_capabilities?: ReadonlyArray<string>;
+  readonly publication_status: SnapshotPublicationStatus;
+  readonly quality_status: QualityStatus;
+  readonly revision: number;
+  readonly revision_kind: RevisionKind;
+  readonly snapshot_id: string;
+  readonly supersedes_id?: string | null;
+  readonly task_ids?: ReadonlyArray<string>;
+  readonly timeline?: ReadonlyArray<DataQualityTimelineStage>;
+  readonly trade_date: string;
+  readonly warnings?: ReadonlyArray<string>;
+}
+
+/** Bounded filters for the P-DATA read projection. */
+export interface DataQualityQuery {
+  readonly capability?: string | null;
+  readonly dataset?: string | null;
+  readonly provider?: string | null;
+  readonly quality_status?: QualityStatus | null;
+  readonly snapshot_id?: string | null;
+  readonly trade_date?: string | null;
+}
+
+/** Named response contract for the data-quality projection endpoint. */
+export interface DataQualityQueryResult {
+  readonly capabilities?: ReadonlyArray<DataQualityCapability>;
+  readonly current_pointers?: ReadonlyArray<Readonly<Record<string, unknown>>>;
+  readonly cutoff_at: string;
+  readonly data_as_of: string;
+  readonly datasets?: ReadonlyArray<DataQualityDataset>;
+  readonly missing_capabilities?: ReadonlyArray<string>;
+  readonly publication_status: SnapshotPublicationStatus;
+  readonly quality_status: QualityStatus;
+  readonly revision: number;
+  readonly revision_kind: RevisionKind;
+  readonly snapshot_id: string;
+  readonly supersedes_id?: string | null;
+  readonly task_ids?: ReadonlyArray<string>;
+  readonly timeline?: ReadonlyArray<DataQualityTimelineStage>;
+  readonly trade_date: string;
+  readonly warnings?: ReadonlyArray<string>;
+}
+
+export interface DataQualityTimelineStage {
+  readonly local_time: string;
+  readonly reason_code?: string | null;
+  readonly stage_id: string;
+  readonly stage_status: string;
+  readonly task_ids?: ReadonlyArray<string>;
+}
+
 export interface DatasetDefinition {
   readonly dataset_id: string;
   readonly entity_scope: string;
@@ -291,6 +422,8 @@ export interface ProviderSettingsProvider {
   readonly provider_kind: ProviderKind;
 }
 
+export type QualityStatus = "COMPLETE" | "PARTIAL" | "FAILED" | "UNAVAILABLE" | "STALE";
+
 export type QuarantineStatus = "OPEN" | "RESOLVED" | "REJECTED";
 
 export type RawCompression = "NONE" | "GZIP";
@@ -360,6 +493,12 @@ export interface ResourceRef {
 export type ResourceType = "task" | "attempt" | "data_snapshot" | "feature_snapshot" | "observation_snapshot" | "fact_pack" | "research" | "review" | "strategy" | "backtest_run" | "prediction" | "artifact" | "report" | "provider_run" | "sector" | "taxonomy" | "indicator" | "raw_object" | "canonical_partition" | "feature_partition" | "fact_block" | "claim" | "watch_condition" | "quality_report" | "request" | "checkpoint" | "backup" | "deployment" | "raw_ingestion_quarantine";
 
 export type RetentionClass = "PINNED" | "AUDIT" | "REBUILDABLE" | "CACHE" | "TEMP" | "QUARANTINE";
+
+export type RevisionKind = "INITIAL" | "CORRECTION" | "REBUILD" | "MIGRATION";
+
+export type SnapshotCapabilityStatus = "CERTIFIED" | "PROVISIONAL" | "PARTIAL" | "UNAVAILABLE" | "STALE" | "DEGRADED" | "UNVERIFIED";
+
+export type SnapshotPublicationStatus = "PROVISIONAL" | "CERTIFIED" | "REJECTED";
 
 export type StorageBackend = "local_fs";
 

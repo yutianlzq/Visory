@@ -1,0 +1,270 @@
+{
+  "$defs": {
+    "DataQualityEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "dataset_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dataset Id"
+        },
+        "details": {
+          "additionalProperties": true,
+          "title": "Details",
+          "type": "object"
+        },
+        "provider_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider Id"
+        },
+        "quality_status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QualityStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "resource_id": {
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "resource_type": {
+          "title": "Resource Type",
+          "type": "string"
+        },
+        "revision": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Revision"
+        },
+        "revision_kind": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RevisionKind"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "resource_id",
+        "resource_type"
+      ],
+      "title": "DataQualityEvidence",
+      "type": "object"
+    },
+    "QualityStatus": {
+      "enum": [
+        "COMPLETE",
+        "PARTIAL",
+        "FAILED",
+        "UNAVAILABLE",
+        "STALE"
+      ],
+      "title": "QualityStatus",
+      "type": "string"
+    },
+    "RevisionKind": {
+      "enum": [
+        "INITIAL",
+        "CORRECTION",
+        "REBUILD",
+        "MIGRATION"
+      ],
+      "title": "RevisionKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "canonical_partitions": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/DataQualityEvidence"
+      },
+      "title": "Canonical Partitions",
+      "type": "array"
+    },
+    "conflict_count": {
+      "minimum": 0,
+      "title": "Conflict Count",
+      "type": "integer"
+    },
+    "correction_snapshot_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correction Snapshot Id"
+    },
+    "coverage_ratio": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Coverage Ratio",
+      "type": "number"
+    },
+    "dataset_id": {
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "dataset_schema_version": {
+      "title": "Dataset Schema Version",
+      "type": "string"
+    },
+    "freshness_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Freshness At"
+    },
+    "partition_key": {
+      "title": "Partition Key",
+      "type": "string"
+    },
+    "provider_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Provider Ids",
+      "type": "array"
+    },
+    "provider_runs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/DataQualityEvidence"
+      },
+      "title": "Provider Runs",
+      "type": "array"
+    },
+    "quality_reports": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/DataQualityEvidence"
+      },
+      "title": "Quality Reports",
+      "type": "array"
+    },
+    "quality_status": {
+      "$ref": "#/$defs/QualityStatus"
+    },
+    "quarantines": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/DataQualityEvidence"
+      },
+      "title": "Quarantines",
+      "type": "array"
+    },
+    "raw_objects": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/DataQualityEvidence"
+      },
+      "title": "Raw Objects",
+      "type": "array"
+    },
+    "revision": {
+      "minimum": 1,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "revision_kind": {
+      "$ref": "#/$defs/RevisionKind"
+    },
+    "row_count": {
+      "minimum": 0,
+      "title": "Row Count",
+      "type": "integer"
+    },
+    "snapshot_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Snapshot Ids",
+      "type": "array"
+    },
+    "trade_date_from": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Trade Date From"
+    },
+    "trade_date_to": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Trade Date To"
+    }
+  },
+  "required": [
+    "dataset_id",
+    "dataset_schema_version",
+    "partition_key",
+    "coverage_ratio",
+    "row_count",
+    "conflict_count",
+    "quality_status",
+    "revision",
+    "revision_kind"
+  ],
+  "title": "DataQualityDataset",
+  "type": "object"
+}
