@@ -67,6 +67,12 @@ def get_transport_request_id(request: Request) -> str:
     if is_valid_request_id(current):
         setattr(request.state, _STATE_KEY, current)
         return current
+    # Some unit/integration callers mount a router directly without the
+    # application middleware. Preserve a valid transport header in that case.
+    incoming = request.headers.get(REQUEST_ID_HEADER)
+    if is_valid_request_id(incoming):
+        setattr(request.state, _STATE_KEY, incoming)
+        return incoming
     generated = generate_request_id()
     setattr(request.state, _STATE_KEY, generated)
     return generated

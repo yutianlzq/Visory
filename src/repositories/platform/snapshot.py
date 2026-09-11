@@ -188,6 +188,30 @@ class SnapshotRepository:
         return tuple(_capability(row) for row in rows)
 
     @staticmethod
+    def get_latest_for_trade_date(session: Session, trade_date: date) -> DataSnapshot | None:
+        row = session.execute(
+            select(data_snapshot)
+            .where(data_snapshot.c.trade_date == trade_date)
+            .order_by(
+                data_snapshot.c.revision.desc(),
+                data_snapshot.c.available_at.desc(),
+                data_snapshot.c.created_at.desc(),
+            )
+            .limit(1)
+        ).mappings().one_or_none()
+        if row is None:
+            return None
+        snapshot_id = row["snapshot_id"]
+        value = _snapshot_values_from_row(row)
+        parts = session.execute(
+            select(snapshot_partition_ref)
+            .where(snapshot_partition_ref.c.snapshot_id == snapshot_id)
+            .order_by(snapshot_partition_ref.c.partition_order)
+        ).mappings()
+        value["canonical_partitions"] = tuple(_partition(item) for item in parts)
+        return DataSnapshot.model_validate(value)
+
+    @staticmethod
     def add_consumer_requirement(session: Session, record: ConsumerRequirement) -> None:
         session.execute(insert(consumer_requirement).values(consumer_id=record.consumer_id, consumer_kind=record.consumer_kind.value, required_capabilities=list(record.required_capabilities), accepted_publication_statuses=[item.value for item in record.accepted_publication_statuses], min_quality_status=record.min_quality_status.value, allow_provisional=record.allow_provisional, requirement_version=record.requirement_version))
 
@@ -195,6 +219,32 @@ class SnapshotRepository:
     def get_consumer_requirement(session: Session, consumer_id: str) -> ConsumerRequirement | None:
         row = session.execute(select(consumer_requirement).where(consumer_requirement.c.consumer_id == consumer_id)).mappings().one_or_none()
         return _consumer(row) if row else None
+
+    @staticmethod
+    def list_consumer_requirements(session: Session) -> tuple[ConsumerRequirement, ...]:
+        rows = session.execute(
+            select(consumer_requirement).order_by(consumer_requirement.c.consumer_id)
+        ).mappings()
+        return tuple(_consumer(row) for row in rows)
+
+    @staticmethod
+    def get_lineage(session: Session, snapshot_id: str) -> tuple[str, ...]:
+        row = session.execute(
+            select(data_snapshot.c.task_id, data_snapshot.c.attempt_id)
+            .where(data_snapshot.c.snapshot_id == snapshot_id)
+        ).mappings().one_or_none()
+        if row is None:
+            return ()
+        return tuple(item for item in (row.get("task_id"), row.get("attempt_id")) if item)
+
+    @staticmethod
+    def list_pointers(session: Session, trade_date: date) -> tuple[SnapshotCurrentPointer, ...]:
+        rows = session.execute(
+            select(snapshot_current_pointer)
+            .where(snapshot_current_pointer.c.trade_date == trade_date)
+            .order_by(snapshot_current_pointer.c.scope, snapshot_current_pointer.c.capability_id)
+        ).mappings()
+        return tuple(SnapshotCurrentPointer.model_validate(dict(row)) for row in rows)
 
     @staticmethod
     def get_pointer(session: Session, *, scope: str, trade_date: date, capability_id: str, for_update: bool = False) -> SnapshotCurrentPointer | None:

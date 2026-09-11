@@ -1,0 +1,10 @@
+{
+  "contract_id": "C-010/DataQualityActionResult",
+  "payload": {
+    "action": "recheck",
+    "message": "受控任务已创建，未直接修改 Canonical 数据。",
+    "snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000007",
+    "task_id": "task_019dbd74-2a00-7000-8000-000000000201",
+    "task_type": "data_snapshot_build"
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "contract_id": "C-010/DataQualityQueryResult",
+  "payload": {
+    "capabilities": [
+      {
+        "capability_id": "backtest_core",
+        "capability_status": "CERTIFIED",
+        "dataset_ids": [
+          "security_master"
+        ],
+        "evidence_refs": [
+          "quality_019dbd74-2a00-7000-8000-000000000104"
+        ],
+        "provider_ids": [
+          "a_stock_data"
+        ]
+      }
+    ],
+    "current_pointers": [
+      {
+        "capability_id": "backtest_core",
+        "scope": "global",
+        "snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000007"
+      }
+    ],
+    "cutoff_at": "2026-08-31T11:00:00Z",
+    "data_as_of": "2026-08-31T09:10:00Z",
+    "datasets": [
+      {
+        "canonical_partitions": [
+          {
+            "dataset_id": "security_master",
+            "details": {
+              "partition_key": "2026-08-31",
+              "row_count": 5000
+            },
+            "quality_status": "COMPLETE",
+            "resource_id": "cpart_019dbd74-2a00-7000-8000-000000000103",
+            "resource_type": "canonical_partition",
+            "revision": 1,
+            "revision_kind": "INITIAL"
+          }
+        ],
+        "conflict_count": 0,
+        "coverage_ratio": 1.0,
+        "dataset_id": "security_master",
+        "dataset_schema_version": "1.0.0",
+        "freshness_at": "2026-08-31T16:00:00Z",
+        "partition_key": "2026-08-31",
+        "provider_ids": [
+          "a_stock_data"
+        ],
+        "provider_runs": [
+          {
+            "dataset_id": "security_master",
+            "details": {
+              "row_count": 5000,
+              "run_outcome": "SUCCEEDED"
+            },
+            "provider_id": "a_stock_data",
+            "resource_id": "prun_019dbd74-2a00-7000-8000-000000000101",
+            "resource_type": "provider_run"
+          }
+        ],
+        "quality_reports": [
+          {
+            "dataset_id": "security_master",
+            "details": {
+              "coverage_ratio": 1.0,
+              "duplicate_key_count": 0
+            },
+            "quality_status": "COMPLETE",
+            "resource_id": "quality_019dbd74-2a00-7000-8000-000000000104",
+            "resource_type": "quality_report"
+          }
+        ],
+        "quality_status": "COMPLETE",
+        "quarantines": [],
+        "raw_objects": [
+          {
+            "dataset_id": "security_master",
+            "details": {
+              "media_type": "application/json",
+              "row_count": 5000
+            },
+            "provider_id": "a_stock_data",
+            "resource_id": "raw_019dbd74-2a00-7000-8000-000000000102",
+            "resource_type": "raw_object"
+          }
+        ],
+        "revision": 1,
+        "revision_kind": "INITIAL",
+        "row_count": 5000,
+        "snapshot_ids": [
+          "ds_019dbd74-2a00-7000-8000-000000000007"
+        ],
+        "trade_date_from": "2026-08-31",
+        "trade_date_to": "2026-08-31"
+      }
+    ],
+    "missing_capabilities": [],
+    "publication_status": "CERTIFIED",
+    "quality_status": "COMPLETE",
+    "revision": 1,
+    "revision_kind": "INITIAL",
+    "snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000007",
+    "task_ids": [
+      "task_019dbd74-2a00-7000-8000-000000000201"
+    ],
+    "timeline": [
+      {
+        "local_time": "17:10:00",
+        "stage_id": "BACKTEST_CORE_CERTIFICATION",
+        "stage_status": "COMPLETE",
+        "task_ids": [
+          "task_019dbd74-2a00-7000-8000-000000000201"
+        ]
+      }
+    ],
+    "trade_date": "2026-08-31",
+    "warnings": []
+  }
+}

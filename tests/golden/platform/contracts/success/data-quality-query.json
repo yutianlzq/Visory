@@ -1,0 +1,8 @@
+{
+  "contract_id": "C-010/DataQualityQuery",
+  "payload": {
+    "capability": "backtest_core",
+    "quality_status": "COMPLETE",
+    "trade_date": "2026-08-31"
+  }
+}

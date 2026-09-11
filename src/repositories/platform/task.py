@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import base64
 import json
 from typing import Any
@@ -411,6 +411,11 @@ class TaskControlRepository:
                 attempt_id=record.attempt_id,
             )
         )
+
+    @staticmethod
+    def list_schedule_tasks(session: Session, trade_date: date) -> tuple[TaskRecord, ...]:
+        records, _, _ = TaskControlRepository.list_tasks(session, task_type="daily_schedule_phase", limit=500)
+        return tuple(task for task in records if str(task.requirements.get("trade_date")) == trade_date.isoformat())
 
     @staticmethod
     def list_tasks(

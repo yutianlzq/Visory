@@ -42,6 +42,7 @@ class FakeSnapshotRepository:
                 capability_id=capability,
                 capability_status=(SnapshotCapabilityStatus.CERTIFIED if capability in snapshot.certified_capabilities else SnapshotCapabilityStatus.UNAVAILABLE),
                 reason_code=None if capability in snapshot.certified_capabilities else "NOT_PRESENT",
+                certified_at=NOW if capability in snapshot.certified_capabilities else None,
                 snapshot_id=snapshot.snapshot_id,
             )
             for capability in DATA_QUALITY_CAPABILITIES
@@ -87,6 +88,9 @@ class FakeRawRepository:
 
     def get_raw_object(self, session, raw_id):
         return SimpleNamespace(raw_object_id=raw_id, provider_id="a_stock_data", actual_upstream="a-stock-data", relative_path="raw/hidden")
+
+    def get_raw_object_by_run(self, session, run_id):
+        return self.get_raw_object(session, run_id.replace("prun_", "raw_", 1))
 
     def get_quarantine_by_run(self, session, run_id):
         return None
@@ -228,3 +232,56 @@ def test_controlled_correction_only_creates_data_snapshot_build_task():
     assert request.requirements["trade_date"] == snapshot.trade_date
     assert "storage_ref" not in request.requirements
     assert "canonical" not in service.__class__.__module__.lower()
+
+class FakeTimelineRepository:
+    def __init__(self, tasks=()):
+        self.tasks = tasks
+
+    def list_schedule_tasks(self, session, trade_date):
+        assert session is not None
+        return self.tasks
+
+
+def test_timeline_never_infers_execution_from_certified_snapshot():
+    snapshot = snapshot_fixture()
+    service = DataQualityService(
+        FakeDatabase(), snapshot_repository=FakeSnapshotRepository(snapshot),
+        canonical_repository=FakeCanonicalRepository(), raw_repository=FakeRawRepository(),
+        task_repository=FakeTimelineRepository(),
+    )
+    timeline = service.get_projection(DataQualityQuery(snapshot_id=snapshot.snapshot_id)).timeline
+    assert all(stage.stage_status == 'UNVERIFIED' for stage in timeline)
+    assert all(stage.reason_code == 'SCHEDULE_TASK_NOT_RECORDED' for stage in timeline)
+    assert all(stage.task_ids == () for stage in timeline)
+
+
+def test_timeline_uses_phase_task_state_and_reason():
+    snapshot = snapshot_fixture()
+    task = SimpleNamespace(
+        task_id='task_019dbd74-2a00-7000-8000-000000000201',
+        requirements={'phase': 'CORE_INGESTION'}, task_state=TaskState.BLOCKED,
+        blocked_reason_code='PROVIDER_UNAVAILABLE', failure_code=None,
+    )
+    service = DataQualityService(
+        FakeDatabase(), snapshot_repository=FakeSnapshotRepository(snapshot),
+        canonical_repository=FakeCanonicalRepository(), raw_repository=FakeRawRepository(),
+        task_repository=FakeTimelineRepository((task,)),
+    )
+    timeline = service.get_projection(DataQualityQuery(snapshot_id=snapshot.snapshot_id)).timeline
+    stage = next(item for item in timeline if item.stage_id == 'CORE_INGESTION')
+    assert stage.stage_status == 'BLOCKED'
+    assert stage.reason_code == 'PROVIDER_UNAVAILABLE'
+    assert stage.task_ids == (task.task_id,)
+    assert timeline[-1].stage_status == 'UNVERIFIED'
+
+
+def test_snapshot_task_links_exclude_attempt_resource_ids():
+    snapshot = snapshot_fixture()
+    repository = FakeSnapshotRepository(snapshot)
+    task_id = 'task_019dbd74-2a00-7000-8000-000000000201'
+    repository.get_lineage = lambda session, snapshot_id: (
+        task_id, 'attempt_019dbd74-2a00-7000-8000-000000000202',
+    )
+    service = DataQualityService(FakeDatabase(), snapshot_repository=repository)
+    assert service._snapshot_task_ids(object(), snapshot.snapshot_id) == (task_id,)
+    assert service._lineage_for_session(object(), snapshot.snapshot_id) == (task_id,)

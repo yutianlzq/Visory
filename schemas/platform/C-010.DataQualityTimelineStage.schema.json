@@ -1,0 +1,45 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "local_time": {
+      "format": "time",
+      "title": "Local Time",
+      "type": "string"
+    },
+    "reason_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reason Code"
+    },
+    "stage_id": {
+      "title": "Stage Id",
+      "type": "string"
+    },
+    "stage_status": {
+      "title": "Stage Status",
+      "type": "string"
+    },
+    "task_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Task Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "stage_id",
+    "local_time",
+    "stage_status"
+  ],
+  "title": "DataQualityTimelineStage",
+  "type": "object"
+}

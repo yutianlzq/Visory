@@ -1,0 +1,69 @@
+{
+  "$defs": {
+    "SnapshotCapabilityStatus": {
+      "enum": [
+        "CERTIFIED",
+        "PROVISIONAL",
+        "PARTIAL",
+        "UNAVAILABLE",
+        "STALE",
+        "DEGRADED",
+        "UNVERIFIED"
+      ],
+      "title": "SnapshotCapabilityStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "capability_id": {
+      "title": "Capability Id",
+      "type": "string"
+    },
+    "capability_status": {
+      "$ref": "#/$defs/SnapshotCapabilityStatus"
+    },
+    "dataset_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Dataset Ids",
+      "type": "array"
+    },
+    "evidence_refs": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence Refs",
+      "type": "array"
+    },
+    "provider_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Provider Ids",
+      "type": "array"
+    },
+    "reason_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reason Code"
+    }
+  },
+  "required": [
+    "capability_id",
+    "capability_status"
+  ],
+  "title": "DataQualityCapability",
+  "type": "object"
+}

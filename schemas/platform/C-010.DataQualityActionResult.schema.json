@@ -1,0 +1,59 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "enum": [
+        "recheck",
+        "rebuild",
+        "correction"
+      ],
+      "title": "Action",
+      "type": "string"
+    },
+    "correction_of_snapshot_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correction Of Snapshot Id"
+    },
+    "message": {
+      "default": "受控任务已创建，未直接修改 Canonical 数据。",
+      "title": "Message",
+      "type": "string"
+    },
+    "snapshot_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Snapshot Id"
+    },
+    "task_id": {
+      "title": "Task Id",
+      "type": "string"
+    },
+    "task_type": {
+      "const": "data_snapshot_build",
+      "default": "data_snapshot_build",
+      "title": "Task Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "task_id",
+    "action"
+  ],
+  "title": "DataQualityActionResult",
+  "type": "object"
+}

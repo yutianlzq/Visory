@@ -1,0 +1,16 @@
+{
+  "contract_id": "C-010/DataQualityCapability",
+  "payload": {
+    "capability_id": "backtest_core",
+    "capability_status": "CERTIFIED",
+    "dataset_ids": [
+      "security_master"
+    ],
+    "evidence_refs": [
+      "quality_019dbd74-2a00-7000-8000-000000000104"
+    ],
+    "provider_ids": [
+      "a_stock_data"
+    ]
+  }
+}

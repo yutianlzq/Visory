@@ -19,6 +19,18 @@ from .asset_identity import (
 )
 from .base import PlatformContractModel
 from .benchmark import BenchmarkIndexBar
+from .data_quality import (
+    DataQualityActionRequest,
+    DataQualityActionResult,
+    DataQualityCapability,
+    DataQualityDataset,
+    DataQualityDiff,
+    DataQualityEvidence,
+    DataQualityProjection,
+    DataQualityQuery,
+    DataQualityQueryResult,
+    DataQualityTimelineStage,
+)
 from .provider import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy
 from .provider_raw_schema import ProviderRawSchemaDefinition
 from .raw_ingestion import ProviderRun, RawIngestionPublishResult, RawIngestionQuarantine, RawIngestionTaskRequirements, RawObject
@@ -938,6 +950,36 @@ PLATFORM_CONTRACTS = ContractRegistry(
             retention_class="AUDIT",
             compatibility="exactly one normal RawObject or quarantine record is returned",
             golden_payloads=_golden("success/raw-ingestion-publish-result.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-010/DataQualityQuery", owner_module="src.schemas.platform.data_quality", producer="P-DATA web client", consumers=("Data Quality Application Service",), schema_model=DataQualityQuery, schema_version="1.0.0", business_key="trade_date or snapshot_id plus bounded filters", resource_id_field=None, time_semantics=("trade_date",), version_semantics=(), quality_semantics=("quality_status",), lineage_fields=("snapshot_id",), storage_profile="C-010 query parameters without paths or secrets", retention_class="TEMP", compatibility="filters are additive and unmatched filters return stable errors", golden_payloads=_golden("success/data-quality-query.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-010/DataQualityEvidence", owner_module="src.schemas.platform.data_quality", producer="Data Quality Application Service", consumers=("P-DATA web client",), schema_model=DataQualityEvidence, schema_version="1.0.0", business_key="resource_id", resource_id_field="resource_id", time_semantics=(), version_semantics=("revision", "revision_kind"), quality_semantics=("quality_status",), lineage_fields=("resource_id", "dataset_id", "provider_id"), storage_profile="secret-free logical evidence; no storage_ref, relative_path, credentials or raw payload", retention_class="AUDIT", compatibility="details may add sanitized diagnostic fields only", golden_payloads=_golden("success/data-quality-evidence.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-010/DataQualityCapability", owner_module="src.schemas.platform.data_quality", producer="Data Quality Application Service", consumers=("P-DATA web client",), schema_model=DataQualityCapability, schema_version="1.0.0", business_key="capability_id", resource_id_field=None, time_semantics=(), version_semantics=(), quality_semantics=("capability_status", "reason_code"), lineage_fields=("evidence_refs", "dataset_ids", "provider_ids"), storage_profile="C-010 response projection", retention_class="TEMP", compatibility="the eight capability identifiers and stable statuses remain explicit", golden_payloads=_golden("success/data-quality-capability.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-010/DataQualityDataset", owner_module="src.schemas.platform.data_quality", producer="Data Quality Application Service", consumers=("P-DATA web client",), schema_model=DataQualityDataset, schema_version="1.0.0", business_key="dataset_id + partition_key + revision", resource_id_field=None, time_semantics=("trade_date_from", "trade_date_to", "freshness_at"), version_semantics=("dataset_schema_version", "revision", "revision_kind"), quality_semantics=("coverage_ratio", "conflict_count", "quality_status"), lineage_fields=("snapshot_ids", "provider_runs", "raw_objects", "canonical_partitions", "quality_reports", "quarantines"), storage_profile="secret-free read projection", retention_class="TEMP", compatibility="new evidence collections are additive and immutable source records are never edited", golden_payloads=_golden("success/data-quality-dataset.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-010/DataQualityTimelineStage", owner_module="src.schemas.platform.data_quality", producer="Data Quality Application Service", consumers=("P-DATA web client",), schema_model=DataQualityTimelineStage, schema_version="1.0.0", business_key="stage_id", resource_id_field=None, time_semantics=("local_time",), version_semantics=(), quality_semantics=("stage_status", "reason_code"), lineage_fields=("task_ids",), storage_profile="C-010 response projection", retention_class="TEMP", compatibility="stage identifiers and Asia/Shanghai target times remain stable", golden_payloads=_golden("success/data-quality-timeline-stage.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-010/DataQualityProjection", owner_module="src.schemas.platform.data_quality", producer="Data Quality Application Service", consumers=("P-DATA web client",), schema_model=DataQualityProjection, schema_version="1.0.0", business_key="snapshot_id", resource_id_field="snapshot_id", time_semantics=("trade_date", "data_as_of", "cutoff_at"), version_semantics=("revision", "revision_kind", "supersedes_id"), quality_semantics=("publication_status", "quality_status", "capabilities", "missing_capabilities"), lineage_fields=("current_pointers", "datasets", "timeline", "task_ids"), storage_profile="secret-free C-010 projection; no physical storage locations", retention_class="TEMP", compatibility="new fields are additive and full logical resource IDs stay copyable", golden_payloads=_golden("success/data-quality-projection.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-010/DataQualityQueryResult", owner_module="src.schemas.platform.data_quality", producer="Data Quality Application Service", consumers=("P-DATA web client",), schema_model=DataQualityQueryResult, schema_version="1.0.0", business_key="snapshot_id", resource_id_field="snapshot_id", time_semantics=("trade_date", "data_as_of", "cutoff_at"), version_semantics=("revision", "revision_kind", "supersedes_id"), quality_semantics=("publication_status", "quality_status", "warnings"), lineage_fields=("datasets", "timeline", "task_ids"), storage_profile="C-010 endpoint result without credentials or physical paths", retention_class="TEMP", compatibility="response additions remain optional or backward compatible", golden_payloads=_golden("success/data-quality-query-result.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-010/DataQualityDiff", owner_module="src.schemas.platform.data_quality", producer="Data Quality Application Service", consumers=("P-DATA web client", "operations"), schema_model=DataQualityDiff, schema_version="1.0.0", business_key="base_snapshot_id + target_snapshot_id", resource_id_field=None, time_semantics=(), version_semantics=("base_snapshot_id", "target_snapshot_id"), quality_semantics=("quality_changes", "capability_changes", "provider_switches"), lineage_fields=("affected_consumers", "affected_tasks"), storage_profile="computed C-010 response projection", retention_class="TEMP", compatibility="partition comparisons are keyed by dataset_id and partition_key", golden_payloads=_golden("success/data-quality-diff.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-010/DataQualityActionRequest", owner_module="src.schemas.platform.data_quality", producer="P-DATA web client", consumers=("Task Control Application Service",), schema_model=DataQualityActionRequest, schema_version="1.0.0", business_key="HTTP Idempotency-Key + canonical request", resource_id_field=None, time_semantics=("trade_date",), version_semantics=("snapshot_id",), quality_semantics=("action", "reason_code"), lineage_fields=("snapshot_id", "requested_by"), storage_profile="secret-free C-010 request; Idempotency-Key remains an HTTP header", retention_class="AUDIT", compatibility="actions only create data_snapshot_build tasks and never edit Canonical data", golden_payloads=_golden("success/data-quality-action-request.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-010/DataQualityActionResult", owner_module="src.schemas.platform.data_quality", producer="Data Quality Application Service", consumers=("P-DATA web client", "operations"), schema_model=DataQualityActionResult, schema_version="1.0.0", business_key="task_id", resource_id_field="task_id", time_semantics=(), version_semantics=("snapshot_id", "correction_of_snapshot_id"), quality_semantics=("action", "task_type"), lineage_fields=("task_id", "snapshot_id", "correction_of_snapshot_id"), storage_profile="C-010 response with logical task and snapshot IDs", retention_class="AUDIT", compatibility="task_type remains data_snapshot_build", golden_payloads=_golden("success/data-quality-action-result.json"),
         ),
         ContractRegistration(
             contract_id="C-004/ProviderCanonicalMappingDefinition", owner_module="src.schemas.platform.canonical", producer="Canonical Normalizer", consumers=("canonical worker", "data quality"), schema_model=ProviderCanonicalMappingDefinition, schema_version="1.0.0", business_key="provider_id + dataset_id + mapping_version", resource_id_field=None, time_semantics=("created_at",), version_semantics=("mapping_version", "dataset_schema_version"), quality_semantics=("mapping hash is deterministic",), lineage_fields=("provider_id", "dataset_id"), storage_profile="PostgreSQL canonical_mapping_definition", retention_class="PINNED", compatibility="mapping rows are immutable and versioned", golden_payloads=_golden("success/provider-canonical-mapping-definition.json"),
