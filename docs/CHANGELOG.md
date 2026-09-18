@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/yutianlzq/Visory/releases) page.
 
 ## [Unreleased]
+- [文档] Visory-G019 / WP-0206 P-DATA 数据质量页面完成实现 PR #36 与 Run `34581431121` 远端三项阻断 CI；代码能力门禁为 `VERIFIED`，implemented work packages 为 `13/45`，生产 Provider/数据库/真实 `/data` 与生产数据仍为 `NOT CERTIFIED`。
 - [文档] Visory-G018 / WP-0205 完成远端 Exit Gate：PR #34、Run `34264795037` 的 Governance/Python deterministic gate/Web lint and build 三项阻断 Job 全部成功；实现 head `d9255474dc52a4e36bf9eb33c5e967383a06f7a8` 以普通 merge commit `76194dc378f689c0e0f34cc88d7a3989431a96fc` 合入 `main`，implemented work packages 更新为 `12/45`，Scheduler/补充源代码能力门禁为 `VERIFIED`，生产数据仍为 `NOT CERTIFIED`。
 - [新功能] Visory-G018 / WP-0205 在既有 Durable Task Control Plane 上增加 `Asia/Shanghai` 九阶段盘后调度、交易日跳过、幂等依赖链、`a_stock_data` 主源与 `financial_api` 显式补充策略、Provisional/Certified/19:00 Formal Deadline/20:30 Correction Audit 门禁及 Operations 任务详情投影；不连接生产 Provider、不写真实 `/data`。
 - [文档] Visory-G017 / WP-0204 完成远端 Exit Gate：PR #32、Run `34176102715` 的 Governance/Python deterministic gate/Web lint and build 三项阻断 Job 全部成功；实现提交 `6d28889b11e128f7d963acab469218c5c7955a8a` 以普通 merge commit `38bb737067e4e89bf766fb1b73023c3193cfa8ea` 合入 `main`，implemented work packages 更新为 `11/45`，`backtest_core` 代码能力门禁为 `VERIFIED`，生产 `backtest_core` 数据仍为 `NOT CERTIFIED`。

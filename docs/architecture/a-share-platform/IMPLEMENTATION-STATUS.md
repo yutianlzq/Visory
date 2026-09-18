@@ -1,6 +1,6 @@
 # Visory 实现状态
 
-最后更新：2026-09-09
+最后更新：2026-09-18
 
 ## 1. 当前结论
 
@@ -8,9 +8,9 @@
 
 工程底座状态：DSA 固定提交 `fb4735a1055caefa2396982af3b09121feb9ff30` 已完成导入和双基线验收，状态为 `IMPORTED / VERIFIED`。导入代码中的 React/FastAPI、Legacy SQLite、内存 Task Queue、分析、LLM、报告、通知和数据 Fetcher 仍是迁移基线，不能作为 Visory 新契约已实现的证据。
 
-目标架构状态：implemented work packages 为 `12/45`；`WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201`、`WP-0202`、`WP-0203`、`WP-0204`、`WP-0205` 为 `VERIFIED`；其余 WP 为 `NOT_STARTED`。G013 Provider Raw Schema Hardening 已完成并通过最终 CI，仍计入同一 `WP-0202`。
+目标架构状态：implemented work packages 为 `13/45`；`WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201`、`WP-0202`、`WP-0203`、`WP-0204`、`WP-0205` 为 `VERIFIED`；其余 WP 为 `NOT_STARTED`。G013 Provider Raw Schema Hardening 已完成并通过最终 CI，仍计入同一 `WP-0202`。
 
-最近完成的 Work Package：`WP-0205 16:00 Scheduler与补充源`。`Visory-G018` 在既有 Durable Task Control Plane 上增加 `Asia/Shanghai` 九阶段盘后调度、交易日跳过、稳定幂等键、阶段依赖、主/补充源显式策略、19:00 Formal Deadline 拒绝门禁和 20:30 Correction Audit；不新增 Migration，Alembic head 保持 `0012_wp0204_benchmark_dataset_extension`。本地平台测试 `390 passed, 5 skipped`、真实 PostgreSQL 16 集成 `63 passed`、契约/治理/Flake8/py_compile/Web 验证通过；PR #34 的 Run `34264795037` 三项阻断 Job 全绿，普通 merge commit `76194dc378f689c0e0f34cc88d7a3989431a96fc`；状态为 `COMPLETE / MERGED / VERIFIED / 12/45`，生产 Provider、真实 `/data` 和生产 `backtest_core` 数据仍未认证。
+最近完成的 Work Package：`WP-0206 P-DATA 数据质量页面`。`Visory-G019` 在既有 Snapshot、Capability、Provider、Canonical 与 Durable Task Control Plane 上增加只读数据质量 Projection/API、能力/数据集/血缘下钻、15:50—20:30 调度时间线、Snapshot/Correction 对比与受控 Recheck/Rebuild/Correction Task 入口；不新增 Migration，不接入真实 Provider、生产数据库、真实 `/data` 或生产调度。P-DATA 定向测试、平台契约/治理/Flake8/py_compile/Web 验证通过；PR #36 的 Run `34581431121` 三项阻断 Job 全绿，普通 merge commit `3db5057acd0029c6fb3557fe6a90ebfb2c288acd`；状态为 `COMPLETE / MERGED / VERIFIED / 13/45`，生产 Provider、真实 `/data` 和生产 `backtest_core` 数据仍未认证。
 
 交付阶段：MVP 一期为本地核心功能版（M0—M6 + WP-0701—0703）；MVP 二期为本地生产预演与服务器发布版（WP-0704 + M8）。未过 Local Release Gate 不得将 WP 标记为 `RELEASED`。
 
@@ -36,9 +36,9 @@
 | Visory-G017 | COMPLETE / MERGED | [G017 / WP-0204 Backtest Core Certification](GOAL-G017-STATUS.md)；Migration `0012_wp0204_benchmark_dataset_extension`；独立 `benchmark_index_1d` Dataset/Provider/Raw/Canonical/Quality/Snapshot 血缘与 Formal Consumer Gate 完成；本地平台测试 `381 passed, 5 skipped` 与真实 PostgreSQL 16 集成 `61 passed`；PR #32 的 Run `34176102715` 中 Governance/Python deterministic gate/Web lint and build 三项阻断 Job 全部成功；实现提交 `6d28889b11e128f7d963acab469218c5c7955a8a` 以普通 merge commit `38bb737067e4e89bf766fb1b73023c3193cfa8ea` 合入 `main`；WP-0204 `VERIFIED`，`backtest_core` 代码能力门禁 `VERIFIED`，生产 `backtest_core` 数据 `NOT CERTIFIED` |
 | Visory-G018 | COMPLETE / MERGED | [G018 / WP-0205 Daily Scheduler 与补充源](GOAL-G018-STATUS.md)；`Asia/Shanghai` 九阶段盘后调度、非交易日跳过、幂等依赖链、`a_stock_data` 主源与 `financial_api` 显式补充、19:00 Formal Deadline 和 20:30 Correction Audit 完成；本地平台 `390 passed, 5 skipped`、PostgreSQL 16 集成 `63 passed`；PR #34 head `d9255474dc52a4e36bf9eb33c5e967383a06f7a8`，Run `34264795037` 三项阻断 Job 全绿，普通 merge commit `76194dc378f689c0e0f34cc88d7a3989431a96fc`；WP-0205 `VERIFIED`，进度 `12/45`，生产数据 `NOT CERTIFIED` |
 | DSA Baseline | IMPORTED / VERIFIED | 1126/1126 blob 验签；Python/Web 双基线；`baseline_regression_delta=0`；`web_lint_build_regression_delta=0` |
-| Implemented Work Packages | 12/45 | `WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201`、`WP-0202`、`WP-0203`、`WP-0204`、`WP-0205` 为 `VERIFIED`；其余 33 项 `NOT_STARTED` |
+| Implemented Work Packages | 13/45 | `WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201`、`WP-0202`、`WP-0203`、`WP-0204`、`WP-0205`、`WP-0206` 为 `VERIFIED`；其余 32 项 `NOT_STARTED` |
 
-Current Goal: Visory-G018 / WP-0205 Daily Scheduler 与补充源 is COMPLETE / MERGED from baseline `9b26a1ecfb404932c3694dec7230a2c706de628a`; the implementation uses the existing Durable Task Control Plane for an `Asia/Shanghai` nine-phase schedule, non-trading-day skipping, stable idempotency/dependency semantics, explicit `a_stock_data` primary and `financial_api` supplemental policy, Provisional/Certified/Formal Deadline/Correction gates, and Operations visibility. No new Migration is introduced; Alembic head remains `0012_wp0204_benchmark_dataset_extension`. Local platform tests (`390 passed, 5 skipped`), real PostgreSQL 16 integration (`63 passed`), generated export checks, governance checks, critical Flake8, changed-file py_compile, `ci_gate.sh deterministic`, and Web lint/build pass; remote PR #34 / Run `34264795037` completed the three blocking jobs successfully, and implementation head `d9255474dc52a4e36bf9eb33c5e967383a06f7a8` was merged by ordinary merge commit `76194dc378f689c0e0f34cc88d7a3989431a96fc`. Implemented work packages are `12/45`; scheduler/supplemental-source code capability gate is `VERIFIED`; production Provider, real `/data`, production scheduler execution and production `backtest_core` data remain `NOT CERTIFIED`.
+Current Goal: Visory-G019 / WP-0206 P-DATA 数据质量页面 is COMPLETE / MERGED from baseline `8bc1592e7bf3418555e3c6bec405404efd1b1841`; the implementation adds a read-only Data Quality Projection/API and `/data-quality?trade_date=YYYY-MM-DD` page over existing Snapshot, Capability, Provider, Canonical and Durable Task Control Plane contracts, including lineage drill-down, schedule timeline, revision/correction comparison, and controlled Recheck/Rebuild/Correction tasks. No new Migration is introduced and no real Provider, production database, real `/data`, production scheduler, or production `backtest_core` certification is included. Implemented work packages are `13/45`; P-DATA code capability gate is `VERIFIED`; implementation PR #36 merge commit `3db5057acd0029c6fb3557fe6a90ebfb2c288acd`; remote CI Run `34581431121` passed Governance, Python deterministic gate, and Web lint/build.
 
 ## 2. 状态定义
 
@@ -68,7 +68,7 @@ RELEASED     已部署且通过运行观察和回滚/恢复要求
 | WP-0203 | Canonical Normalization + Extended Datasets | VERIFIED | [G014 / WP-0203](GOAL-G014-STATUS.md) 已完成 Core；[G015 / WP-0203 扩展](GOAL-G015-STATUS.md) 新增 `0010_wp0203_extended_canonical_datasets`、四数据集、14 条 Provider Schema/Mapping 与质量血缘门禁；平台 `323 passed, 5 skipped`、PostgreSQL integration `55 passed`、Run `33851938418` Governance/Python/Web 全绿；PR #28 普通 merge commit `76554416853314d6b3fe950f9d81a2c896320c27`；进度 `10/45` |
 | WP-0204 | DataSnapshot与Capability Gate + Backtest Core Certification | VERIFIED | [G016 / Snapshot Foundation](GOAL-G016-STATUS.md) 已通过 PR #30 和 Run `33941401645` 合并，Migration `0011_wp0204_snapshot_foundation`；[G017 / Backtest Core Certification](GOAL-G017-STATUS.md) 新增 Migration `0012_wp0204_benchmark_dataset_extension`、独立 `benchmark_index_1d` 契约及 Formal Consumer Gate，本地平台测试 `381 passed, 5 skipped`、真实 PostgreSQL 16 集成 `61 passed`；PR #32 的 Run `34176102715` Governance/Python deterministic gate/Web lint and build 三项阻断 Job 全部成功；实现提交 `6d28889b11e128f7d963acab469218c5c7955a8a`、普通 merge commit `38bb737067e4e89bf766fb1b73023c3193cfa8ea`、最终 `main` SHA `38bb737067e4e89bf766fb1b73023c3193cfa8ea`；代码能力门禁 `VERIFIED`，生产 `backtest_core` 数据 `NOT CERTIFIED` |
 | WP-0205 | 16:00 Scheduler与补充源 | VERIFIED | [G018 / WP-0205](GOAL-G018-STATUS.md)；既有 Durable Task Control Plane 上的 `Asia/Shanghai` 九阶段盘后调度、交易日跳过、幂等/依赖、`a_stock_data` 主源与 `financial_api` 显式补充、19:00 Formal Deadline、20:30 Correction Audit 和 Operations 投影完成；无新增 Migration，Alembic head `0012_wp0204_benchmark_dataset_extension`；平台 `390 passed, 5 skipped`、PostgreSQL 16 integration `63 passed`；PR #34 / Run `34264795037` 三项阻断 Job 全绿；普通 merge commit `76194dc378f689c0e0f34cc88d7a3989431a96fc`；生产数据 `NOT CERTIFIED` |
-| WP-0206 | P-DATA数据质量页面 | NOT_STARTED | — |
+| WP-0206 | P-DATA数据质量页面 | VERIFIED | [G019 / WP-0206](GOAL-G019-STATUS.md)；PR #36；Run `34581431121` 三项阻断 Job 全绿；普通 merge commit `3db5057acd0029c6fb3557fe6a90ebfb2c288acd`；生产数据 `NOT CERTIFIED` |
 | WP-0207 | 分批Backfill | NOT_STARTED | — |
 | WP-0301 | Indicator Registry与DAG | NOT_STARTED | — |
 | WP-0302 | Feature Partition/Snapshot/Bundle | NOT_STARTED | — |
