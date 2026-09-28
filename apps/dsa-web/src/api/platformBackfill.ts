@@ -34,4 +34,4 @@ export const platformBackfillApi = {
     const response = await apiClient.get<PlatformSuccessEnvelope>(`/api/platform/v1/backfills/${encodeURIComponent(batchId)}`);
     return response.data.data as unknown as BackfillBatchProjection;
   },
-};\n
+};

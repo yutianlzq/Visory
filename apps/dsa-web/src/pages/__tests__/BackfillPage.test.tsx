@@ -93,4 +93,4 @@ describe('BackfillPage', () => {
     expect(screen.queryByText('C:\\private\\raw_payload.json')).not.toBeInTheDocument();
     expect(screen.queryByText('fixture-secret')).not.toBeInTheDocument();
   });
-});\n
+});
