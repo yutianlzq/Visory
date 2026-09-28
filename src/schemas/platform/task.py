@@ -12,6 +12,7 @@ from .raw_ingestion import RawIngestionTaskRequirements
 from .canonical import CanonicalNormalizationTaskRequirements
 from .scheduler import DailySchedulePhaseTaskRequirements
 from .snapshot import SnapshotBuildTaskRequirements
+from .backfill import BackfillTaskRequirements
 from .storage import StorageRef
 
 
@@ -332,7 +333,7 @@ class TaskCheckpointRecord(PlatformContractModel):
 
 
 class TaskCreateRequest(PlatformContractModel):
-    task_type: Literal["artifact_orphan_dry_run", "raw_ingestion", "canonical_normalization", "data_snapshot_build", "daily_schedule_phase"]
+    task_type: Literal["artifact_orphan_dry_run", "raw_ingestion", "canonical_normalization", "data_snapshot_build", "daily_schedule_phase", "backfill"]
     task_schema_version: Annotated[str, Field(pattern=_SEMVER_PATTERN, max_length=32)] = "1.0.0"
     priority_class: PriorityClass = PriorityClass.P5_PREVIEW_AND_MAINTENANCE
     priority_value: int = Field(default=100, ge=0, le=2_147_483_647)
@@ -355,6 +356,8 @@ class TaskCreateRequest(PlatformContractModel):
             SnapshotBuildTaskRequirements.model_validate(self.requirements)
         elif self.task_type == "daily_schedule_phase":
             DailySchedulePhaseTaskRequirements.model_validate(self.requirements)
+        elif self.task_type == "backfill":
+            BackfillTaskRequirements.model_validate(self.requirements)
         return self
     @field_validator("requested_by", "request_source", "force_reason")
     @classmethod

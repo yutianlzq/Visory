@@ -193,6 +193,17 @@ class RawIngestionRepository:
         return _provider_run(row) if row is not None else None
 
     @staticmethod
+    def get_provider_run_by_task(session: Session, task_id: str) -> ProviderRun | None:
+        """Load the provider run owned by a durable task for crash recovery."""
+        row = session.execute(
+            select(provider_run)
+            .where(provider_run.c.task_id == task_id)
+            .order_by(provider_run.c.started_at.desc(), provider_run.c.provider_run_id.desc())
+            .limit(1)
+        ).mappings().one_or_none()
+        return _provider_run(row) if row is not None else None
+
+    @staticmethod
     def update_provider_run(session: Session, record: ProviderRun) -> None:
         values = record.model_dump(mode="python")
         session.execute(update(provider_run).where(provider_run.c.provider_run_id == record.provider_run_id).values(**values))

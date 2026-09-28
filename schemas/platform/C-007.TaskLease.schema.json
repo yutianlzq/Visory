@@ -72,7 +72,8 @@
         "checkpoint",
         "backup",
         "deployment",
-        "raw_ingestion_quarantine"
+        "raw_ingestion_quarantine",
+        "backfill_batch"
       ],
       "title": "ResourceType",
       "type": "string"

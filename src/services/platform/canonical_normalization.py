@@ -896,7 +896,14 @@ class CanonicalNormalizationTaskWorker:
             raise CanonicalNormalizationError("CANONICAL_RAW_INTEGRITY_FAILED", "Raw object integrity validation failed.")
         return raw, content
 
-    def execute(self, lease, *, mapping=None, identity_resolver=None) -> CanonicalNormalizationTaskResult:
+    def execute(
+        self,
+        lease,
+        *,
+        mapping=None,
+        identity_resolver=None,
+        publication_guard: Callable[[object], None] | None = None,
+    ) -> CanonicalNormalizationTaskResult:
         from src.services.platform.task_control import TaskControlError
 
         if lease.task.task_type != "canonical_normalization":
@@ -1002,6 +1009,8 @@ class CanonicalNormalizationTaskWorker:
                 )
 
                 def register(session, _record):
+                    if publication_guard is not None:
+                        publication_guard(session)
                     self.repository.add_quality_report(session, report)
                     self.repository.add_partition(session, partition)
                     self.task_control.complete_with_artifact_in_session(
@@ -1014,6 +1023,8 @@ class CanonicalNormalizationTaskWorker:
                 self.artifact_publisher.publish(request, output, after_register=register)
             else:
                 with self.database.transaction() as session:
+                    if publication_guard is not None:
+                        publication_guard(session)
                     self.repository.add_quality_report(session, report)
                     self.repository.add_partition(session, partition)
                     self.task_control.complete_in_session(

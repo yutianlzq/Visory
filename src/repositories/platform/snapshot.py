@@ -174,6 +174,18 @@ class SnapshotRepository:
         return DataSnapshot.model_validate(value)
 
     @staticmethod
+    def get_snapshot_by_task(session: Session, task_id: str) -> DataSnapshot | None:
+        row = session.execute(
+            select(data_snapshot.c.snapshot_id)
+            .where(data_snapshot.c.task_id == task_id)
+            .order_by(data_snapshot.c.created_at.desc(), data_snapshot.c.snapshot_id.desc())
+            .limit(1)
+        ).first()
+        if row is None:
+            return None
+        return SnapshotRepository.get_snapshot(session, row[0])
+
+    @staticmethod
     def add_capability(session: Session, record: CapabilityCertification) -> None:
         session.execute(insert(capability_certification).values(**{**record.model_dump(mode="python"), "capability_status": record.capability_status.value, "evidence_refs": list(record.evidence_refs)}))
 

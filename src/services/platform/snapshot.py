@@ -1171,9 +1171,8 @@ class SnapshotGateService:
             for item in all_caps
             if item.capability_status is not SnapshotCapabilityStatus.CERTIFIED
         )
-        draft = DataSnapshot.model_construct(
-            **{
-                **capability_input.model_dump(mode="python"),
+        draft = capability_input.model_copy(
+            update={
                 "certified_capabilities": certified_caps,
                 "missing_capabilities": missing,
                 "content_hash": compute_content_hash(
@@ -1282,7 +1281,13 @@ class SnapshotBuildTaskWorker:
         self.task_control = task_control
         self.snapshot_service = snapshot_service
 
-    def execute(self, lease: TaskLease, *, partition_rows: Mapping[str, list[Mapping[str, Any]]] | None = None) -> SnapshotBuildTaskResult:
+    def execute(
+        self,
+        lease: TaskLease,
+        *,
+        partition_rows: Mapping[str, list[Mapping[str, Any]]] | None = None,
+        publication_guard: Callable[[object], None] | None = None,
+    ) -> SnapshotBuildTaskResult:
         from src.services.platform.task_control import TaskControlError
         if lease.task.task_type != "data_snapshot_build":
             raise TaskControlError("TASK_TYPE_UNSUPPORTED", "Worker does not support this task type.", status_code=422)
@@ -1290,6 +1295,8 @@ class SnapshotBuildTaskWorker:
         requirements = SnapshotBuildTaskRequirements.model_validate(lease.task.requirements)
         try:
             with self.snapshot_service.database.transaction() as session:
+                if publication_guard is not None:
+                    publication_guard(session)
                 snapshot, certifications = self.snapshot_service.build_snapshot(requirements, task_id=lease.task.task_id, attempt_id=lease.attempt.attempt_id, partition_rows=partition_rows, session=session)
                 self.task_control.complete_in_session(session, attempt_id=lease.attempt.attempt_id, lease_token=lease.lease_token)
             return SnapshotBuildTaskResult(task_id=lease.task.task_id, attempt_id=lease.attempt.attempt_id, snapshot=snapshot, capability_certifications=certifications, published=True)

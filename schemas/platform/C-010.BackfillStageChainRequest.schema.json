@@ -1,0 +1,161 @@
+{
+  "$defs": {
+    "BackfillBatchRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "batch_id": {
+          "title": "Batch Id",
+          "type": "string"
+        },
+        "batch_type": {
+          "$ref": "#/$defs/BackfillBatchType"
+        },
+        "dataset": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Dataset",
+          "type": "string"
+        },
+        "date_from": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Date From"
+        },
+        "date_to": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Date To"
+        },
+        "dependency_task_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Dependency Task Ids",
+          "type": "array"
+        },
+        "dry_run": {
+          "default": false,
+          "title": "Dry Run",
+          "type": "boolean"
+        },
+        "plan_only": {
+          "default": false,
+          "title": "Plan Only",
+          "type": "boolean"
+        },
+        "priority": {
+          "default": 100,
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Priority",
+          "type": "integer"
+        },
+        "provider_policy_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Provider Policy Id",
+          "type": "string"
+        },
+        "requested_by": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Requested By",
+          "type": "string"
+        },
+        "stage": {
+          "$ref": "#/$defs/BackfillStage",
+          "default": "IDENTITY_CALENDAR"
+        },
+        "supersedes_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Supersedes Id"
+        },
+        "trade_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trade Date"
+        }
+      },
+      "required": [
+        "batch_id",
+        "batch_type",
+        "dataset",
+        "provider_policy_id",
+        "requested_by"
+      ],
+      "title": "BackfillBatchRequest",
+      "type": "object"
+    },
+    "BackfillBatchType": {
+      "enum": [
+        "MONTH",
+        "YEAR"
+      ],
+      "title": "BackfillBatchType",
+      "type": "string"
+    },
+    "BackfillStage": {
+      "enum": [
+        "IDENTITY_CALENDAR",
+        "PRICE_MONTH",
+        "LIFECYCLE_NAMES",
+        "CORPORATE_ACTION",
+        "FINANCIAL_VALUATION",
+        "INDUSTRY_MEMBERS",
+        "NON_CORE_OBSERVATION"
+      ],
+      "title": "BackfillStage",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "batches": {
+      "items": {
+        "$ref": "#/$defs/BackfillBatchRequest"
+      },
+      "maxItems": 7,
+      "minItems": 7,
+      "title": "Batches",
+      "type": "array"
+    }
+  },
+  "required": [
+    "batches"
+  ],
+  "title": "BackfillStageChainRequest",
+  "type": "object"
+}

@@ -1880,6 +1880,215 @@
       ]
     },
     {
+      "business_key": "batch_id + task_id",
+      "compatibility": "status values are closed",
+      "consumers": [
+        "Operations",
+        "P-DATA"
+      ],
+      "contract_id": "C-010/BackfillBatchProjection",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/backfill-batch-projection.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.BackfillBatchProjection.schema.json",
+      "lineage_fields": [
+        "batch_id",
+        "task_id"
+      ],
+      "owner_module": "src.schemas.platform.backfill",
+      "producer": "Backfill application service",
+      "quality_semantics": [
+        "status is explicit and derived from durable task state"
+      ],
+      "resource_id_field": "batch_id",
+      "retention_class": "TEMP",
+      "schema_version": "1.0.0",
+      "storage_profile": "computed C-010 projection",
+      "time_semantics": [
+        "trade_date",
+        "date_from",
+        "date_to"
+      ],
+      "version_semantics": [
+        "checkpoint_phase"
+      ]
+    },
+    {
+      "business_key": "batch_id",
+      "compatibility": "additive fields only",
+      "consumers": [
+        "backfill task service"
+      ],
+      "contract_id": "C-010/BackfillBatchRequest",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/backfill-batch-request.json",
+        "tests/golden/platform/contracts/correction/backfill-batch-request-correction.json",
+        "tests/golden/platform/contracts/rejected/backfill-month-crosses-calendar.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.BackfillBatchRequest.schema.json",
+      "lineage_fields": [
+        "batch_id",
+        "supersedes_id"
+      ],
+      "owner_module": "src.schemas.platform.backfill",
+      "producer": "Operations backfill client",
+      "quality_semantics": [
+        "dry_run does not publish",
+        "fallback and quarantine are explicit"
+      ],
+      "resource_id_field": "batch_id",
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "embedded durable Task requirements",
+      "time_semantics": [
+        "trade_date",
+        "date_from",
+        "date_to"
+      ],
+      "version_semantics": [
+        "provider_policy_id"
+      ]
+    },
+    {
+      "business_key": "ordered stage task ids",
+      "compatibility": "stage order is closed for WP-0207 v1",
+      "consumers": [
+        "Operations",
+        "P-DATA"
+      ],
+      "contract_id": "C-010/BackfillStageChainProjection",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/backfill-stage-chain-projection.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.BackfillStageChainProjection.schema.json",
+      "lineage_fields": [
+        "batches[].batch_id",
+        "batches[].task_id"
+      ],
+      "owner_module": "src.schemas.platform.backfill",
+      "producer": "Backfill application service",
+      "quality_semantics": [
+        "each stage status remains explicit",
+        "each stage depends on the previous task"
+      ],
+      "resource_id_field": null,
+      "retention_class": "TEMP",
+      "schema_version": "1.0.0",
+      "storage_profile": "computed C-010 projection",
+      "time_semantics": [
+        "batches[].trade_date",
+        "batches[].date_from",
+        "batches[].date_to"
+      ],
+      "version_semantics": [
+        "batches[].checkpoint_phase"
+      ]
+    },
+    {
+      "business_key": "ordered stage batch ids",
+      "compatibility": "stage order is closed for WP-0207 v1",
+      "consumers": [
+        "backfill task service"
+      ],
+      "contract_id": "C-010/BackfillStageChainRequest",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/backfill-stage-chain-request.json",
+        "tests/golden/platform/contracts/rejected/backfill-stage-chain-wrong-order.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.BackfillStageChainRequest.schema.json",
+      "lineage_fields": [
+        "batches[].batch_id"
+      ],
+      "owner_module": "src.schemas.platform.backfill",
+      "producer": "Operations backfill client",
+      "quality_semantics": [
+        "all seven roadmap stages are required",
+        "dependency task ids are server-managed"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "request-only control-plane contract",
+      "time_semantics": [
+        "batches[].trade_date",
+        "batches[].date_from",
+        "batches[].date_to"
+      ],
+      "version_semantics": [
+        "batches[].provider_policy_id"
+      ]
+    },
+    {
+      "business_key": "batch_id + stage + date range",
+      "compatibility": "checkpoint fields are additive",
+      "consumers": [
+        "durable task worker",
+        "operations"
+      ],
+      "contract_id": "C-010/BackfillTaskRequirements",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/backfill-task-requirements.json",
+        "tests/golden/platform/contracts/rejected/backfill-invalid-lineage-ref.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-010.BackfillTaskRequirements.schema.json",
+      "lineage_fields": [
+        "batch_id",
+        "supersedes_id"
+      ],
+      "owner_module": "src.schemas.platform.backfill",
+      "producer": "Backfill task service",
+      "quality_semantics": [
+        "failed and unavailable ranges remain visible"
+      ],
+      "resource_id_field": "batch_id",
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "durable Task requirements",
+      "time_semantics": [
+        "trade_date",
+        "date_from",
+        "date_to"
+      ],
+      "version_semantics": [
+        "checkpoint_phase"
+      ]
+    },
+    {
       "business_key": "schedule_version + trade_date + phase",
       "compatibility": "phase additions are additive; correction lineage remains append-only",
       "consumers": [

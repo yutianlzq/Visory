@@ -25,10 +25,14 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
     assert spec["info"]["version"] == "1.0.0"
     assert set(spec["paths"]) == {
         "/api/platform/v1/asset-resolutions",
+        "/api/platform/v1/backfills",
+        "/api/platform/v1/backfills/stage-chain",
+        "/api/platform/v1/backfills/{batch_id}",
         "/api/platform/v1/provider-registry",
         "/api/platform/v1/providers",
         "/api/platform/v1/datasets",
         "/api/platform/v1/data-quality",
+        "/api/platform/v1/data-quality/backfills/{batch_id}",
         "/api/platform/v1/data-quality/compare",
         "/api/platform/v1/data-quality/actions",
         "/api/platform/v1/tasks",
@@ -53,6 +57,14 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "AssetResolutionRequest",
         "AssetResolutionResult",
         "AssetType",
+        "BackfillBatchProjection",
+        "BackfillBatchRequest",
+        "BackfillBatchType",
+        "BackfillStage",
+        "BackfillStageChainProjection",
+        "BackfillStageChainRequest",
+        "BackfillStatus",
+        "BackfillTaskRequirements",
         "DataQualityActionRequest",
         "DataQualityActionResult",
         "DataQualityCapability",
@@ -172,6 +184,11 @@ def test_generated_frontend_types_are_strict_and_cover_c010_fields() -> None:
     assert "export interface ProviderRun" in generated
     assert "export interface RawObject" in generated
     assert "export interface RawIngestionQuarantine" in generated
+    assert "export interface BackfillBatchProjection" in generated
+    assert "export interface BackfillBatchRequest" in generated
+    assert "export interface BackfillStageChainRequest" in generated
+    assert "export interface BackfillStageChainProjection" in generated
+    assert "export interface BackfillTaskRequirements" in generated
     assert "export interface DataQualityQueryResult" in generated
     assert "export interface DataQualityDiff" in generated
     assert "export interface DataQualityActionRequest" in generated

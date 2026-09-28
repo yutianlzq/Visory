@@ -11,7 +11,7 @@ from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Callable, Protocol
 
 from src.artifacts.hashing import compute_bytes_hash
 from src.artifacts.namespace import StorageNamespaceResolver, fsync_directory
@@ -657,7 +657,12 @@ class RawIngestionTaskWorker:
             if exc.error_code != "TASK_LEASE_LOST":
                 raise
 
-    def execute(self, lease: TaskLease) -> RawIngestionPublishResult:
+    def execute(
+        self,
+        lease: TaskLease,
+        *,
+        publication_guard: Callable[[object], None] | None = None,
+    ) -> RawIngestionPublishResult:
         if lease.task.task_type != "raw_ingestion":
             raise TaskControlError("TASK_TYPE_UNSUPPORTED", "Worker does not support this task type.", status_code=422)
         self.task_control.start_attempt(lease.attempt.attempt_id, lease.lease_token)
@@ -729,14 +734,21 @@ class RawIngestionTaskWorker:
                     "run_outcome": ProviderRunOutcome.SUCCEEDED,
                     "raw_object_refs": (raw.raw_object_id,),
                 })
+                def register_raw(session: object, record: RawObject) -> None:
+                    if publication_guard is not None:
+                        publication_guard(session)
+                    self.repository.add_raw_object(session, record)
+                    self.repository.update_provider_run(session, final)
+                    self.task_control.complete_in_session(
+                        session,
+                        attempt_id=lease.attempt.attempt_id,
+                        lease_token=lease.lease_token,
+                    )
+
                 published = self.publisher.publish_raw(
                     raw,
                     response.content,
-                    after_register=lambda session, record: (
-                        self.repository.add_raw_object(session, record),
-                        self.repository.update_provider_run(session, final),
-                        self.task_control.complete_in_session(session, attempt_id=lease.attempt.attempt_id, lease_token=lease.lease_token),
-                    ),
+                    after_register=register_raw,
                 )
                 return RawIngestionPublishResult(provider_run=final, raw_object=published)
 
@@ -766,16 +778,31 @@ class RawIngestionTaskWorker:
                 "run_outcome": outcome,
                 "failure_code": reason if outcome is ProviderRunOutcome.FAILED else None,
             })
+            def register_quarantine(session: object, record: RawIngestionQuarantine) -> None:
+                if publication_guard is not None:
+                    publication_guard(session)
+                self.repository.add_quarantine(session, record)
+                self.repository.update_provider_run(session, final)
+                if outcome is ProviderRunOutcome.DEGRADED:
+                    self.task_control.complete_in_session(
+                        session,
+                        attempt_id=lease.attempt.attempt_id,
+                        lease_token=lease.lease_token,
+                        degraded=True,
+                    )
+                else:
+                    self.task_control.record_failure_in_session(
+                        session,
+                        attempt_id=lease.attempt.attempt_id,
+                        lease_token=lease.lease_token,
+                        failure_code=reason,
+                        retryable=False,
+                    )
+
             published_quarantine = self.publisher.publish_quarantine(
                 quarantine,
                 response.content,
-                after_register=lambda session, record: (
-                    self.repository.add_quarantine(session, record),
-                    self.repository.update_provider_run(session, final),
-                    self.task_control.complete_in_session(session, attempt_id=lease.attempt.attempt_id, lease_token=lease.lease_token, degraded=True)
-                    if outcome is ProviderRunOutcome.DEGRADED
-                    else self.task_control.record_failure_in_session(session, attempt_id=lease.attempt.attempt_id, lease_token=lease.lease_token, failure_code=reason, retryable=False),
-                ),
+                after_register=register_quarantine,
             )
             return RawIngestionPublishResult(provider_run=final, quarantine=published_quarantine)
         except TaskControlError as exc:

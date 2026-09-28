@@ -187,7 +187,25 @@ class TaskControlService:
         *,
         idempotency_key: str,
         endpoint: str = "/api/platform/v1/tasks",
+        initial_state: TaskState = TaskState.QUEUED,
+        blocked_reason_code: str | None = None,
+        unblock_condition: str | None = None,
+        actor_ref: str = "scheduler",
     ) -> TaskRecord:
+        if initial_state not in {TaskState.QUEUED, TaskState.BLOCKED}:
+            raise TaskControlError(
+                "TASK_INITIAL_STATE_INVALID",
+                "Task initial state is not supported.",
+                status_code=422,
+            )
+        if initial_state is TaskState.BLOCKED and (
+            not blocked_reason_code or not unblock_condition
+        ):
+            raise TaskControlError(
+                "TASK_BLOCK_DETAILS_REQUIRED",
+                "Blocked task creation requires a reason and unblock condition.",
+                status_code=422,
+            )
         command_key = self._idempotency_key(idempotency_key)
         now = self._now()
         request_hash = compute_content_hash(request.model_dump(mode="python"))
@@ -272,14 +290,49 @@ class TaskControlService:
                 event_at=now,
                 attempt_id=None,
             )
-            return self._transition(
+            queued = self._transition(
                 session,
                 accepted,
                 TaskState.QUEUED,
                 reason_code="TASK_READY",
-                actor_ref="scheduler",
+                actor_ref=actor_ref,
                 event_at=now,
             )
+            if initial_state is TaskState.BLOCKED:
+                return self._transition(
+                    session,
+                    queued,
+                    TaskState.BLOCKED,
+                    reason_code=blocked_reason_code or "TASK_BLOCKED",
+                    actor_ref=actor_ref,
+                    event_at=now,
+                    updates={
+                        "blocked_reason_code": blocked_reason_code,
+                        "unblock_condition": unblock_condition,
+                    },
+                )
+            return queued
+
+    def create_blocked_task(
+        self,
+        request: TaskCreateRequest,
+        *,
+        idempotency_key: str,
+        endpoint: str = "/api/platform/v1/tasks",
+        reason_code: str,
+        unblock_condition: str,
+        actor_ref: str,
+    ) -> TaskRecord:
+        """Create a blocked task without exposing a schedulable queue window."""
+        return self.create_task(
+            request,
+            idempotency_key=idempotency_key,
+            endpoint=endpoint,
+            initial_state=TaskState.BLOCKED,
+            blocked_reason_code=reason_code,
+            unblock_condition=unblock_condition,
+            actor_ref=actor_ref,
+        )
 
     def get_task(self, task_id: str) -> TaskDetails:
         with self.database.transaction() as session:
@@ -508,7 +561,7 @@ class TaskControlService:
         supported_task_types = tuple(
             sorted(
                 set(capabilities)
-                & {"artifact_orphan_dry_run", "raw_ingestion", "canonical_normalization", "data_snapshot_build", "daily_schedule_phase"}
+                & {"artifact_orphan_dry_run", "raw_ingestion", "canonical_normalization", "data_snapshot_build", "daily_schedule_phase", "backfill"}
             )
         )
         if not supported_task_types:
@@ -922,6 +975,44 @@ class TaskControlService:
         if len(content) != checkpoint.storage_ref.size_bytes or compute_bytes_hash(content) != checkpoint.checkpoint_hash:
             raise TaskControlError("TASK_CHECKPOINT_INVALID", "Checkpoint cannot be resumed.")
         return checkpoint
+
+    def assert_attempt_publishable_in_session(
+        self,
+        session: object,
+        *,
+        attempt_id: str,
+        lease_token: str,
+        expected_task_id: str | None = None,
+        expected_task_type: str | None = None,
+    ) -> TaskRecord:
+        """Lock and validate an active attempt before a related registry publish.
+
+        Callers use the same database transaction for this check and their
+        immutable registry writes. A concurrent cancellation therefore either
+        commits before this lock and blocks publication, or commits after the
+        guarded publication transaction.
+        """
+        task, _ = self._validate_lease(
+            session,
+            attempt_id,
+            lease_token,
+            now=self._now(),
+            allowed_states=frozenset({TaskState.RUNNING}),
+        )
+        if (
+            (expected_task_id is not None and task.task_id != expected_task_id)
+            or (expected_task_type is not None and task.task_type != expected_task_type)
+        ):
+            raise TaskControlError(
+                "TASK_DEPENDENCY_MISMATCH",
+                "Task publication dependency does not match.",
+            )
+        if task.cancel_requested_at is not None:
+            raise TaskControlError(
+                "TASK_CANCEL_PENDING",
+                "Cancelled task cannot publish a result.",
+            )
+        return task
 
     def complete_in_session(
         self,

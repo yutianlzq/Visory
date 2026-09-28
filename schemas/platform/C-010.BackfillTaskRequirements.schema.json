@@ -1,0 +1,316 @@
+{
+  "$defs": {
+    "BackfillBatchType": {
+      "enum": [
+        "MONTH",
+        "YEAR"
+      ],
+      "title": "BackfillBatchType",
+      "type": "string"
+    },
+    "BackfillStage": {
+      "enum": [
+        "IDENTITY_CALENDAR",
+        "PRICE_MONTH",
+        "LIFECYCLE_NAMES",
+        "CORPORATE_ACTION",
+        "FINANCIAL_VALUATION",
+        "INDUSTRY_MEMBERS",
+        "NON_CORE_OBSERVATION"
+      ],
+      "title": "BackfillStage",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "batch_id": {
+      "title": "Batch Id",
+      "type": "string"
+    },
+    "batch_type": {
+      "$ref": "#/$defs/BackfillBatchType"
+    },
+    "canonical_partition_refs": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Canonical Partition Refs",
+      "type": "array"
+    },
+    "checkpoint_phase": {
+      "default": "PLANNED",
+      "title": "Checkpoint Phase",
+      "type": "string"
+    },
+    "completed_range": {
+      "anyOf": [
+        {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "format": "date",
+              "type": "string"
+            }
+          ],
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Completed Range"
+    },
+    "dataset": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Dataset",
+      "type": "string"
+    },
+    "date_from": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Date From"
+    },
+    "date_to": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Date To"
+    },
+    "dependency_task_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Dependency Task Ids",
+      "type": "array"
+    },
+    "differences_summary": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Differences Summary"
+    },
+    "dry_run": {
+      "default": false,
+      "title": "Dry Run",
+      "type": "boolean"
+    },
+    "failed_range": {
+      "anyOf": [
+        {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "format": "date",
+              "type": "string"
+            }
+          ],
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Failed Range"
+    },
+    "failed_ranges": {
+      "default": [],
+      "items": {
+        "maxItems": 2,
+        "minItems": 2,
+        "prefixItems": [
+          {
+            "format": "date",
+            "type": "string"
+          },
+          {
+            "format": "date",
+            "type": "string"
+          }
+        ],
+        "type": "array"
+      },
+      "title": "Failed Ranges",
+      "type": "array"
+    },
+    "plan_only": {
+      "default": false,
+      "title": "Plan Only",
+      "type": "boolean"
+    },
+    "priority": {
+      "maximum": 2147483647,
+      "minimum": 0,
+      "title": "Priority",
+      "type": "integer"
+    },
+    "provider_fallback": {
+      "default": false,
+      "title": "Provider Fallback",
+      "type": "boolean"
+    },
+    "provider_policy_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Provider Policy Id",
+      "type": "string"
+    },
+    "provider_run_refs": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Provider Run Refs",
+      "type": "array"
+    },
+    "quality_events": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Quality Events",
+      "type": "array"
+    },
+    "raw_object_refs": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Raw Object Refs",
+      "type": "array"
+    },
+    "resource_usage": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Resource Usage",
+      "type": "object"
+    },
+    "skipped_range": {
+      "anyOf": [
+        {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "format": "date",
+              "type": "string"
+            }
+          ],
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Skipped Range"
+    },
+    "skipped_ranges": {
+      "default": [],
+      "items": {
+        "maxItems": 2,
+        "minItems": 2,
+        "prefixItems": [
+          {
+            "format": "date",
+            "type": "string"
+          },
+          {
+            "format": "date",
+            "type": "string"
+          }
+        ],
+        "type": "array"
+      },
+      "title": "Skipped Ranges",
+      "type": "array"
+    },
+    "snapshot_refs": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Snapshot Refs",
+      "type": "array"
+    },
+    "stage": {
+      "$ref": "#/$defs/BackfillStage"
+    },
+    "supersedes_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Supersedes Id"
+    },
+    "trade_date": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Trade Date"
+    }
+  },
+  "required": [
+    "batch_id",
+    "batch_type",
+    "dataset",
+    "provider_policy_id",
+    "priority",
+    "stage"
+  ],
+  "title": "BackfillTaskRequirements",
+  "type": "object"
+}

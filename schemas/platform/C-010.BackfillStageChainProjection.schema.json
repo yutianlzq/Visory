@@ -1,0 +1,396 @@
+{
+  "$defs": {
+    "BackfillBatchProjection": {
+      "additionalProperties": false,
+      "properties": {
+        "batch_id": {
+          "title": "Batch Id",
+          "type": "string"
+        },
+        "batch_state": {
+          "$ref": "#/$defs/BackfillStatus"
+        },
+        "batch_type": {
+          "$ref": "#/$defs/BackfillBatchType"
+        },
+        "blocked_reason_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Blocked Reason Code"
+        },
+        "canonical_partition_refs": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Canonical Partition Refs",
+          "type": "array"
+        },
+        "checkpoint_phase": {
+          "title": "Checkpoint Phase",
+          "type": "string"
+        },
+        "completed_range": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "format": "date",
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Completed Range"
+        },
+        "dataset": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Dataset",
+          "type": "string"
+        },
+        "date_from": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Date From"
+        },
+        "date_to": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Date To"
+        },
+        "dependency_task_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Dependency Task Ids",
+          "type": "array"
+        },
+        "differences_summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Differences Summary"
+        },
+        "dry_run": {
+          "title": "Dry Run",
+          "type": "boolean"
+        },
+        "failed_range": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "format": "date",
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Failed Range"
+        },
+        "failed_ranges": {
+          "default": [],
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "format": "date",
+                "type": "string"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Failed Ranges",
+          "type": "array"
+        },
+        "failure_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Failure Code"
+        },
+        "plan_only": {
+          "title": "Plan Only",
+          "type": "boolean"
+        },
+        "priority": {
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Priority",
+          "type": "integer"
+        },
+        "provider_fallback": {
+          "default": false,
+          "title": "Provider Fallback",
+          "type": "boolean"
+        },
+        "provider_policy_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Provider Policy Id",
+          "type": "string"
+        },
+        "provider_run_refs": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Provider Run Refs",
+          "type": "array"
+        },
+        "quality_events": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Quality Events",
+          "type": "array"
+        },
+        "raw_object_refs": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Raw Object Refs",
+          "type": "array"
+        },
+        "resource_usage": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Resource Usage",
+          "type": "object"
+        },
+        "skipped_range": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "format": "date",
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Skipped Range"
+        },
+        "skipped_ranges": {
+          "default": [],
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "format": "date",
+                "type": "string"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Skipped Ranges",
+          "type": "array"
+        },
+        "snapshot_refs": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Snapshot Refs",
+          "type": "array"
+        },
+        "stage": {
+          "$ref": "#/$defs/BackfillStage"
+        },
+        "supersedes_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Supersedes Id"
+        },
+        "task_id": {
+          "title": "Task Id",
+          "type": "string"
+        },
+        "trade_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trade Date"
+        },
+        "unblock_condition": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unblock Condition"
+        }
+      },
+      "required": [
+        "batch_id",
+        "task_id",
+        "batch_state",
+        "batch_type",
+        "stage",
+        "dataset",
+        "provider_policy_id",
+        "priority",
+        "dry_run",
+        "plan_only",
+        "checkpoint_phase"
+      ],
+      "title": "BackfillBatchProjection",
+      "type": "object"
+    },
+    "BackfillBatchType": {
+      "enum": [
+        "MONTH",
+        "YEAR"
+      ],
+      "title": "BackfillBatchType",
+      "type": "string"
+    },
+    "BackfillStage": {
+      "enum": [
+        "IDENTITY_CALENDAR",
+        "PRICE_MONTH",
+        "LIFECYCLE_NAMES",
+        "CORPORATE_ACTION",
+        "FINANCIAL_VALUATION",
+        "INDUSTRY_MEMBERS",
+        "NON_CORE_OBSERVATION"
+      ],
+      "title": "BackfillStage",
+      "type": "string"
+    },
+    "BackfillStatus": {
+      "enum": [
+        "PLANNED",
+        "RUNNING",
+        "PAUSED",
+        "PARTIAL",
+        "FAILED",
+        "CANCELLED",
+        "COMPLETED",
+        "UNAVAILABLE",
+        "QUARANTINED"
+      ],
+      "title": "BackfillStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Ordered read projection for the created prefix or partial stage chain.",
+  "properties": {
+    "batches": {
+      "items": {
+        "$ref": "#/$defs/BackfillBatchProjection"
+      },
+      "maxItems": 7,
+      "minItems": 1,
+      "title": "Batches",
+      "type": "array"
+    }
+  },
+  "required": [
+    "batches"
+  ],
+  "title": "BackfillStageChainProjection",
+  "type": "object"
+}

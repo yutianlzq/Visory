@@ -25,6 +25,7 @@ const TokenUsagePage = lazy(() => import('./pages/TokenUsagePage'));
 const StockScreeningPage = lazy(() => import('./pages/StockScreeningPage'));
 const OperationsTasksPage = lazy(() => import('./pages/OperationsTasksPage'));
 const DataQualityPage = lazy(() => import('./pages/DataQualityPage'));
+const BackfillPage = lazy(() => import('./pages/BackfillPage'));
 
 const AppContent: React.FC = () => {
   const location = useLocation();
@@ -91,6 +92,7 @@ const AppContent: React.FC = () => {
         <Route path="/usage" element={<TokenUsagePage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/operations/tasks/:taskId?" element={<OperationsTasksPage />} />
+        <Route path="/operations/backfills" element={<BackfillPage />} />
         <Route path="/data-quality" element={<DataQualityPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>

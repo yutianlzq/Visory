@@ -11,7 +11,10 @@ from api.platform.responses import build_list_envelope, build_success_envelope
 from src.services.platform.task_control import TaskControlError
 from src.services.platform.provider_registry import ProviderRegistryService
 from src.services.platform.data_quality import DataQualityError, DataQualityService
+from src.services.platform.backfill import BackfillService, BackfillError
 from src.schemas.platform import (
+    BackfillBatchRequest,
+    BackfillStageChainRequest,
     DataQualityActionRequest,
     DataQualityQuery,
     QualityStatus,
@@ -58,11 +61,137 @@ def list_datasets(request: Request) -> PlatformSuccessEnvelope:
     return build_success_envelope(request=request, data={"datasets": payload["datasets"]}, data_snapshot_id=None)
 
 
+def _backfill_service(request: Request) -> BackfillService:
+    service = getattr(request.app.state, "backfill_service", None)
+    if service is None:
+        raise platform_error(503, details={"dependency": "postgresql", "operation": "backfill"})
+    return service
+
+
+@router.get("/backfills", response_model=object, summary="List historical backfill batches")
+def list_backfills(
+    request: Request,
+    tab: str | None = Query(default=None),
+    task_state: str | None = Query(default=None),
+    requested_by: str | None = Query(default=None),
+    cursor: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+) -> object:
+    try:
+        query = TaskListQuery.model_validate({"tab": tab, "task_state": task_state, "requested_by": requested_by, "cursor": cursor, "limit": limit, "task_type": "backfill"})
+        batches, next_cursor, has_more = _backfill_service(request).list_batches(query)
+    except BackfillError as exc:
+        raise platform_error(exc.status_code, code=exc.error_code, message=exc.public_message, retryable=exc.retryable) from exc
+    except TaskControlError as exc:
+        _raise_task_error(exc)
+    except PlatformDatabaseError as exc:
+        _raise_task_database_error(exc)
+    return build_list_envelope(
+        request=request,
+        data=[batch.model_dump(mode="json") for batch in batches],
+        cursor=cursor,
+        next_cursor=next_cursor,
+        limit=limit,
+        has_more=has_more,
+        data_snapshot_id=None,
+        generated_at=None,
+    )
+
+
+@router.post("/backfills/stage-chain", response_model=PlatformSuccessEnvelope, summary="Create or reconcile the controlled seven-stage historical backfill chain")
+def create_backfill_stage_chain(
+    request_body: BackfillStageChainRequest,
+    request: Request,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+) -> PlatformSuccessEnvelope:
+    if idempotency_key is None:
+        raise platform_error(400, code="TASK_IDEMPOTENCY_KEY_REQUIRED", message="Idempotency-Key is required.")
+    try:
+        result = _backfill_service(request).create_stage_chain(
+            request_body,
+            idempotency_key=idempotency_key,
+        )
+    except BackfillError as exc:
+        raise platform_error(exc.status_code, code=exc.error_code, message=exc.public_message, retryable=exc.retryable) from exc
+    except TaskControlError as exc:
+        _raise_task_error(exc)
+    except PlatformDatabaseError as exc:
+        _raise_task_database_error(exc)
+    return build_success_envelope(request=request, data=result.model_dump(mode="json"), data_snapshot_id=None)
+
+
+@router.get("/backfills/{batch_id}", response_model=PlatformSuccessEnvelope, summary="Read a historical backfill batch")
+def get_backfill(batch_id: str, request: Request) -> PlatformSuccessEnvelope:
+    try:
+        result = _backfill_service(request).get_batch(batch_id)
+    except BackfillError as exc:
+        raise platform_error(exc.status_code, code=exc.error_code, message=exc.public_message, retryable=exc.retryable) from exc
+    except TaskControlError as exc:
+        _raise_task_error(exc)
+    except PlatformDatabaseError as exc:
+        _raise_task_database_error(exc)
+    return build_success_envelope(request=request, data=result.model_dump(mode="json"), data_snapshot_id=None)
+
+
+@router.post("/backfills", response_model=PlatformSuccessEnvelope, summary="Create a controlled historical backfill batch")
+def create_backfill(request_body: BackfillBatchRequest, request: Request, idempotency_key: str | None = Header(default=None, alias="Idempotency-Key")) -> PlatformSuccessEnvelope:
+    if idempotency_key is None:
+        raise platform_error(400, code="TASK_IDEMPOTENCY_KEY_REQUIRED", message="Idempotency-Key is required.")
+    try:
+        result = _backfill_service(request).create_batch(request_body, idempotency_key=idempotency_key)
+    except BackfillError as exc:
+        raise platform_error(exc.status_code, code=exc.error_code, message=exc.public_message, retryable=exc.retryable) from exc
+    except TaskControlError as exc:
+        _raise_task_error(exc)
+    except PlatformDatabaseError as exc:
+        _raise_task_database_error(exc)
+    return build_success_envelope(request=request, data=result.model_dump(mode="json"), data_snapshot_id=None)
+
+
 def _data_quality_service(request: Request) -> DataQualityService:
     service = getattr(request.app.state, "data_quality_service", None)
     if service is None:
         raise platform_error(503, details={"dependency": "postgresql", "operation": "data_quality"})
     return service
+
+
+
+@router.get("/data-quality/backfills/{batch_id}", response_model=PlatformSuccessEnvelope, summary="Read backfill batch projection through P-DATA")
+def get_data_quality_backfill(batch_id: str, request: Request) -> PlatformSuccessEnvelope:
+    """Expose the Backfill projection through the existing read-only P-DATA envelope."""
+
+    try:
+        projection = _backfill_service(request).get_batch(batch_id)
+    except BackfillError as exc:
+        raise platform_error(exc.status_code, code=exc.error_code, message=exc.public_message, retryable=exc.retryable) from exc
+    except TaskControlError as exc:
+        _raise_task_error(exc)
+    except PlatformDatabaseError as exc:
+        _raise_task_database_error(exc)
+    return build_success_envelope(
+        request=request,
+        data=projection.model_dump(mode="json"),
+        data_snapshot_id=None,
+    )
+
+
+@router.get("/data-quality/backfills/{batch_id}/stages", response_model=PlatformSuccessEnvelope, summary="Read the created backfill stage chain through P-DATA")
+def get_data_quality_backfill_stage_chain(batch_id: str, request: Request) -> PlatformSuccessEnvelope:
+    """Expose the created backfill stages as a read-only P-DATA projection."""
+
+    try:
+        projection = _backfill_service(request).get_stage_chain(batch_id)
+    except BackfillError as exc:
+        raise platform_error(exc.status_code, code=exc.error_code, message=exc.public_message, retryable=exc.retryable) from exc
+    except TaskControlError as exc:
+        _raise_task_error(exc)
+    except PlatformDatabaseError as exc:
+        _raise_task_database_error(exc)
+    return build_success_envelope(
+        request=request,
+        data=projection.model_dump(mode="json"),
+        data_snapshot_id=None,
+    )
 
 
 def _raise_data_quality_error(exc: DataQualityError) -> None:
