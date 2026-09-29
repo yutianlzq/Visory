@@ -1704,6 +1704,91 @@
       ]
     },
     {
+      "business_key": "plan_hash",
+      "compatibility": "plan fields are additive; dependency semantics require a new schema version",
+      "consumers": [
+        "feature store worker",
+        "formal consumers"
+      ],
+      "contract_id": "C-006/FeatureDependencyPlan",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/feature-dependency-plan.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-006.FeatureDependencyPlan.schema.json",
+      "lineage_fields": [
+        "dependency_edges",
+        "dataset_refs",
+        "capability_ids"
+      ],
+      "owner_module": "src.schemas.platform.indicator",
+      "producer": "Feature Dependency Resolver",
+      "quality_semantics": [
+        "topological order is deterministic",
+        "PIT and capability gates are explicit"
+      ],
+      "resource_id_field": null,
+      "retention_class": "AUDIT",
+      "schema_version": "1.0.0",
+      "storage_profile": "resolver output; no feature values or physical paths",
+      "time_semantics": [
+        "cutoff_at"
+      ],
+      "version_semantics": [
+        "required_instances[].definition_version"
+      ]
+    },
+    {
+      "business_key": "indicator_id + definition_version",
+      "compatibility": "definitions are immutable versions; new semantics require a new definition_version",
+      "consumers": [
+        "feature dependency resolver",
+        "feature store"
+      ],
+      "contract_id": "C-006/IndicatorDefinition",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/indicator-definition-moving-average.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-006.IndicatorDefinition.schema.json",
+      "lineage_fields": [
+        "input_dataset_refs",
+        "input_indicator_refs",
+        "capability_id"
+      ],
+      "owner_module": "src.schemas.platform.indicator",
+      "producer": "Indicator Registry",
+      "quality_semantics": [
+        "definition hash is canonical",
+        "formula and implementation references are controlled"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL indicator_definition control-plane contract",
+      "time_semantics": [
+        "created_at",
+        "deprecated_at"
+      ],
+      "version_semantics": [
+        "schema_version",
+        "definition_version",
+        "implementation_version"
+      ]
+    },
+    {
       "business_key": "attempt_id",
       "compatibility": "retries create new immutable attempts and never overwrite earlier attempt evidence",
       "consumers": [

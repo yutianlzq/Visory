@@ -86,6 +86,18 @@ from .enums import (
 )
 from .hashing import ContentHashValue, DEFAULT_HASH_PROFILE, HashProfile, canonical_json_bytes, compute_content_hash
 from .identity import EntityIdentity, build_entity_key, parse_entity_key
+from .indicator import (
+    DatasetInputRef,
+    FeatureDependencyEdge,
+    FeatureDependencyPlan,
+    FeatureInstance,
+    FeatureInstanceKey,
+    FormulaType,
+    IndicatorDefinition,
+    IndicatorDependencyRef,
+    IndicatorOutputDefinition,
+    ParameterDefinition,
+)
 from .registry import PLATFORM_CONTRACTS, ContractRegistration, ContractRegistry
 from .resources import ResourceRef, generate_resource_id, generate_uuid7, parse_resource_id
 from .provider import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy, ProviderSettingsProvider, ProviderSettingsProjection
@@ -276,4 +288,14 @@ __all__ = [
     "parse_resource_id",
     "ensure_safe_actual_upstream",
     "ensure_secret_free",
+    "DatasetInputRef",
+    "FeatureDependencyEdge",
+    "FeatureDependencyPlan",
+    "FeatureInstance",
+    "FeatureInstanceKey",
+    "FormulaType",
+    "IndicatorDefinition",
+    "IndicatorDependencyRef",
+    "IndicatorOutputDefinition",
+    "ParameterDefinition",
 ]
