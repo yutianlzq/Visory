@@ -311,3 +311,33 @@
 - 2026-09-28 当前 Goal 续验：本地分支 `main`、`HEAD` 与缓存 `origin/main` 仍为 `46804661dbb897433f114c25898c8da7021254a1`，`main...origin/main = 0/0`；本次 `git ls-remote origin refs/heads/main` 因 GitHub 连接低速超时失败，记录为实时远程基线 `BLOCKER`，未执行 `fetch`、`pull`、`reset`、`stash`、`commit`、`push` 或 PR。定向 Python 为 `182 passed, 15 skipped, 2 warnings`；Backfill Web Vitest 为 `9 passed`；Contract/generation、治理检查、受影响 Python `py_compile`、定向 ESLint、`tsc -b`、Vite build 和 `git diff --check` 通过。全量 Web ESLint 的 41 个错误仍属于未修改路径既有问题；隔离 PostgreSQL `16 passed` 证据仍为 deterministic fixture，不代表生产认证。WP-0207 保持 `IN_PROGRESS / NOT CERTIFIED / 13/45`。
 - 2026-09-28 当前 Goal 续验补充：使用临时 `postgres:16-alpine`、tmpfs、loopback-only `127.0.0.1:55439` 和临时 Secret 文件执行 `tests/integration/platform/test_backfill_integration.py`，结果 `16 passed, 2 warnings`；测试容器和凭据已清理。该结果仅证明隔离 deterministic fixture，不代表真实 Provider、生产数据库、真实 `/data` 或生产回填认证。WP-0207 仍为 `IN_PROGRESS / NOT CERTIFIED / 13/45`。
 - 2026-09-28 当前 Goal 续验：实时 `git ls-remote origin refs/heads/main` 成功返回 `46804661dbb897433f114c25898c8da7021254a1`，与本地 `HEAD`、`main` 和缓存 `origin/main` 一致，`main...origin/main = 0/0`。WP-0207 定向 Python/Contract 套件为 `182 passed, 15 skipped, 2 warnings`；Contract/generated exports、`check_ai_assets.py`、`check_visory_baseline.py` 均通过；范围审计未发现 WP-0301 或相邻 Work Package 路径。WP-0207 仍保持 `IN_PROGRESS / NOT CERTIFIED / 13/45`。
+
+## 2026-09-28 当前 checkout 与 TaskLease 脱敏复核
+
+- 当前实际 checkout 为 `codex/wp-0207-backfill`；文档记录前代码工作树 clean，本轮当前仅有本节文档改动；HEAD 为 `b5ab2da578cbad1e34e854cc3b67a0bc957185bb`；本地 `main`、缓存 `origin/main` 与实时 `git ls-remote origin refs/heads/main` 均为 `46804661dbb897433f114c25898c8da7021254a1`，未执行 fetch、pull、reset、stash、commit 或 push。
+- WP-0206 代码、`GOAL-G019-STATUS.md` 与既有 Run `34581431121` 证据未被 WP-0207 覆盖；WP-0207 仍保持 `IN_PROGRESS / NOT CERTIFIED / 13/45`，不得标记 `VERIFIED` 或 `RELEASED`。
+- 只读审计确认 `TaskLease.lease_token` 仅在 worker/Task Control Plane 内部使用；公共任务详情移除 `lease_token_hash`，列表/取消/重试仅返回 `TaskRecord`，SSE 仅返回 `TaskEventRecord`，Backfill/P-DATA Projection 不包含 raw lease token。当前未发现 WP-0207 直接的 raw lease token 公共暴露；本轮不修改既有 Durable Task 脱敏契约。
+- 本轮不连接真实 Provider、生产数据库、真实 `/data`、生产调度或生产回填；隔离 deterministic fixture 证据不等同于生产认证。
+
+## 2026-09-28 当前回合续验结果
+
+- 实时 `git ls-remote origin refs/heads/main` 成功返回 `46804661dbb897433f114c25898c8da7021254a1`；当前 checkout 为 `codex/wp-0207-backfill`，HEAD 为 `b5ab2da578cbad1e34e854cc3b67a0bc957185bb`，未执行任何 Git 写操作。
+- `.venv` 定向 Python 套件 `tests/platform/test_backfill.py tests/platform/api/test_generated_contracts.py tests/integration/platform/test_data_quality_api.py` 为 `188 passed, 3 warnings`；临时 `postgres:16-alpine`、tmpfs、loopback-only 容器中的 `tests/integration/platform/test_backfill_integration.py` 为 `16 passed, 1 warning`，容器与测试凭据已清理。
+- Contract Registry/generated exports、`check_ai_assets.py`、`check_visory_baseline.py`、22 个受影响 Python 文件 `py_compile`、`git diff --check`、Backfill Web Vitest `9 passed`、修改文件定向 ESLint、`tsc -b` 和 Vite build 均通过。
+- 当前证据仍不包含真实 Provider、生产数据库、真实 `/data`、生产调度或生产回填认证；WP-0207 保持 `IN_PROGRESS / NOT CERTIFIED / 13/45`，不得标记 `VERIFIED` 或 `RELEASED`。
+
+## 2026-09-28 当前回合远程阻断复核
+
+- 本轮只读执行 `git ls-remote origin refs/heads/main` 因 GitHub 连接低速超时失败；本次未取得实时远程 SHA，记录为远程基线 `BLOCKER`。
+- 本地 `main`、缓存 `origin/main` 仍为 `46804661dbb897433f114c25898c8da7021254a1`；当前 checkout 仍为 `codex/wp-0207-backfill`，未执行 fetch、pull、reset、stash、commit 或 push。
+- 本地 WP-0207 验收证据保持有效。该历史记录形成时尚未完成远程复核；现已确认 PR #38 已存在，Run `36404883866` 的三项远程阻断 Job 均成功，因此本条“专用 PR 与远程阻断 CI 仍未建立”结论已被后续事实取代；状态继续为 `IN_PROGRESS / NOT CERTIFIED / 13/45`，不得标记 `VERIFIED` 或 `RELEASED`。
+
+
+## 2026-09-29 当前权威复核与远程证据
+
+- 当前 checkout 为 `codex/wp-0207-backfill`，HEAD 为 `b5ab2da578cbad1e34e854cc3b67a0bc957185bb`；本地 `main`、缓存 `origin/main` 与实时 `git ls-remote origin refs/heads/main` 均为 `46804661dbb897433f114c25898c8da7021254a1`。工作树仅保留本次两份状态文档的有意修订，未执行 reset、stash 或覆盖用户改动。
+- WP-0206 仍以 `46804661dbb897433f114c25898c8da7021254a1` 为合入基线；代码、`GOAL-G019-STATUS.md` 与 Run `34581431121` 的既有证据未被 WP-0207 覆盖。
+- 已确认现有 PR #38（`feat: add WP-0207 backfill control plane`）对应当前 HEAD，未创建重复 PR；Run `36404883866` 的 Governance and repository boundaries、Python deterministic gate、Web lint and build 三个阻断 Job 均 `completed / success`。
+- 本地验收证据保持：定向 Python `188 passed, 3 warnings`；隔离 `postgres:16-alpine` Backfill integration `16 passed, 1 warning`；Backfill Web Vitest `9 passed`；Contract/generated exports、治理检查、受影响 Python `py_compile`、定向 ESLint、`tsc -b`、Vite build 和 `git diff --check` 通过。
+- 全量 Web ESLint 的 41 个错误和完整 Web 测试的既有失败仍未被 WP-0207 修改；不将其宣称为 WP-0207 通过。未连接真实 Provider、生产数据库、真实 `/data`、生产调度或生产回填。
+- WP-0207 继续保持 `IN_PROGRESS / NOT CERTIFIED / 13/45`；尚未满足七类数据完整逐阶段生产级发布、完整脱敏矩阵和生产认证等 VERIFIED 门槛，不得标记 `VERIFIED` 或 `RELEASED`。

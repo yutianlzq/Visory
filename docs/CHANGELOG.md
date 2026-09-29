@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/yutianlzq/Visory/releases) page.
 
 ## [Unreleased]
+- [文档] WP-0207 2026-09-29 权威复核：确认 PR #38 对应 head `b5ab2da578cbad1e34e854cc3b67a0bc957185bb`，远程 Run `36404883866` 的 Governance/Python deterministic gate/Web lint and build 全部成功；状态继续为 `IN_PROGRESS / NOT CERTIFIED`，生产资源未连接。
 - [测试] WP-0207 2026-09-28 复验：实时 `git ls-remote origin refs/heads/main` 成功返回 `46804661dbb897433f114c25898c8da7021254a1`；隔离临时 `postgres:16` 容器执行 Backfill integration 为 `16 passed, 2 warnings`，容器与测试凭据已清理，未连接生产资源。
 - [修复] WP-0207 Backfill worker 现在累计并持久化各分区 `differences_summary`，恢复和最终 Projection 不再丢失已完成分区的差异摘要；checkpoint 读取同时拒绝非字符串、空值或超长摘要；新增 YEAR 分区成功/失败 checkpoint 回归。
 - [修复] WP-0207 deterministic fallback publication 现在保留 primary/supplement 的完整 CanonicalPartition lineage，不再将多源回填压缩为单一伪发布引用；新增回归断言验证两条 Canonical lineage 可查询且幂等语义不变。
