@@ -1,4 +1,15 @@
 # Visory-G020 / WP-0207 分批 Backfill 状态
+## 2026-09-29 合入后最终闭环复核
+
+- PR #38 已按授权以普通 merge 合入：`merged=true`、状态 `closed`，base SHA `46804661dbb897433f114c25898c8da7021254a1`，实际 PR head SHA `528baa072d32f0242cfdcfa8bb7b1314de19db78`，merge commit `a1d31f9c3d16e62ea4fd78217c992bfe96dc33a8`，`merged_at=2026-09-29T04:01:18Z`；未使用 squash 或 rebase。
+- 最终 PR 只读审阅结果：GitHub submitted reviews 为 0，review threads 为 0，PR conversation comments 为 0；改动边界仍限定为 WP-0207 Backfill Schema/Registry/OpenAPI/generated exports、Batch/Task Requirements/Projection、MONTH/YEAR planning、七阶段 Stage Chain、Durable Task lease/checkpoint/retry/cancel、BLOCKED/UNBLOCKED、Raw→Canonical→Snapshot 子任务链、Provider fallback/unavailable/quarantine、Correction lineage、Operations/P-DATA 只读投影、Backfill Web/API、测试/Golden/PostgreSQL integration 与 acceptance 文档。
+- 合入后手动触发同一 Baseline CI 的 Run `36520276484`（`workflow_dispatch`，head branch `main`，head SHA `a1d31f9c3d16e62ea4fd78217c992bfe96dc33a8`）已完成成功：Governance and repository boundaries、Python deterministic gate、Web lint and build 三个阻断 Job 均 `completed / success`。
+- `git ls-remote origin refs/heads/main` 实时返回 `a1d31f9c3d16e62ea4fd78217c992bfe96dc33a8`；本地 `origin/main` 已定向更新为同一 SHA。为遵守不覆盖其他分支约束，本地 `main` 仍为其原值 `46804661dbb897433f114c25898c8da7021254a1`，是远程 main 的祖先而非当前同值；当前分支 HEAD 仍为 PR head，且 PR head 是 `origin/main` 的祖先，可追溯至该 merge commit。
+- 本节记录完成后，工作树只允许保留本状态闭环文档的有意未提交修改；未创建新的代码提交、未 push、未修改远程 PR、未连接真实 Provider/生产数据库/真实 `/data`/生产调度或生产回填。
+- 状态保持：`Visory-G020 = COMPLETE`；`WP-0207 = IN_PROGRESS`；production certification = `NOT CERTIFIED`；implemented work packages = `13/45`；`RELEASED = false`；`WP-0301 = NOT_STARTED`。
+- 回滚方式：如需撤销合入结果，按维护者流程对完整 merge change set 执行 revert（merge commit 为 `a1d31f9c3d16e62ea4fd78217c992bfe96dc33a8`，不得 reset 或 force-push），不涉及生产迁移或生产数据回滚。
+
+
 
 ## 2026-09-28 当前回合最新复核：实时远程基线成功
 
@@ -47,7 +58,7 @@
 
 ## 当前结论
 
-- Goal 和 WP-0207 均为 `IN_PROGRESS`，累计完成仍为 `13/45`。
+- Goal-G020 已完成并已合入；WP-0207 仍为 `IN_PROGRESS`，累计完成仍为 `13/45`。
 - 生产认证 `NOT CERTIFIED`；未满足 VERIFIED 条件，不得标记 RELEASED。
 - 当前代码已形成第一阶段隔离安全最小闭环：MONTH 1 分区与 YEAR 12 分区通过既有 RawIngestion→CanonicalNormalization→SnapshotBuild worker、PostgreSQL 注册表和物理 Artifact/Manifest 验证；七阶段控制链已复用既有 Durable Task 创建、BLOCKED/解除阻断和前置阶段依赖语义。Provider transport 仍为隔离 deterministic fixture，不代表真实 Provider、生产数据或七类数据完整执行/发布验收。
 ## 2026-09-28 最新补验：批次查询一致性
