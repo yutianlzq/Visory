@@ -1,4 +1,5 @@
 from .benchmark import BenchmarkIndexBar
+from .backfill import BackfillBatchProjection, BackfillBatchRequest, BackfillBatchType, BackfillStage, BackfillStageChainProjection, BackfillStageChainRequest, BackfillStatus, BackfillTaskRequirements
 from .canonical import (
     CanonicalNormalizationTaskRequirements,
     CanonicalNormalizationTaskResult,
@@ -134,6 +135,14 @@ from .versioning import PublicationMetadata, RevisionMetadata, TaskStateMetadata
 
 __all__ = [
     "BenchmarkIndexBar",
+    "BackfillBatchProjection",
+    "BackfillBatchRequest",
+    "BackfillBatchType",
+    "BackfillStage",
+    "BackfillStageChainProjection",
+    "BackfillStageChainRequest",
+    "BackfillStatus",
+    "BackfillTaskRequirements",
     "DATA_QUALITY_CAPABILITIES",
     "DataQualityActionRequest",
     "DataQualityActionResult",

@@ -6,6 +6,7 @@ from typing import Any
 
 from pydantic.json_schema import models_json_schema
 
+from .backfill import BackfillBatchProjection, BackfillBatchRequest, BackfillStageChainProjection, BackfillStageChainRequest, BackfillTaskRequirements
 from .canonical import CanonicalNormalizationTaskRequirements, CanonicalNormalizationTaskResult, CanonicalPartition, CanonicalQualityReport, ProviderCanonicalMappingDefinition
 from .artifact import (
     ArtifactManifest,
@@ -57,6 +58,11 @@ from .api import (
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FRONTEND_TYPE_EXPORT = REPO_ROOT / "apps" / "dsa-web" / "src" / "types" / "generated" / "platform-api.ts"
 _API_MODELS = (
+    BackfillBatchProjection,
+    BackfillBatchRequest,
+    BackfillStageChainProjection,
+    BackfillStageChainRequest,
+    BackfillTaskRequirements,
     DatasetDefinition,
     ProviderCapability,
     ProviderDefinition,
@@ -133,6 +139,44 @@ def render_platform_openapi() -> dict[str, Any]:
             "/api/platform/v1/provider-registry": {"get": {"operationId": "getProviderRegistry", "responses": {"200": {"description": "Dataset and provider registry projection", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}}, "summary": "Read dataset and provider registry"}},
             "/api/platform/v1/providers": {"get": {"operationId": "listProviders", "responses": {"200": {"description": "Registered providers", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}}, "summary": "List registered providers"}},
             "/api/platform/v1/datasets": {"get": {"operationId": "listDatasets", "responses": {"200": {"description": "Registered datasets", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}}, "summary": "List registered datasets"}},
+            "/api/platform/v1/backfills": {
+                "get": {
+                    "operationId": "listBackfills",
+                    "parameters": [
+                        {"name": "tab", "in": "query", "schema": {"type": "string"}},
+                        {"name": "task_state", "in": "query", "schema": {"type": "string"}},
+                        {"name": "requested_by", "in": "query", "schema": {"type": "string"}},
+                        {"name": "cursor", "in": "query", "schema": {"type": "string"}},
+                        {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50}},
+                    ],
+                    "responses": {"200": {"description": "Historical backfill projections", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformListEnvelope"}}}}},
+                    "summary": "List historical backfill batches",
+                },
+                "post": {
+                    "operationId": "createBackfill",
+                    "parameters": [{"name": "Idempotency-Key", "in": "header", "required": True, "schema": {"type": "string"}}],
+                    "requestBody": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/BackfillBatchRequest"}}}, "required": True},
+                    "responses": {"200": {"description": "Controlled backfill task created", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}},
+                    "summary": "Create a controlled historical backfill batch",
+                },
+            },
+            "/api/platform/v1/backfills/stage-chain": {
+                "post": {
+                    "operationId": "createBackfillStageChain",
+                    "parameters": [{"name": "Idempotency-Key", "in": "header", "required": True, "schema": {"type": "string"}}],
+                    "requestBody": {"content": {"application/json": {"schema": {"$ref": "#/components/schemas/BackfillStageChainRequest"}}}, "required": True},
+                    "responses": {"200": {"description": "Controlled seven-stage backfill task chain created or reconciled", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}},
+                    "summary": "Create or reconcile the controlled seven-stage historical backfill chain",
+                },
+            },
+            "/api/platform/v1/backfills/{batch_id}": {
+                "get": {
+                    "operationId": "getBackfill",
+                    "parameters": [{"name": "batch_id", "in": "path", "required": True, "schema": {"type": "string"}}],
+                    "responses": {"200": {"description": "Historical backfill projection", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}},
+                    "summary": "Read a historical backfill batch",
+                },
+            },
             "/api/platform/v1/asset-resolutions": {
                 "post": {
                     "operationId": "resolveAssetIdentity",
@@ -190,6 +234,14 @@ def render_platform_openapi() -> dict[str, Any]:
                     },
                     "summary": "Read the data-quality projection",
                 }
+            },
+            "/api/platform/v1/data-quality/backfills/{batch_id}": {
+                "get": {
+                    "operationId": "getDataQualityBackfill",
+                    "parameters": [{"name": "batch_id", "in": "path", "required": True, "schema": {"type": "string"}}],
+                    "responses": {"200": {"description": "P-DATA Backfill batch projection", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}},
+                    "summary": "Read the Backfill projection through P-DATA",
+                },
             },
             "/api/platform/v1/data-quality/compare": {
                 "get": {

@@ -8,6 +8,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/yutianlzq/Visory/releases) page.
 
 ## [Unreleased]
+- [文档] WP-0207 2026-09-29 权威复核：确认 PR #38 对应 head `b5ab2da578cbad1e34e854cc3b67a0bc957185bb`，远程 Run `36404883866` 的 Governance/Python deterministic gate/Web lint and build 全部成功；状态继续为 `IN_PROGRESS / NOT CERTIFIED`，生产资源未连接。
+- [测试] WP-0207 2026-09-28 复验：实时 `git ls-remote origin refs/heads/main` 成功返回 `46804661dbb897433f114c25898c8da7021254a1`；隔离临时 `postgres:16` 容器执行 Backfill integration 为 `16 passed, 2 warnings`，容器与测试凭据已清理，未连接生产资源。
+- [修复] WP-0207 Backfill worker 现在累计并持久化各分区 `differences_summary`，恢复和最终 Projection 不再丢失已完成分区的差异摘要；checkpoint 读取同时拒绝非字符串、空值或超长摘要；新增 YEAR 分区成功/失败 checkpoint 回归。
+- [修复] WP-0207 deterministic fallback publication 现在保留 primary/supplement 的完整 CanonicalPartition lineage，不再将多源回填压缩为单一伪发布引用；新增回归断言验证两条 Canonical lineage 可查询且幂等语义不变。
+- [测试] WP-0207 当前回合定向 Python 套件为 `185 passed, 15 skipped, 3 warnings`；PostgreSQL integration 因当前环境未配置连接变量而跳过，实时 `git ls-remote` 复核间歇性失败（exit 128），因此不将缓存 ref 当作稳定实时远程证据，状态保持 `IN_PROGRESS / NOT CERTIFIED`。
+- [改进] WP-0207 Backfill 输入契约支持 `trade_date` 单日 shorthand，规范化为同日范围并拒绝与显式日期范围冲突的请求。
+- [修复] WP-0207 阶段链 Projection 拒绝跳过中间阶段的非连续 partial chain，避免 P-DATA 暴露不完整的伪合法链。
+- [测试] WP-0207 当前回合实时远程基线复核因无法连接 `github.com:443` 失败；本地 `HEAD`、`main` 与缓存 `origin/main` 仍一致，但不将缓存 ref 作为实时远程成功证据。
+- [测试] WP-0207 当前回合隔离 PostgreSQL 16 补验：临时 tmpfs/loopback-only 容器执行 `tests/integration/platform/test_backfill_integration.py`，`16 passed, 2 warnings`；容器、独立数据库和临时凭据已清理，未连接生产资源。
+- [测试] WP-0207 Backfill 单元与 generated contract 定向复验：`175 passed, 3 warnings`。
+- [测试] WP-0207 当前回合复验：相关 Python 定向套件 `183 passed, 15 skipped, 4 warnings`，Backfill API/Page 定向 Vitest `9 passed`，Contract Registry/generated exports、治理检查、受影响 Python `py_compile` 与 `git diff --check` 通过；bundled Node.js v24.19.0 下 Vite build 与修改文件定向 ESLint 通过，全量 Web ESLint 仍有 41 个既有错误。
+- [测试] WP-0207 全量 Web ESLint 当前仍有 41 个既有错误，系统 Node.js v16.20.2 另受 `structuredClone` 运行时限制；失败路径位于未修改页面/组件及既有 Operations 页面，本轮不扩大范围修复，状态保持 `IN_PROGRESS / NOT CERTIFIED`。
+- [修复] WP-0207 Backfill 单批查询在同一 `batch_id` 出现多个 Durable Task 记录时 fail-closed，返回稳定 `BACKFILL_BATCH_AMBIGUOUS`，并增加重复记录回归测试。
+- [测试] WP-0207 使用临时 tmpfs/loopback-only `postgres:16` 容器执行 Backfill PostgreSQL integration，`16 passed, 1 warning`；测试容器和临时凭据已清理。
+- [测试] WP-0207 本轮使用 bundled Node.js v24.19.0 执行修改文件定向 ESLint 与 Web build 均成功；全量 Web ESLint 仍有 41 个既有未修改路径错误，构建产物包含 BackfillPage chunk。
+- [修复] WP-0207 Web Backfill 错误投影增加前端防御性脱敏与公开错误字段校验，拒绝凭据、绝对路径、内部格式和超长消息进入页面。
+- [测试] WP-0207 增加 P-DATA Backfill 与四个 Backfill 公开入口未知异常回归，验证内部异常、凭据、绝对路径和原始 payload 不进入公开 API Envelope。
+- [测试] WP-0207 2026-09-28 复验：相关 Python 定向套件 `389 passed, 53 skipped, 3 warnings`，隔离 PostgreSQL Backfill integration `16 passed, 1 warning`，Contract Registry/generated exports、治理检查、受影响 `py_compile`、`git diff --check`、Backfill Vitest `7 passed` 和 bundled Node.js v24.19.0 下 Web lint/build 均通过；完整 Web Vitest 的 3 个失败来自未修改的既有页面测试路径，因此 WP-0207 仍为 `IN_PROGRESS / NOT CERTIFIED`。
+- [改进] WP-0207 增加只读 P-DATA 阶段链下钻 `GET /api/platform/v1/data-quality/backfills/{batch_id}/stages`；复用现有 Durable Task 查询、Backfill Projection、API Envelope 和脱敏错误契约，按路线图固定顺序返回已创建阶段，不创建 Task 或业务发布。
+- [测试] WP-0207 Backfill/阶段链/P-DATA/generated contract 定向 Python 套件为 `173 passed, 4 warnings`；本轮使用本地已有 `postgres:16` 镜像启动 tmpfs/loopback 临时容器复验 `tests/integration/platform/test_backfill_integration.py`，结果为 `16 passed, 2 warnings`。
+- [测试] WP-0207 使用本地 `postgres:16` 镜像的 tmpfs/loopback 隔离容器复验 Backfill integration `16 passed, 2 warnings`，覆盖 1 个月与 1 年 pilot、dry-run/plan-only 无业务发布、checkpoint 恢复、幂等、取消/失败、fallback/quarantine/unavailable、Correction 不覆盖旧 Snapshot 与依赖 Task 原子阻断创建；持久化 `pg` 容器为 `Exited (255)`，未启动、未复用、未修改。
+- [测试] WP-0207 同一隔离 PostgreSQL 16 实例上，排除两个因未安装 `markdown2` 而无法导入完整 API 应用的既有模块后，`tests/integration/platform` 为 `81 passed, 3 warnings`；完整目录收集仍有 2 个同源错误。排除三个同源 API 模块后，`tests/platform` 为 `549 passed, 5 skipped, 4 warnings`；完整目录收集仍有 3 个同源错误；测试数据库、临时容器和密码文件已清理，未连接真实 Provider、生产数据库或真实 `/data`。
+- [测试] WP-0207 定向 API/Vitest 回归分别为 `4 passed`/`2 passed`；bundled Node.js `v24.19.0` 直接运行项目本地 ESLint、`tsc -b`、Vite build 均通过。系统 Node.js `v16.20.2` 下的 `npm run lint/build` 受 Node/Vite 版本限制失败，未修改 Web 依赖；WP-0207 仍为 `IN_PROGRESS / NOT CERTIFIED`。
+- [文档] WP-0207 状态文档更新至 2026-09-27，明确本地 Docker PostgreSQL 证据、WP-0206 基线/远程 CI 复核、`markdown2`/Node 版本环境阻塞、未提交未推送边界和七类数据/真实 Provider/生产资源未认证范围。
+
+- [修复] WP-0207 前端 Backfill API 对非 Envelope 异常统一脱敏为公开不可用文案，避免内部异常、凭据和绝对物理路径透传；platformBackfill Vitest 回归 2 passed。
+- [测试] WP-0207 完整离线 pytest gate 为 6836 passed, 83 failed, 84 skipped, 4 deselected, 572 subtests passed；失败集中于既有 Codex transport/process、Local CLI、SQLite/Storage 等 Windows 基线路径，未将该结果误报为完整 backend gate 通过。
+- [改进] WP-0207 增加只读 P-DATA Backfill 下钻 `GET /api/platform/v1/data-quality/backfills/{batch_id}`，复用既有 API Envelope、Backfill Projection 和错误契约，支持查询 checkpoint、完成范围与资源使用，不产生业务发布。
+- [测试] WP-0207 P-DATA Backfill 只读下钻 API 回归 `4 passed, 1 warning`，覆盖 API Envelope、request ID、checkpoint/完成范围和脱敏 `retryable` 错误契约。
+- [测试] WP-0207 在本地已有 `postgres:16` 镜像的 tmpfs 隔离临时容器中完成完整 `tests/integration/platform`，结果 `79 passed, 10 warnings`；临时密码文件与容器已清理，持久化 `pg` 容器未启动或修改。
+- [测试] WP-0207 在本地已有 `postgres:16` 镜像的隔离临时容器中复验七阶段 StageChain worker `1 passed`、Backfill PostgreSQL integration `12 passed, 4 warnings`，并覆盖 MONTH/YEAR pilot、checkpoint、恢复、幂等、失败/取消与质量降级路径；不连接生产数据库或真实 Provider。
+- [测试] WP-0207 Backfill 单元 `151 passed, 3 warnings`、Contract/Golden/Registry/generated 定向套件 `278 passed, 3 warnings`；bundled Node.js `v24.19.0` 下 Web `npm run lint` 与 `npm run build` 均通过。
+- [改进] WP-0207 增加七阶段 `BackfillStageChainRequest/Projection` 与 `/api/platform/v1/backfills/stage-chain`，复用既有 `backfill` Durable Task、`input_refs`、`BLOCKED`/`unblock_task` 和幂等语义；本轮只证明控制链，不代表七类历史数据已完整执行或发布。
+- [测试] WP-0207 使用本地 `postgres:16` 镜像的 tmpfs 隔离容器验证 StageChain `1 passed`、Backfill PostgreSQL integration `11 passed, 4 warnings`；覆盖线性依赖、MONTH/YEAR pilot、checkpoint、恢复、幂等、取消/lease、fallback/quarantine/unavailable、Correction 不覆盖旧 Snapshot 和 Raw→Canonical→Snapshot 子 Task 顺序。
+- [测试] WP-0207 使用 bundled Node.js v24.19.0 执行 Web lint/build 均通过；本轮完整 `tests/integration/platform` 因未改动的 `lark_oapi`/Feishu 导入链触发 Windows fatal exception `0xc000070a` 未完成，WP-0207 仍为 `IN_PROGRESS / NOT CERTIFIED`。
+- [修复] WP-0207 将父 Backfill attempt 的 lease/cancel 校验注入 Raw、Canonical、Snapshot 既有注册事务；并发取消与业务发布通过同一 PostgreSQL Task 行锁线性化，取消先提交时子任务不会注册新业务对象。
+- [修复] WP-0207 配置真实 Raw→Canonical→Snapshot pipeline 时不再把 deterministic Provider 的计划 fixture ID 混入发布血缘；Backfill Projection/Checkpoint 只接受 executor 从 PostgreSQL 注册表取得或恢复的 ProviderRun、RawObject、CanonicalPartition 与 DataSnapshot 引用。
+- [测试] WP-0207 使用本地既有 `postgres:16` 镜像的 tmpfs 隔离容器执行 Backfill integration `10 passed`、平台 integration `75 passed`；除 MONTH 1 分区与 YEAR 12 分区真实 worker 链外，新增父 Task 在三个子对象提交后、保存 checkpoint 前进程退出的跨 attempt 恢复，验证子 Task/worker/对象均不重复；Provider transport 仍为隔离 deterministic fixture，不等价于生产 Provider 或生产对象发布认证。
+- [修复] WP-0207 公开 Backfill Request/Projection 对 `dataset` 统一执行非空和长度约束，避免空数据集延迟到 Durable Task 转换阶段才失败。
+- [改进] WP-0207 将 Task `CANCELLED` 显式投影为 Backfill `CANCELLED` 并在 Operations 页面显示终态，不再与可恢复的 `PAUSED` 混淆。
+- [改进] WP-0207 Backfill 只读 Projection 与 Operations 页面补充 provider_policy_id 和 priority，使每批 Provider policy 与优先级输入可查询；同步更新 Golden、Schema 和 generated frontend types。
+- [修复] WP-0207 checkpoint 仅将已完成业务发布的连续前缀记入 `completed_range`；dry-run、plan-only、Unavailable 与未发布分区只进入跳过/质量证据，不再误报为完成。
+- [测试] WP-0207 补充父 Backfill Task 在子 Raw→Canonical→Snapshot 已成功、写 checkpoint 前崩溃后的确定性恢复回归；重试复用既有成功子 Task 和发布结果，不重复执行子 worker。
+- [修复] WP-0207 公开 Backfill Correction 请求新增 `supersedes_id`，强制与 Snapshot 子 Task 的 `correction_of_snapshot_id` 一致并在 Operations 投影显示；冲突或隐式 Correction fail-closed，仍不代表真实发布事务已认证。
+- [改进] WP-0207 批次 Projection 与 Operations 页面展示脱敏的失败码、依赖阻断原因和解除条件，区分 `PAUSED`、`UNAVAILABLE` 与 `QUARANTINED`。
+- [改进] WP-0207 增加可选 `dependency_task_ids`，通过既有 Task `input_refs` 和 `BLOCKED`/`unblock_task` 复用跨阶段依赖控制，不新增队列或平行状态机；该能力仍未替代完整七阶段运行验收。
+- [修复] WP-0207 deterministic publisher 对非 dry-run/plan-only 发布增加三类 lineage 非空、数量一致和去重校验，防止主源/补充源证据错位或重复引用。
+- [测试] WP-0207 使用现有本地隔离 PostgreSQL 容器实际执行 Backfill integration，5 passed；覆盖 MONTH/YEAR checkpoint/idempotency 与 Raw→Canonical→Snapshot child Task 顺序链，不连接生产数据库。
+- [修复] WP-0207 列表、详情和创建 API 保留 BackfillError 的 retryable，不再用 HTTP 状态默认值覆盖服务端重试语义；新增六个 API Envelope 回归测试。
+- [修复] WP-0207 deterministic publisher 在非 dry-run/plan-only 发布前 fail-closed 校验 ProviderRun、RawObject、CanonicalPartition lineage；不完整 lineage 不创建发布记录，当前仍为 IN_PROGRESS。
+- [测试] WP-0207 使用 bundled Node.js v24.19.0 重跑 Web lint/build 均通过；系统 Node.js v16.20.2 的失败仅为环境版本限制。
+- [改进] WP-0207 deterministic publication fixture 现在在不可变发布记录中同时保留 ProviderRun、RawObject、CanonicalPartition 和 Snapshot lineage，重试与 correction 继续使用稳定 idempotency/supersedes 语义。
+- [测试] WP-0207 在隔离 PostgreSQL 中补充并通过 Raw→Canonical→Snapshot 子 Task Control Plane 顺序执行测试；使用 deterministic worker fixture，不等价于真实对象发布事务或生产 Provider。
+- [改进] WP-0207 增加按路线图固定顺序表达七个回填阶段前置依赖的只读 registry，并补充七阶段 deterministic 一个月 pilot；完整跨阶段 Durable Task 编排仍未完成。
+- [修复] WP-0207 让 BackfillWorker 的 checkpoint 过期时间复用 Durable Task Control Plane 时钟，修复隔离 PostgreSQL 月度/年度 pilot 中控制面 created_at 晚于 worker expires_at 导致的 checkpoint 拒绝。
+- [修复] WP-0207 修正 checkpoint 投影字段与 phase，取消或失败时完成范围不包含当前未完成分区；补充文件级投影和 provider 内取消回归，PostgreSQL 与原子发布 fence 仍待验收。
+- [修复] WP-0207 checkpoint 读取按 attempt/时间/sequence 选择最新记录，并将损坏、hash 不一致或归属不匹配统一转换为脱敏错误契约（当前 IN_PROGRESS，未接入生产资源）
+- [改进] WP-0207 在分区安全点复用 Task Control Plane heartbeat 续租，避免长批次仅依赖终态写入才发现 lease 失效（当前 IN_PROGRESS，未接入生产资源）
+- [测试] WP-0207 集成测试采用独立文件名以避免默认 pytest 模块冲突，修正 pilot fixture 的发布引用断言并以内容寻址保留历史 checkpoint；PostgreSQL 真实 Provider/生产发布事务仍未认证；本地隔离 deterministic pilot 已通过。
+- [改进] WP-0207 建立分批历史回填的 BackfillBatch/Task 契约、dry-run/plan-only 参数和受控 Durable Task 创建入口（当前 IN_PROGRESS，未接入生产资源）
+- [改进] WP-0207 增加隔离分区编排器，按现有 RawIngestion/CanonicalNormalization/SnapshotBuild workers 顺序执行并在缺少发布产物时 fail-closed；尚未接入 BackfillWorker 完整分区回收闭环（IN_PROGRESS，未接入生产资源）
+- [改进] WP-0207 将隔离分区编排器接入 BackfillWorker，回收 RawObject、CanonicalPartition 与 DataSnapshot 引用并避免重复调用旧 publisher（IN_PROGRESS，未接入生产资源）
+- [测试] WP-0207 补充实际 ProviderRun 血缘回收与 Canonical 失败阻断 Snapshot 的回归覆盖（IN_PROGRESS，未接入生产资源）
+- [测试] WP-0207 失败 checkpoint 保留已完成分区的 lineage、累计资源使用和发布引用，支持失败后从同一分区安全恢复（当前 IN_PROGRESS，未接入生产资源）
+- [改进] WP-0207 批次投影和 Operations 页面新增 Snapshot 发布引用，区分 Canonical 与 Snapshot 产物（当前 IN_PROGRESS，未接入生产资源）
+- [改进] WP-0207 将运行进度从可变 Task requirements 收敛到既有不可变 Checkpoint/StorageRef；读取 Backfill 投影时校验 checkpoint 内容 hash 与 task/batch/handler 绑定，原始请求 hash 保持不变（当前 IN_PROGRESS，未接入生产资源）
+- [测试] WP-0207 增加分区级取消安全点：保留已完成分区 checkpoint，调用既有 Task Control Plane 的 `acknowledge_cancel`，并阻止下一个未完成分区发布（当前 IN_PROGRESS，未接入生产资源）
 - [文档] Visory-G019 / WP-0206 P-DATA 数据质量页面完成实现 PR #36 与 Run `34581431121` 远端三项阻断 CI；代码能力门禁为 `VERIFIED`，implemented work packages 为 `13/45`，生产 Provider/数据库/真实 `/data` 与生产数据仍为 `NOT CERTIFIED`。
 - [文档] Visory-G018 / WP-0205 完成远端 Exit Gate：PR #34、Run `34264795037` 的 Governance/Python deterministic gate/Web lint and build 三项阻断 Job 全部成功；实现 head `d9255474dc52a4e36bf9eb33c5e967383a06f7a8` 以普通 merge commit `76194dc378f689c0e0f34cc88d7a3989431a96fc` 合入 `main`，implemented work packages 更新为 `12/45`，Scheduler/补充源代码能力门禁为 `VERIFIED`，生产数据仍为 `NOT CERTIFIED`。
 - [新功能] Visory-G018 / WP-0205 在既有 Durable Task Control Plane 上增加 `Asia/Shanghai` 九阶段盘后调度、交易日跳过、幂等依赖链、`a_stock_data` 主源与 `financial_api` 显式补充策略、Provisional/Certified/19:00 Formal Deadline/20:30 Correction Audit 门禁及 Operations 任务详情投影；不连接生产 Provider、不写真实 `/data`。
@@ -2358,3 +2425,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 [1.2.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ZhuLinsen/daily_stock_analysis/releases/tag/v1.0.0
+- [测试] WP-0207 2026-09-28 续验：定向 Python `182 passed, 15 skipped, 2 warnings`、Backfill Web Vitest `9 passed`、Contract/治理/py_compile/定向 ESLint/tsc/build/diff-check 通过；本次实时 `git ls-remote` 低速超时，记录为远程基线 BLOCKER，状态保持 `IN_PROGRESS / NOT CERTIFIED`。
+- [测试] WP-0207 2026-09-28 续验：临时 `postgres:16-alpine` 隔离容器执行 Backfill integration，`16 passed, 2 warnings`；容器和临时凭据已清理，未连接生产资源。
+- [测试] WP-0207 2026-09-28 续验：实时远程 `main` 成功核验为 `46804661dbb897433f114c25898c8da7021254a1`；定向 Python/Contract `182 passed, 15 skipped, 2 warnings`，Contract/generated exports、治理检查和范围审计通过。

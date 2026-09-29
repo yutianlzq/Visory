@@ -100,6 +100,103 @@ export type AssetType = "stock" | "index" | "etf" | "convertible_bond" | "fund" 
 
 export type AttemptOutcome = "SUCCEEDED" | "DEGRADED" | "FAILED" | "CANCELLED" | "BLOCKED" | "LEASE_LOST";
 
+export interface BackfillBatchProjection {
+  readonly batch_id: string;
+  readonly batch_state: BackfillStatus;
+  readonly batch_type: BackfillBatchType;
+  readonly blocked_reason_code?: string | null;
+  readonly canonical_partition_refs?: ReadonlyArray<string>;
+  readonly checkpoint_phase: string;
+  readonly completed_range?: ReadonlyArray<unknown> | null;
+  readonly dataset: string;
+  readonly date_from?: string | null;
+  readonly date_to?: string | null;
+  readonly dependency_task_ids?: ReadonlyArray<string>;
+  readonly differences_summary?: string | null;
+  readonly dry_run: boolean;
+  readonly failed_range?: ReadonlyArray<unknown> | null;
+  readonly failed_ranges?: ReadonlyArray<ReadonlyArray<unknown>>;
+  readonly failure_code?: string | null;
+  readonly plan_only: boolean;
+  readonly priority: number;
+  readonly provider_fallback?: boolean;
+  readonly provider_policy_id: string;
+  readonly provider_run_refs?: ReadonlyArray<string>;
+  readonly quality_events?: ReadonlyArray<string>;
+  readonly raw_object_refs?: ReadonlyArray<string>;
+  readonly resource_usage?: Readonly<Record<string, number>>;
+  readonly skipped_range?: ReadonlyArray<unknown> | null;
+  readonly skipped_ranges?: ReadonlyArray<ReadonlyArray<unknown>>;
+  readonly snapshot_refs?: ReadonlyArray<string>;
+  readonly stage: BackfillStage;
+  readonly supersedes_id?: string | null;
+  readonly task_id: string;
+  readonly trade_date?: string | null;
+  readonly unblock_condition?: string | null;
+}
+
+export interface BackfillBatchRequest {
+  readonly batch_id: string;
+  readonly batch_type: BackfillBatchType;
+  readonly dataset: string;
+  readonly date_from?: string | null;
+  readonly date_to?: string | null;
+  readonly dependency_task_ids?: ReadonlyArray<string>;
+  readonly dry_run?: boolean;
+  readonly plan_only?: boolean;
+  readonly priority?: number;
+  readonly provider_policy_id: string;
+  readonly requested_by: string;
+  readonly stage?: BackfillStage;
+  readonly supersedes_id?: string | null;
+  readonly trade_date?: string | null;
+}
+
+export type BackfillBatchType = "MONTH" | "YEAR";
+
+export type BackfillStage = "IDENTITY_CALENDAR" | "PRICE_MONTH" | "LIFECYCLE_NAMES" | "CORPORATE_ACTION" | "FINANCIAL_VALUATION" | "INDUSTRY_MEMBERS" | "NON_CORE_OBSERVATION";
+
+/** Ordered read projection for the created prefix or partial stage chain. */
+export interface BackfillStageChainProjection {
+  readonly batches: ReadonlyArray<BackfillBatchProjection>;
+}
+
+export interface BackfillStageChainRequest {
+  readonly batches: ReadonlyArray<BackfillBatchRequest>;
+}
+
+export type BackfillStatus = "PLANNED" | "RUNNING" | "PAUSED" | "PARTIAL" | "FAILED" | "CANCELLED" | "COMPLETED" | "UNAVAILABLE" | "QUARANTINED";
+
+export interface BackfillTaskRequirements {
+  readonly batch_id: string;
+  readonly batch_type: BackfillBatchType;
+  readonly canonical_partition_refs?: ReadonlyArray<string>;
+  readonly checkpoint_phase?: string;
+  readonly completed_range?: ReadonlyArray<unknown> | null;
+  readonly dataset: string;
+  readonly date_from?: string | null;
+  readonly date_to?: string | null;
+  readonly dependency_task_ids?: ReadonlyArray<string>;
+  readonly differences_summary?: string | null;
+  readonly dry_run?: boolean;
+  readonly failed_range?: ReadonlyArray<unknown> | null;
+  readonly failed_ranges?: ReadonlyArray<ReadonlyArray<unknown>>;
+  readonly plan_only?: boolean;
+  readonly priority: number;
+  readonly provider_fallback?: boolean;
+  readonly provider_policy_id: string;
+  readonly provider_run_refs?: ReadonlyArray<string>;
+  readonly quality_events?: ReadonlyArray<string>;
+  readonly raw_object_refs?: ReadonlyArray<string>;
+  readonly resource_usage?: Readonly<Record<string, number>>;
+  readonly skipped_range?: ReadonlyArray<unknown> | null;
+  readonly skipped_ranges?: ReadonlyArray<ReadonlyArray<unknown>>;
+  readonly snapshot_refs?: ReadonlyArray<string>;
+  readonly stage: BackfillStage;
+  readonly supersedes_id?: string | null;
+  readonly trade_date?: string | null;
+}
+
 export interface DataQualityActionRequest {
   readonly action: "recheck" | "rebuild" | "correction";
   readonly idempotency_key?: string | null;
@@ -490,7 +587,7 @@ export interface ResourceRef {
   readonly resource_type: ResourceType;
 }
 
-export type ResourceType = "task" | "attempt" | "data_snapshot" | "feature_snapshot" | "observation_snapshot" | "fact_pack" | "research" | "review" | "strategy" | "backtest_run" | "prediction" | "artifact" | "report" | "provider_run" | "sector" | "taxonomy" | "indicator" | "raw_object" | "canonical_partition" | "feature_partition" | "fact_block" | "claim" | "watch_condition" | "quality_report" | "request" | "checkpoint" | "backup" | "deployment" | "raw_ingestion_quarantine";
+export type ResourceType = "task" | "attempt" | "data_snapshot" | "feature_snapshot" | "observation_snapshot" | "fact_pack" | "research" | "review" | "strategy" | "backtest_run" | "prediction" | "artifact" | "report" | "provider_run" | "sector" | "taxonomy" | "indicator" | "raw_object" | "canonical_partition" | "feature_partition" | "fact_block" | "claim" | "watch_condition" | "quality_report" | "request" | "checkpoint" | "backup" | "deployment" | "raw_ingestion_quarantine" | "backfill_batch";
 
 export type RetentionClass = "PINNED" | "AUDIT" | "REBUILDABLE" | "CACHE" | "TEMP" | "QUARANTINE";
 
@@ -566,7 +663,7 @@ export interface TaskCreateRequest {
   readonly requested_by: string;
   readonly requirements?: Readonly<Record<string, unknown>>;
   readonly task_schema_version?: string;
-  readonly task_type: "artifact_orphan_dry_run" | "raw_ingestion" | "canonical_normalization" | "data_snapshot_build" | "daily_schedule_phase";
+  readonly task_type: "artifact_orphan_dry_run" | "raw_ingestion" | "canonical_normalization" | "data_snapshot_build" | "daily_schedule_phase" | "backfill";
 }
 
 export interface TaskDetails {

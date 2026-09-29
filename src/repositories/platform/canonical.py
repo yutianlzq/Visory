@@ -104,6 +104,16 @@ class CanonicalRepository:
         return _quality(row) if row else None
 
     @staticmethod
+    def get_quality_report_by_task(session: Session, task_id: str) -> CanonicalQualityReport | None:
+        row = session.execute(
+            select(canonical_quality_report)
+            .where(canonical_quality_report.c.task_id == task_id)
+            .order_by(canonical_quality_report.c.created_at.desc(), canonical_quality_report.c.quality_report_id.desc())
+            .limit(1)
+        ).mappings().one_or_none()
+        return _quality(row) if row else None
+
+    @staticmethod
     def get_latest_partition_for_key(
         session: Session,
         *,

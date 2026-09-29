@@ -38,6 +38,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: 'usage', labelKey: 'layout.nav.usage', to: '/usage', icon: Gauge },
   { key: 'data-quality', labelKey: 'layout.nav.dataQuality', to: '/data-quality', icon: Activity },
   { key: 'operations-tasks', labelKey: 'layout.nav.operationsTasks', to: '/operations/tasks', icon: ListTodo },
+  { key: 'operations-backfills', labelKey: 'layout.nav.operationsBackfills', to: '/operations/backfills', icon: ListTodo },
   { key: 'settings', labelKey: 'layout.nav.settings', to: '/settings', icon: Settings2 },
 ];
 

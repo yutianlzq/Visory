@@ -538,6 +538,831 @@
         "title": "AttemptOutcome",
         "type": "string"
       },
+      "BackfillBatchProjection": {
+        "additionalProperties": false,
+        "properties": {
+          "batch_id": {
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "batch_state": {
+            "$ref": "#/components/schemas/BackfillStatus"
+          },
+          "batch_type": {
+            "$ref": "#/components/schemas/BackfillBatchType"
+          },
+          "blocked_reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Blocked Reason Code"
+          },
+          "canonical_partition_refs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Canonical Partition Refs",
+            "type": "array"
+          },
+          "checkpoint_phase": {
+            "title": "Checkpoint Phase",
+            "type": "string"
+          },
+          "completed_range": {
+            "anyOf": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  {
+                    "format": "date",
+                    "type": "string"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Completed Range"
+          },
+          "dataset": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Dataset",
+            "type": "string"
+          },
+          "date_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date From"
+          },
+          "date_to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date To"
+          },
+          "dependency_task_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Dependency Task Ids",
+            "type": "array"
+          },
+          "differences_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Differences Summary"
+          },
+          "dry_run": {
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "failed_range": {
+            "anyOf": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  {
+                    "format": "date",
+                    "type": "string"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Failed Range"
+          },
+          "failed_ranges": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "format": "date",
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Failed Ranges",
+            "type": "array"
+          },
+          "failure_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Failure Code"
+          },
+          "plan_only": {
+            "title": "Plan Only",
+            "type": "boolean"
+          },
+          "priority": {
+            "maximum": 2147483647,
+            "minimum": 0,
+            "title": "Priority",
+            "type": "integer"
+          },
+          "provider_fallback": {
+            "default": false,
+            "title": "Provider Fallback",
+            "type": "boolean"
+          },
+          "provider_policy_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Provider Policy Id",
+            "type": "string"
+          },
+          "provider_run_refs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Provider Run Refs",
+            "type": "array"
+          },
+          "quality_events": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Quality Events",
+            "type": "array"
+          },
+          "raw_object_refs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Raw Object Refs",
+            "type": "array"
+          },
+          "resource_usage": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Resource Usage",
+            "type": "object"
+          },
+          "skipped_range": {
+            "anyOf": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  {
+                    "format": "date",
+                    "type": "string"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Skipped Range"
+          },
+          "skipped_ranges": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "format": "date",
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Skipped Ranges",
+            "type": "array"
+          },
+          "snapshot_refs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Snapshot Refs",
+            "type": "array"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/BackfillStage"
+          },
+          "supersedes_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Supersedes Id"
+          },
+          "task_id": {
+            "title": "Task Id",
+            "type": "string"
+          },
+          "trade_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Trade Date"
+          },
+          "unblock_condition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Unblock Condition"
+          }
+        },
+        "required": [
+          "batch_id",
+          "task_id",
+          "batch_state",
+          "batch_type",
+          "stage",
+          "dataset",
+          "provider_policy_id",
+          "priority",
+          "dry_run",
+          "plan_only",
+          "checkpoint_phase"
+        ],
+        "title": "BackfillBatchProjection",
+        "type": "object"
+      },
+      "BackfillBatchRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "batch_id": {
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "batch_type": {
+            "$ref": "#/components/schemas/BackfillBatchType"
+          },
+          "dataset": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Dataset",
+            "type": "string"
+          },
+          "date_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date From"
+          },
+          "date_to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date To"
+          },
+          "dependency_task_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Dependency Task Ids",
+            "type": "array"
+          },
+          "dry_run": {
+            "default": false,
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "plan_only": {
+            "default": false,
+            "title": "Plan Only",
+            "type": "boolean"
+          },
+          "priority": {
+            "default": 100,
+            "maximum": 2147483647,
+            "minimum": 0,
+            "title": "Priority",
+            "type": "integer"
+          },
+          "provider_policy_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Provider Policy Id",
+            "type": "string"
+          },
+          "requested_by": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Requested By",
+            "type": "string"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/BackfillStage",
+            "default": "IDENTITY_CALENDAR"
+          },
+          "supersedes_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Supersedes Id"
+          },
+          "trade_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Trade Date"
+          }
+        },
+        "required": [
+          "batch_id",
+          "batch_type",
+          "dataset",
+          "provider_policy_id",
+          "requested_by"
+        ],
+        "title": "BackfillBatchRequest",
+        "type": "object"
+      },
+      "BackfillBatchType": {
+        "enum": [
+          "MONTH",
+          "YEAR"
+        ],
+        "title": "BackfillBatchType",
+        "type": "string"
+      },
+      "BackfillStage": {
+        "enum": [
+          "IDENTITY_CALENDAR",
+          "PRICE_MONTH",
+          "LIFECYCLE_NAMES",
+          "CORPORATE_ACTION",
+          "FINANCIAL_VALUATION",
+          "INDUSTRY_MEMBERS",
+          "NON_CORE_OBSERVATION"
+        ],
+        "title": "BackfillStage",
+        "type": "string"
+      },
+      "BackfillStageChainProjection": {
+        "additionalProperties": false,
+        "description": "Ordered read projection for the created prefix or partial stage chain.",
+        "properties": {
+          "batches": {
+            "items": {
+              "$ref": "#/components/schemas/BackfillBatchProjection"
+            },
+            "maxItems": 7,
+            "minItems": 1,
+            "title": "Batches",
+            "type": "array"
+          }
+        },
+        "required": [
+          "batches"
+        ],
+        "title": "BackfillStageChainProjection",
+        "type": "object"
+      },
+      "BackfillStageChainRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "batches": {
+            "items": {
+              "$ref": "#/components/schemas/BackfillBatchRequest"
+            },
+            "maxItems": 7,
+            "minItems": 7,
+            "title": "Batches",
+            "type": "array"
+          }
+        },
+        "required": [
+          "batches"
+        ],
+        "title": "BackfillStageChainRequest",
+        "type": "object"
+      },
+      "BackfillStatus": {
+        "enum": [
+          "PLANNED",
+          "RUNNING",
+          "PAUSED",
+          "PARTIAL",
+          "FAILED",
+          "CANCELLED",
+          "COMPLETED",
+          "UNAVAILABLE",
+          "QUARANTINED"
+        ],
+        "title": "BackfillStatus",
+        "type": "string"
+      },
+      "BackfillTaskRequirements": {
+        "additionalProperties": false,
+        "properties": {
+          "batch_id": {
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "batch_type": {
+            "$ref": "#/components/schemas/BackfillBatchType"
+          },
+          "canonical_partition_refs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Canonical Partition Refs",
+            "type": "array"
+          },
+          "checkpoint_phase": {
+            "default": "PLANNED",
+            "title": "Checkpoint Phase",
+            "type": "string"
+          },
+          "completed_range": {
+            "anyOf": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  {
+                    "format": "date",
+                    "type": "string"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Completed Range"
+          },
+          "dataset": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Dataset",
+            "type": "string"
+          },
+          "date_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date From"
+          },
+          "date_to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date To"
+          },
+          "dependency_task_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Dependency Task Ids",
+            "type": "array"
+          },
+          "differences_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Differences Summary"
+          },
+          "dry_run": {
+            "default": false,
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "failed_range": {
+            "anyOf": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  {
+                    "format": "date",
+                    "type": "string"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Failed Range"
+          },
+          "failed_ranges": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "format": "date",
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Failed Ranges",
+            "type": "array"
+          },
+          "plan_only": {
+            "default": false,
+            "title": "Plan Only",
+            "type": "boolean"
+          },
+          "priority": {
+            "maximum": 2147483647,
+            "minimum": 0,
+            "title": "Priority",
+            "type": "integer"
+          },
+          "provider_fallback": {
+            "default": false,
+            "title": "Provider Fallback",
+            "type": "boolean"
+          },
+          "provider_policy_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Provider Policy Id",
+            "type": "string"
+          },
+          "provider_run_refs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Provider Run Refs",
+            "type": "array"
+          },
+          "quality_events": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Quality Events",
+            "type": "array"
+          },
+          "raw_object_refs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Raw Object Refs",
+            "type": "array"
+          },
+          "resource_usage": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Resource Usage",
+            "type": "object"
+          },
+          "skipped_range": {
+            "anyOf": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "format": "date",
+                    "type": "string"
+                  },
+                  {
+                    "format": "date",
+                    "type": "string"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Skipped Range"
+          },
+          "skipped_ranges": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "format": "date",
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Skipped Ranges",
+            "type": "array"
+          },
+          "snapshot_refs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Snapshot Refs",
+            "type": "array"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/BackfillStage"
+          },
+          "supersedes_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Supersedes Id"
+          },
+          "trade_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Trade Date"
+          }
+        },
+        "required": [
+          "batch_id",
+          "batch_type",
+          "dataset",
+          "provider_policy_id",
+          "priority",
+          "stage"
+        ],
+        "title": "BackfillTaskRequirements",
+        "type": "object"
+      },
       "DataQualityActionRequest": {
         "additionalProperties": false,
         "properties": {
@@ -2881,7 +3706,8 @@
           "checkpoint",
           "backup",
           "deployment",
-          "raw_ingestion_quarantine"
+          "raw_ingestion_quarantine",
+          "backfill_batch"
         ],
         "title": "ResourceType",
         "type": "string"
@@ -3325,7 +4151,8 @@
               "raw_ingestion",
               "canonical_normalization",
               "data_snapshot_build",
-              "daily_schedule_phase"
+              "daily_schedule_phase",
+              "backfill"
             ],
             "title": "Task Type",
             "type": "string"
@@ -3976,6 +4803,166 @@
         "summary": "Resolve an asset identity without guessing"
       }
     },
+    "/api/platform/v1/backfills": {
+      "get": {
+        "operationId": "listBackfills",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "tab",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "task_state",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "requested_by",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformListEnvelope"
+                }
+              }
+            },
+            "description": "Historical backfill projections"
+          }
+        },
+        "summary": "List historical backfill batches"
+      },
+      "post": {
+        "operationId": "createBackfill",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackfillBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformSuccessEnvelope"
+                }
+              }
+            },
+            "description": "Controlled backfill task created"
+          }
+        },
+        "summary": "Create a controlled historical backfill batch"
+      }
+    },
+    "/api/platform/v1/backfills/stage-chain": {
+      "post": {
+        "operationId": "createBackfillStageChain",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackfillStageChainRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformSuccessEnvelope"
+                }
+              }
+            },
+            "description": "Controlled seven-stage backfill task chain created or reconciled"
+          }
+        },
+        "summary": "Create or reconcile the controlled seven-stage historical backfill chain"
+      }
+    },
+    "/api/platform/v1/backfills/{batch_id}": {
+      "get": {
+        "operationId": "getBackfill",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "batch_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformSuccessEnvelope"
+                }
+              }
+            },
+            "description": "Historical backfill projection"
+          }
+        },
+        "summary": "Read a historical backfill batch"
+      }
+    },
     "/api/platform/v1/data-quality": {
       "get": {
         "operationId": "getDataQuality",
@@ -4105,6 +5092,34 @@
           }
         },
         "summary": "Create a controlled data-quality task"
+      }
+    },
+    "/api/platform/v1/data-quality/backfills/{batch_id}": {
+      "get": {
+        "operationId": "getDataQualityBackfill",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "batch_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformSuccessEnvelope"
+                }
+              }
+            },
+            "description": "P-DATA Backfill batch projection"
+          }
+        },
+        "summary": "Read the Backfill projection through P-DATA"
       }
     },
     "/api/platform/v1/data-quality/compare": {

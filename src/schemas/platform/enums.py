@@ -154,6 +154,7 @@ class ResourceType(PlatformStringEnum):
     BACKUP = "backup"
     DEPLOYMENT = "deployment"
     RAW_INGESTION_QUARANTINE = "raw_ingestion_quarantine"
+    BACKFILL_BATCH = "backfill_batch"
 
 
 class SnapshotPublicationStatus(PlatformStringEnum):
