@@ -10,7 +10,7 @@ def test_registry_contains_supported_contracts_and_required_metadata() -> None:
     registrations = PLATFORM_CONTRACTS.list()
     assert registrations
     assert {item.contract_id.split("/", 1)[0] for item in registrations} <= {
-        "C-001", "C-002", "C-003", "C-004", "C-007", "C-010", "C-011",
+        "C-001", "C-002", "C-003", "C-004", "C-006", "C-007", "C-010", "C-011",
     }
 
     for item in registrations:

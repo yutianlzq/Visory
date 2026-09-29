@@ -1,0 +1,152 @@
+{
+  "$defs": {
+    "FeatureDependencyEdge": {
+      "additionalProperties": false,
+      "properties": {
+        "consumer": {
+          "$ref": "#/$defs/FeatureInstanceKey"
+        },
+        "dependency": {
+          "$ref": "#/$defs/FeatureInstanceKey"
+        }
+      },
+      "required": [
+        "dependency",
+        "consumer"
+      ],
+      "title": "FeatureDependencyEdge",
+      "type": "object"
+    },
+    "FeatureInstanceKey": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical_parameter_json": {
+          "title": "Canonical Parameter Json",
+          "type": "string"
+        },
+        "definition_version": {
+          "title": "Definition Version",
+          "type": "string"
+        },
+        "frequency": {
+          "title": "Frequency",
+          "type": "string"
+        },
+        "indicator_id": {
+          "title": "Indicator Id",
+          "type": "string"
+        },
+        "parameter_hash": {
+          "title": "Parameter Hash",
+          "type": "string"
+        },
+        "universe_scope_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Universe Scope Hash"
+        }
+      },
+      "required": [
+        "indicator_id",
+        "definition_version",
+        "canonical_parameter_json",
+        "parameter_hash",
+        "frequency"
+      ],
+      "title": "FeatureInstanceKey",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "capability_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Capability Ids",
+      "type": "array"
+    },
+    "cutoff_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cutoff At"
+    },
+    "dataset_refs": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Dataset Refs",
+      "type": "array"
+    },
+    "dependency_edges": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/FeatureDependencyEdge"
+      },
+      "title": "Dependency Edges",
+      "type": "array"
+    },
+    "ordered_instances": {
+      "items": {
+        "$ref": "#/$defs/FeatureInstanceKey"
+      },
+      "title": "Ordered Instances",
+      "type": "array"
+    },
+    "plan_hash": {
+      "default": "",
+      "title": "Plan Hash",
+      "type": "string"
+    },
+    "required_columns": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Required Columns",
+      "type": "array"
+    },
+    "required_instances": {
+      "items": {
+        "$ref": "#/$defs/FeatureInstanceKey"
+      },
+      "title": "Required Instances",
+      "type": "array"
+    },
+    "universe_scope_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Universe Scope Hash"
+    }
+  },
+  "required": [
+    "required_instances",
+    "ordered_instances"
+  ],
+  "title": "FeatureDependencyPlan",
+  "type": "object"
+}

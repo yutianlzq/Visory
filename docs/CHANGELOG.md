@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/yutianlzq/Visory/releases) page.
 
 ## [Unreleased]
+- [新功能] WP-0301 增加 C-006 IndicatorDefinition、受控 Builtin Registry、确定性依赖 DAG、参数与定义 Hash 及 PIT/Capability/universe 门禁；未新增 runtime API，未连接生产资源。
 - [文档] Visory-G020 2026-09-29 合入后闭环：PR #38 以普通 merge 合入，实际 head `528baa072d32f0242cfdcfa8bb7b1314de19db78`，merge commit `a1d31f9c3d16e62ea4fd78217c992bfe96dc33a8`，`merged_at=2026-09-29T04:01:18Z`；合入后 Run `36520276484` 的 Governance/Python deterministic gate/Web lint and build 全部成功；Goal-G020 为 `COMPLETE`，WP-0207 继续 `IN_PROGRESS / NOT CERTIFIED`，implemented work packages 保持 `13/45`，`RELEASED=false`，生产资源未连接。
 - [测试] WP-0207 2026-09-28 复验：实时 `git ls-remote origin refs/heads/main` 成功返回 `46804661dbb897433f114c25898c8da7021254a1`；隔离临时 `postgres:16` 容器执行 Backfill integration 为 `16 passed, 2 warnings`，容器与测试凭据已清理，未连接生产资源。
 - [修复] WP-0207 Backfill worker 现在累计并持久化各分区 `differences_summary`，恢复和最终 Projection 不再丢失已完成分区的差异摘要；checkpoint 读取同时拒绝非字符串、空值或超长摘要；新增 YEAR 分区成功/失败 checkpoint 回归。

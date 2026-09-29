@@ -1,0 +1,62 @@
+{
+  "contract_id": "C-006/IndicatorDefinition",
+  "payload": {
+    "adjustment_policy": "NONE",
+    "asof_policy": "AVAILABLE_AT",
+    "capability_id": "market_bars_daily",
+    "created_at": "2026-01-01T00:00:00Z",
+    "definition_hash": "sha256:a696ec288d9414b62db9a2b9355dadb5848bd36b74c60e65f18ca40f26aa151a",
+    "definition_version": "1.0.0",
+    "domain": "a_share",
+    "formula_hash": "sha256:4db6c92b6462120205b963c275d190bf4ddbfdf2d6683264b0428e1e819f050c",
+    "formula_ref": "moving_average_builtin",
+    "formula_type": "PYTHON_BUILTIN",
+    "frequency": "1d",
+    "implementation_hash": "sha256:8c4640a1b10ec85f12e41550315d242e74528482feebee02debaf7ac23d77378",
+    "implementation_version": "1.0.0",
+    "indicator_id": "moving_average",
+    "input_dataset_refs": [
+      {
+        "dataset_id": "bar_1d_raw",
+        "required_fields": [
+          "close",
+          "available_at"
+        ],
+        "schema_version": "1.0.0"
+      }
+    ],
+    "input_indicator_refs": [],
+    "lookback_requirement": 20,
+    "materialization": "F1_LONG_TERM",
+    "name": "Moving Average",
+    "normalized_default_parameters": {
+      "period": 20
+    },
+    "null_policy": "PROPAGATE",
+    "numeric_policy": "DECIMAL",
+    "output_schema": [
+      {
+        "alias": "value",
+        "nullable": true,
+        "unit": "cny_per_share",
+        "value_type": "decimal"
+      }
+    ],
+    "owner": "src.services.platform.indicator_registry",
+    "parameter_schema": [
+      {
+        "allowed_values": [],
+        "name": "period",
+        "required": false,
+        "value_type": "integer"
+      }
+    ],
+    "pit_review_version": "1.0.0",
+    "point_in_time": true,
+    "publication_status": "PROVISIONAL",
+    "recompute_policy": "DAILY_INCREMENTAL",
+    "schema_version": "1.0.0",
+    "universe_policy": "ENTITY",
+    "warmup_requirement": 20
+  }
+}

@@ -1,0 +1,365 @@
+{
+  "$defs": {
+    "DatasetInputRef": {
+      "additionalProperties": false,
+      "properties": {
+        "dataset_id": {
+          "title": "Dataset Id",
+          "type": "string"
+        },
+        "required_fields": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Required Fields",
+          "type": "array"
+        },
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "dataset_id"
+      ],
+      "title": "DatasetInputRef",
+      "type": "object"
+    },
+    "FormulaType": {
+      "enum": [
+        "SQL",
+        "PYTHON_BUILTIN",
+        "HIKYUU_BUILTIN",
+        "COMPOSITE"
+      ],
+      "title": "FormulaType",
+      "type": "string"
+    },
+    "IndicatorDependencyRef": {
+      "additionalProperties": false,
+      "properties": {
+        "definition_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Definition Version"
+        },
+        "indicator_id": {
+          "title": "Indicator Id",
+          "type": "string"
+        },
+        "parameter_bindings": {
+          "additionalProperties": true,
+          "title": "Parameter Bindings",
+          "type": "object"
+        }
+      },
+      "required": [
+        "indicator_id"
+      ],
+      "title": "IndicatorDependencyRef",
+      "type": "object"
+    },
+    "IndicatorOutputDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "alias": {
+          "title": "Alias",
+          "type": "string"
+        },
+        "nullable": {
+          "default": true,
+          "title": "Nullable",
+          "type": "boolean"
+        },
+        "precision": {
+          "anyOf": [
+            {
+              "maximum": 18,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Precision"
+        },
+        "unit": {
+          "title": "Unit",
+          "type": "string"
+        },
+        "value_type": {
+          "title": "Value Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "alias",
+        "value_type",
+        "unit"
+      ],
+      "title": "IndicatorOutputDefinition",
+      "type": "object"
+    },
+    "ParameterDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_values": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Allowed Values",
+          "type": "array"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "required": {
+          "default": false,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "value_type": {
+          "title": "Value Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "value_type"
+      ],
+      "title": "ParameterDefinition",
+      "type": "object"
+    },
+    "PublicationStatus": {
+      "enum": [
+        "DRAFT",
+        "PROVISIONAL",
+        "CERTIFIED",
+        "RETIRED"
+      ],
+      "title": "PublicationStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Immutable semantic contract for one versioned indicator definition.",
+  "properties": {
+    "adjustment_policy": {
+      "title": "Adjustment Policy",
+      "type": "string"
+    },
+    "asof_policy": {
+      "title": "Asof Policy",
+      "type": "string"
+    },
+    "capability_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Capability Id"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "definition_hash": {
+      "default": "",
+      "title": "Definition Hash",
+      "type": "string"
+    },
+    "definition_version": {
+      "title": "Definition Version",
+      "type": "string"
+    },
+    "deprecated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Deprecated At"
+    },
+    "domain": {
+      "title": "Domain",
+      "type": "string"
+    },
+    "formula_hash": {
+      "default": "",
+      "title": "Formula Hash",
+      "type": "string"
+    },
+    "formula_ref": {
+      "title": "Formula Ref",
+      "type": "string"
+    },
+    "formula_type": {
+      "$ref": "#/$defs/FormulaType"
+    },
+    "frequency": {
+      "title": "Frequency",
+      "type": "string"
+    },
+    "implementation_hash": {
+      "default": "",
+      "title": "Implementation Hash",
+      "type": "string"
+    },
+    "implementation_version": {
+      "default": "1.0.0",
+      "title": "Implementation Version",
+      "type": "string"
+    },
+    "indicator_id": {
+      "title": "Indicator Id",
+      "type": "string"
+    },
+    "input_dataset_refs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/DatasetInputRef"
+      },
+      "title": "Input Dataset Refs",
+      "type": "array"
+    },
+    "input_indicator_refs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/IndicatorDependencyRef"
+      },
+      "title": "Input Indicator Refs",
+      "type": "array"
+    },
+    "lookback_requirement": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Lookback Requirement",
+      "type": "integer"
+    },
+    "materialization": {
+      "title": "Materialization",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "normalized_default_parameters": {
+      "additionalProperties": true,
+      "title": "Normalized Default Parameters",
+      "type": "object"
+    },
+    "null_policy": {
+      "title": "Null Policy",
+      "type": "string"
+    },
+    "numeric_policy": {
+      "title": "Numeric Policy",
+      "type": "string"
+    },
+    "output_schema": {
+      "items": {
+        "$ref": "#/$defs/IndicatorOutputDefinition"
+      },
+      "title": "Output Schema",
+      "type": "array"
+    },
+    "owner": {
+      "title": "Owner",
+      "type": "string"
+    },
+    "parameter_schema": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ParameterDefinition"
+      },
+      "title": "Parameter Schema",
+      "type": "array"
+    },
+    "pit_review_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Pit Review Version"
+    },
+    "point_in_time": {
+      "default": true,
+      "title": "Point In Time",
+      "type": "boolean"
+    },
+    "publication_status": {
+      "$ref": "#/$defs/PublicationStatus"
+    },
+    "recompute_policy": {
+      "title": "Recompute Policy",
+      "type": "string"
+    },
+    "schema_version": {
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "universe_policy": {
+      "title": "Universe Policy",
+      "type": "string"
+    },
+    "warmup_requirement": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Warmup Requirement",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "indicator_id",
+    "name",
+    "domain",
+    "frequency",
+    "schema_version",
+    "definition_version",
+    "formula_type",
+    "formula_ref",
+    "output_schema",
+    "recompute_policy",
+    "adjustment_policy",
+    "universe_policy",
+    "asof_policy",
+    "materialization",
+    "numeric_policy",
+    "null_policy",
+    "owner",
+    "publication_status",
+    "created_at"
+  ],
+  "title": "IndicatorDefinition",
+  "type": "object"
+}

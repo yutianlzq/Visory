@@ -65,6 +65,7 @@ from .task import (
 )
 from .versioning import PublicationMetadata, RevisionMetadata, TaskStateMetadata
 from .hashing import ContentHashValue
+from .indicator import FeatureDependencyPlan, IndicatorDefinition
 
 
 _FORBIDDEN_PROPERTY_NAMES = frozenset({"status", "version", "date", "timestamp", "hash"})
@@ -663,6 +664,42 @@ PLATFORM_CONTRACTS = ContractRegistry(
             golden_payloads=_golden("success/snapshot-build-task-result.json", "rejected/snapshot-build-task-result-unpublished-without-failure.json"),
         ),
         ContractRegistration(
+            contract_id="C-006/IndicatorDefinition",
+            owner_module="src.schemas.platform.indicator",
+            producer="Indicator Registry",
+            consumers=("feature dependency resolver", "feature store"),
+            schema_model=IndicatorDefinition,
+            schema_version="1.0.0",
+            business_key="indicator_id + definition_version",
+            resource_id_field=None,
+            time_semantics=("created_at", "deprecated_at"),
+            version_semantics=("schema_version", "definition_version", "implementation_version"),
+            quality_semantics=("definition hash is canonical", "formula and implementation references are controlled"),
+            lineage_fields=("input_dataset_refs", "input_indicator_refs", "capability_id"),
+            storage_profile="PostgreSQL indicator_definition control-plane contract",
+            retention_class="PINNED",
+            compatibility="definitions are immutable versions; new semantics require a new definition_version",
+            golden_payloads=_golden("success/indicator-definition-moving-average.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-006/FeatureDependencyPlan",
+            owner_module="src.schemas.platform.indicator",
+            producer="Feature Dependency Resolver",
+            consumers=("feature store worker", "formal consumers"),
+            schema_model=FeatureDependencyPlan,
+            schema_version="1.0.0",
+            business_key="plan_hash",
+            resource_id_field=None,
+            time_semantics=("cutoff_at",),
+            version_semantics=("required_instances[].definition_version",),
+            quality_semantics=("topological order is deterministic", "PIT and capability gates are explicit"),
+            lineage_fields=("dependency_edges", "dataset_refs", "capability_ids"),
+            storage_profile="resolver output; no feature values or physical paths",
+            retention_class="AUDIT",
+            compatibility="plan fields are additive; dependency semantics require a new schema version",
+            golden_payloads=_golden("success/feature-dependency-plan.json"),
+        ),
+        ContractRegistration(
             contract_id="C-007/TaskRecord",
             owner_module="src.schemas.platform.task",
             producer="Task Control Application Service",
@@ -1038,7 +1075,7 @@ def validate_contract_registry(registry: ContractRegistry) -> None:
         raise ValueError("platform contract registry cannot be empty")
     model_types: set[type[PlatformContractModel]] = set()
     for registration in registrations:
-        if not registration.contract_id.startswith(("C-001/", "C-002/", "C-003/", "C-004/", "C-007/", "C-010/", "C-011/")):
+        if not registration.contract_id.startswith(("C-001/", "C-002/", "C-003/", "C-004/", "C-006/", "C-007/", "C-010/", "C-011/")):
             raise ValueError(f"unsupported platform contract family: {registration.contract_id}")
         if registration.schema_model in model_types:
             raise ValueError(f"schema model registered more than once: {registration.schema_model.__name__}")
