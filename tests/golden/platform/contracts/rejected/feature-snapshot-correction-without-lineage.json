@@ -1,0 +1,50 @@
+{
+  "contract_id": "C-006/FeatureSnapshot",
+  "payload": {
+    "feature_snapshot_id": "fs_018bcfe5-6804-7000-8000-000000000004",
+    "snapshot_type": "CORRECTION",
+    "as_of_trade_date": "2026-01-03",
+    "cutoff_at": "2026-01-03T18:00:00Z",
+    "data_snapshot_ids": [
+      "ds_018bcfe5-6801-7000-8000-000000000001"
+    ],
+    "feature_partition_refs": [
+      {
+        "feature_partition_id": "fpart_018bcfe5-6802-7000-8000-000000000002",
+        "partition_hash": "sha256:00b02c20870ee6dec9e3dd17e823e8b722f283d39395a072f2add6483ad7845d",
+        "schema_hash": "sha256:f20f19b48fdffa90138941fe3a38e6c21ef033ce2cf6d39e424b91d6fb22fa52",
+        "revision": 1,
+        "storage_ref": {
+          "storage_backend": "local_fs",
+          "storage_namespace": "app",
+          "relative_path": "features/moving_average/2026-01-03.parquet",
+          "content_hash": "sha256:00b02c20870ee6dec9e3dd17e823e8b722f283d39395a072f2add6483ad7845d",
+          "media_type": "application/vnd.apache.parquet",
+          "size_bytes": 128
+        },
+        "indicator_id": "moving_average",
+        "definition_version": "1.0.0",
+        "required_columns": [
+          "moving_average.value"
+        ],
+        "retention_class": "PINNED"
+      }
+    ],
+    "dependency_plan_hash": "sha256:b8fb19a03d3c61043cc987fd673be67141f8c5fced952bfe2e17211d3d19559c",
+    "definition_refs": [
+      "moving_average@1.0.0"
+    ],
+    "publication_status": "CERTIFIED",
+    "quality_status": "COMPLETE",
+    "certified_capabilities": [],
+    "missing_capabilities": [],
+    "max_source_available_at": "2026-01-03T17:30:00Z",
+    "revision": 2,
+    "revision_kind": "CORRECTION",
+    "manifest_hash": "sha256:3341377e992cfa59ee1244be74687a76412974cd718f74faefba7aa0a55bfcdd",
+    "manifest_version": "1.0.0",
+    "created_at": "2026-01-03T18:00:00Z",
+    "published_at": "2026-01-03T18:00:00Z"
+  },
+  "expected_error_fields": []
+}

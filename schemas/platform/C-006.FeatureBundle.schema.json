@@ -1,0 +1,247 @@
+{
+  "$defs": {
+    "ConsumerKind": {
+      "enum": [
+        "PREVIEW",
+        "FORMAL_BACKTEST"
+      ],
+      "title": "ConsumerKind",
+      "type": "string"
+    },
+    "FeaturePartitionRef": {
+      "additionalProperties": false,
+      "properties": {
+        "definition_version": {
+          "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+          "title": "Definition Version",
+          "type": "string"
+        },
+        "feature_partition_id": {
+          "title": "Feature Partition Id",
+          "type": "string"
+        },
+        "indicator_id": {
+          "title": "Indicator Id",
+          "type": "string"
+        },
+        "partition_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Partition Hash",
+          "type": "string"
+        },
+        "required_columns": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Required Columns",
+          "type": "array"
+        },
+        "retention_class": {
+          "$ref": "#/$defs/RetentionClass",
+          "default": "REBUILDABLE"
+        },
+        "revision": {
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "schema_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Schema Hash",
+          "type": "string"
+        },
+        "storage_ref": {
+          "$ref": "#/$defs/StorageRef"
+        }
+      },
+      "required": [
+        "feature_partition_id",
+        "partition_hash",
+        "schema_hash",
+        "revision",
+        "storage_ref",
+        "indicator_id",
+        "definition_version"
+      ],
+      "title": "FeaturePartitionRef",
+      "type": "object"
+    },
+    "RetentionClass": {
+      "enum": [
+        "PINNED",
+        "AUDIT",
+        "REBUILDABLE",
+        "CACHE",
+        "TEMP",
+        "QUARANTINE"
+      ],
+      "title": "RetentionClass",
+      "type": "string"
+    },
+    "StorageBackend": {
+      "enum": [
+        "local_fs"
+      ],
+      "title": "StorageBackend",
+      "type": "string"
+    },
+    "StorageNamespace": {
+      "enum": [
+        "app"
+      ],
+      "title": "StorageNamespace",
+      "type": "string"
+    },
+    "StorageRef": {
+      "additionalProperties": false,
+      "properties": {
+        "content_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "media_type": {
+          "title": "Media Type",
+          "type": "string"
+        },
+        "relative_path": {
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "storage_backend": {
+          "$ref": "#/$defs/StorageBackend"
+        },
+        "storage_namespace": {
+          "$ref": "#/$defs/StorageNamespace"
+        }
+      },
+      "required": [
+        "storage_backend",
+        "storage_namespace",
+        "relative_path",
+        "content_hash",
+        "media_type",
+        "size_bytes"
+      ],
+      "title": "StorageRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "bundle_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Bundle Hash",
+      "type": "string"
+    },
+    "bundle_version": {
+      "default": "1.0.0",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+      "title": "Bundle Version",
+      "type": "string"
+    },
+    "consumer_kind": {
+      "$ref": "#/$defs/ConsumerKind"
+    },
+    "consumer_ref": {
+      "title": "Consumer Ref",
+      "type": "string"
+    },
+    "cutoff_at": {
+      "format": "date-time",
+      "title": "Cutoff At",
+      "type": "string"
+    },
+    "date_from": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Date From"
+    },
+    "date_to": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Date To"
+    },
+    "dependency_plan_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Dependency Plan Hash",
+      "type": "string"
+    },
+    "feature_bundle_id": {
+      "title": "Feature Bundle Id",
+      "type": "string"
+    },
+    "feature_snapshot_ids": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Feature Snapshot Ids",
+      "type": "array"
+    },
+    "required_columns": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Required Columns",
+      "type": "array"
+    },
+    "required_partition_refs": {
+      "items": {
+        "$ref": "#/$defs/FeaturePartitionRef"
+      },
+      "minItems": 1,
+      "title": "Required Partition Refs",
+      "type": "array"
+    },
+    "universe_scope_hash": {
+      "anyOf": [
+        {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Universe Scope Hash"
+    }
+  },
+  "required": [
+    "feature_bundle_id",
+    "feature_snapshot_ids",
+    "dependency_plan_hash",
+    "required_partition_refs",
+    "required_columns",
+    "consumer_ref",
+    "consumer_kind",
+    "cutoff_at",
+    "bundle_hash"
+  ],
+  "title": "FeatureBundle",
+  "type": "object"
+}

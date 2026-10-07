@@ -66,6 +66,7 @@ from .task import (
 from .versioning import PublicationMetadata, RevisionMetadata, TaskStateMetadata
 from .hashing import ContentHashValue
 from .indicator import FeatureDependencyPlan, IndicatorDefinition
+from .feature import FeatureBundle, FeaturePartition, FeatureSnapshot
 
 
 _FORBIDDEN_PROPERTY_NAMES = frozenset({"status", "version", "date", "timestamp", "hash"})
@@ -698,6 +699,60 @@ PLATFORM_CONTRACTS = ContractRegistry(
             retention_class="AUDIT",
             compatibility="plan fields are additive; dependency semantics require a new schema version",
             golden_payloads=_golden("success/feature-dependency-plan.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-006/FeaturePartition",
+            owner_module="src.schemas.platform.feature",
+            producer="Feature Store Worker",
+            consumers=("feature snapshot publisher", "formal consumers", "research consumers"),
+            schema_model=FeaturePartition,
+            schema_version="1.0.0",
+            business_key="domain + indicator_id + definition_version + frequency + partition_key + universe_scope_hash + revision",
+            resource_id_field="feature_partition_id",
+            time_semantics=("min_date", "max_date", "cutoff_at", "min_available_at", "max_available_at", "created_at", "published_at"),
+            version_semantics=("definition_version", "revision", "revision_kind"),
+            quality_semantics=("schema_hash", "unique key", "coverage_ratio", "available_at <= cutoff_at", "quality_status"),
+            lineage_fields=("data_snapshot_ids", "input_partition_ids", "supersedes_id", "quality_report_id"),
+            storage_profile="content-addressed feature partition StorageRef; worker-local atomic publication",
+            retention_class="REBUILDABLE",
+            compatibility="partition content and schema hashes are immutable; corrections create a new revision",
+            golden_payloads=_golden("success/feature-partition.json", "rejected/feature-partition-available-after-cutoff.json", "rejected/feature-partition-duplicate-key.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-006/FeatureSnapshot",
+            owner_module="src.schemas.platform.feature",
+            producer="Feature Snapshot Publisher",
+            consumers=("feature bundle resolver", "formal consumers", "research consumers"),
+            schema_model=FeatureSnapshot,
+            schema_version="1.0.0",
+            business_key="feature_snapshot_id",
+            resource_id_field="feature_snapshot_id",
+            time_semantics=("as_of_trade_date", "cutoff_at", "max_source_available_at", "created_at", "published_at"),
+            version_semantics=("manifest_version", "revision", "revision_kind", "supersedes_id"),
+            quality_semantics=("quality_status", "publication_status", "certified_capabilities", "missing_capabilities"),
+            lineage_fields=("data_snapshot_ids", "feature_partition_refs", "dependency_plan_hash", "supersedes_id"),
+            storage_profile="immutable manifest referencing published feature partitions",
+            retention_class="PINNED",
+            compatibility="manifest identities are immutable; corrections append a new revision and never rewrite prior snapshots",
+            golden_payloads=_golden("success/feature-snapshot.json", "rejected/feature-snapshot-correction-without-lineage.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-006/FeatureBundle",
+            owner_module="src.schemas.platform.feature",
+            producer="Feature Bundle Resolver",
+            consumers=("strategy compiler", "formal backtest", "research preview"),
+            schema_model=FeatureBundle,
+            schema_version="1.0.0",
+            business_key="feature_bundle_id",
+            resource_id_field="feature_bundle_id",
+            time_semantics=("cutoff_at", "date_from", "date_to"),
+            version_semantics=("bundle_version", "dependency_plan_hash", "feature_snapshot_ids"),
+            quality_semantics=("fixed partition references", "formal bundles require PINNED partitions", "deterministic bundle hash"),
+            lineage_fields=("feature_snapshot_ids", "required_partition_refs", "dependency_plan_hash", "consumer_ref"),
+            storage_profile="immutable consumer projection; no physical data copy",
+            retention_class="PINNED",
+            compatibility="bundle references are fixed after creation; changing a dependency requires a new bundle",
+            golden_payloads=_golden("success/feature-bundle.json", "rejected/feature-bundle-formal-unpinned.json"),
         ),
         ContractRegistration(
             contract_id="C-007/TaskRecord",

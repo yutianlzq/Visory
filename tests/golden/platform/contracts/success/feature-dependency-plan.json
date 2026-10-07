@@ -1,35 +1,37 @@
 {
   "contract_id": "C-006/FeatureDependencyPlan",
   "payload": {
+    "required_instances": [
+      {
+        "indicator_id": "moving_average",
+        "definition_version": "1.0.0",
+        "canonical_parameter_json": "{\"period\":20}",
+        "parameter_hash": "sha256:50b7571dd68c97ae1dbd78ab570ec6669ba2dd5a11296c5c0ce90e7d54814465",
+        "frequency": "1d"
+      }
+    ],
+    "ordered_instances": [
+      {
+        "indicator_id": "moving_average",
+        "definition_version": "1.0.0",
+        "canonical_parameter_json": "{\"period\":20}",
+        "parameter_hash": "sha256:50b7571dd68c97ae1dbd78ab570ec6669ba2dd5a11296c5c0ce90e7d54814465",
+        "frequency": "1d"
+      }
+    ],
+    "dependency_edges": [],
+    "required_columns": [
+      "moving_average.value"
+    ],
+    "dataset_refs": [
+      "bar_1d_raw@1.0.0"
+    ],
     "capability_ids": [
       "market_bars_daily"
     ],
     "cutoff_at": "2026-01-02T08:00:00Z",
-    "dataset_refs": [
-      "bar_1d_raw@1.0.0"
-    ],
-    "dependency_edges": [],
-    "ordered_instances": [
-      {
-        "canonical_parameter_json": "{\"period\":20}",
-        "definition_version": "1.0.0",
-        "frequency": "1d",
-        "indicator_id": "moving_average",
-        "parameter_hash": "sha256:50b7571dd68c97ae1dbd78ab570ec6669ba2dd5a11296c5c0ce90e7d54814465"
-      }
-    ],
-    "plan_hash": "sha256:3bb37b44df698415e6ead2ba4f9fe272b92e43b69d615f82b93bb8acd8001d60",
-    "required_columns": [
-      "moving_average.value"
-    ],
-    "required_instances": [
-      {
-        "canonical_parameter_json": "{\"period\":20}",
-        "definition_version": "1.0.0",
-        "frequency": "1d",
-        "indicator_id": "moving_average",
-        "parameter_hash": "sha256:50b7571dd68c97ae1dbd78ab570ec6669ba2dd5a11296c5c0ce90e7d54814465"
-      }
-    ]
+    "lookback_requirement": 0,
+    "warmup_requirement": 0,
+    "plan_hash": "sha256:e867bdb0be587ec31af37215473efcafd948256f9af53dfac2b1e32619aed3cc"
   }
 }

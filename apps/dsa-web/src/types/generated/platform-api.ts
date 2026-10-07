@@ -197,6 +197,8 @@ export interface BackfillTaskRequirements {
   readonly trade_date?: string | null;
 }
 
+export type ConsumerKind = "PREVIEW" | "FORMAL_BACKTEST";
+
 export interface DataQualityActionRequest {
   readonly action: "recheck" | "rebuild" | "correction";
   readonly idempotency_key?: string | null;
@@ -345,6 +347,93 @@ export interface DatasetDefinition {
   readonly time_semantics: Readonly<Record<string, string>>;
   readonly units: Readonly<Record<string, string>>;
 }
+
+export interface FeatureBundle {
+  readonly bundle_hash: string;
+  readonly bundle_version?: string;
+  readonly consumer_kind: ConsumerKind;
+  readonly consumer_ref: string;
+  readonly cutoff_at: string;
+  readonly date_from?: string | null;
+  readonly date_to?: string | null;
+  readonly dependency_plan_hash: string;
+  readonly feature_bundle_id: string;
+  readonly feature_snapshot_ids: ReadonlyArray<string>;
+  readonly required_columns: ReadonlyArray<string>;
+  readonly required_partition_refs: ReadonlyArray<FeaturePartitionRef>;
+  readonly universe_scope_hash?: string | null;
+}
+
+export interface FeaturePartition {
+  readonly coverage_ratio: number | string;
+  readonly created_at: string;
+  readonly cutoff_at: string;
+  readonly data_snapshot_ids: ReadonlyArray<string>;
+  readonly definition_version: string;
+  readonly domain: string;
+  readonly feature_partition_id: string;
+  readonly frequency: string;
+  readonly indicator_id: string;
+  readonly input_partition_ids?: ReadonlyArray<string>;
+  readonly max_available_at: string;
+  readonly max_date: string;
+  readonly min_available_at: string;
+  readonly min_date: string;
+  readonly null_count: number;
+  readonly partition_hash: string;
+  readonly partition_key: string;
+  readonly published_at?: string | null;
+  readonly quality_failure_reasons?: ReadonlyArray<string>;
+  readonly quality_report_id: string;
+  readonly quality_status: QualityStatus;
+  readonly reference_count?: number;
+  readonly retention_class?: RetentionClass;
+  readonly revision: number;
+  readonly revision_kind?: RevisionKind;
+  readonly row_count: number;
+  readonly schema_hash: string;
+  readonly storage_ref: StorageRef;
+  readonly supersedes_id?: string | null;
+  readonly universe_scope_hash?: string | null;
+}
+
+export interface FeaturePartitionRef {
+  readonly definition_version: string;
+  readonly feature_partition_id: string;
+  readonly indicator_id: string;
+  readonly partition_hash: string;
+  readonly required_columns?: ReadonlyArray<string>;
+  readonly retention_class?: RetentionClass;
+  readonly revision: number;
+  readonly schema_hash: string;
+  readonly storage_ref: StorageRef;
+}
+
+export interface FeatureSnapshot {
+  readonly as_of_trade_date: string;
+  readonly certified_capabilities?: ReadonlyArray<string>;
+  readonly created_at: string;
+  readonly cutoff_at: string;
+  readonly data_snapshot_ids: ReadonlyArray<string>;
+  readonly definition_refs: ReadonlyArray<string>;
+  readonly dependency_plan_hash: string;
+  readonly feature_partition_refs: ReadonlyArray<FeaturePartitionRef>;
+  readonly feature_snapshot_id: string;
+  readonly manifest_hash: string;
+  readonly manifest_version?: string;
+  readonly max_source_available_at: string;
+  readonly missing_capabilities?: ReadonlyArray<string>;
+  readonly publication_status: PublicationStatus;
+  readonly published_at?: string | null;
+  readonly quality_report_id?: string | null;
+  readonly quality_status: QualityStatus;
+  readonly revision: number;
+  readonly revision_kind?: RevisionKind;
+  readonly snapshot_type: FeatureSnapshotType;
+  readonly supersedes_id?: string | null;
+}
+
+export type FeatureSnapshotType = "CLOSE_CORE" | "LATE_A_SHARE" | "CORRECTION" | "HISTORICAL_REBUILD";
 
 export type IdentityStatus = "ACTIVE" | "INACTIVE" | "DELISTED" | "QUARANTINED";
 
@@ -519,6 +608,8 @@ export interface ProviderSettingsProvider {
   readonly provider_kind: ProviderKind;
 }
 
+export type PublicationStatus = "DRAFT" | "PROVISIONAL" | "CERTIFIED" | "RETIRED";
+
 export type QualityStatus = "COMPLETE" | "PARTIAL" | "FAILED" | "UNAVAILABLE" | "STALE";
 
 export type QuarantineStatus = "OPEN" | "RESOLVED" | "REJECTED";
@@ -587,7 +678,7 @@ export interface ResourceRef {
   readonly resource_type: ResourceType;
 }
 
-export type ResourceType = "task" | "attempt" | "data_snapshot" | "feature_snapshot" | "observation_snapshot" | "fact_pack" | "research" | "review" | "strategy" | "backtest_run" | "prediction" | "artifact" | "report" | "provider_run" | "sector" | "taxonomy" | "indicator" | "raw_object" | "canonical_partition" | "feature_partition" | "fact_block" | "claim" | "watch_condition" | "quality_report" | "request" | "checkpoint" | "backup" | "deployment" | "raw_ingestion_quarantine" | "backfill_batch";
+export type ResourceType = "task" | "attempt" | "data_snapshot" | "feature_snapshot" | "observation_snapshot" | "fact_pack" | "research" | "review" | "strategy" | "backtest_run" | "prediction" | "artifact" | "report" | "provider_run" | "sector" | "taxonomy" | "indicator" | "raw_object" | "canonical_partition" | "feature_partition" | "feature_bundle" | "fact_block" | "claim" | "watch_condition" | "quality_report" | "request" | "checkpoint" | "backup" | "deployment" | "raw_ingestion_quarantine" | "backfill_batch";
 
 export type RetentionClass = "PINNED" | "AUDIT" | "REBUILDABLE" | "CACHE" | "TEMP" | "QUARANTINE";
 

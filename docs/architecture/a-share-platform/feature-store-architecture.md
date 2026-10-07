@@ -346,24 +346,30 @@ domain=strategy/strategy_id=<id>/instance=<hash>/year=2026/trade_date=2026-08-27
 
 ### 9.3 FeaturePartition
 
-控制面记录：
+WP-0302 的正式控制面契约使用以下不可变字段；`partition_key` 是经过规范化的领域、频率、日期范围、参数和股票池分区标识，避免消费者依赖目录中的“最新文件”语义：
 
 ```text
 feature_partition_id
-domain / group / frequency
-date_from / date_to / trade_date
-definition_set_hash / parameter_set_hash
+indicator_id / definition_version
+domain / frequency / partition_key
 data_snapshot_ids[] / input_partition_ids[]
-universe_hash / taxonomy_version
-storage_uri / file_hash / schema_hash
-row_count / min_entity_id / max_entity_id
-min_available_at / max_available_at
-attempt_id / created_at / published_at
-quality_status / reason_codes
+universe_scope_hash
+cutoff_at
+row_count / null_count / coverage_ratio
+min_date / max_date / min_available_at / max_available_at
+storage_ref{backend, namespace, relative_path, media_type, size_bytes, content_hash}
+partition_hash / schema_hash
+quality_status / quality_failure_reasons[] / quality_report_id
+revision / revision_kind / supersedes_id
 reference_count / retention_class
+created_at / published_at
 ```
 
-Worker 先写 Attempt 临时目录，完成 Schema、行数、唯一键、Hash、时间和数值检查后，在同一文件系统原子发布。控制面只在文件发布成功后提交分区记录。
+`FeatureRow.unique_key` 固定为 `entity_key + trade_date + indicator_id + definition_version`。Worker 先写临时 Parquet，完成 Schema、行数、唯一键、Hash、`available_at <= cutoff_at`、覆盖率和质量检查后，在同一文件系统原子发布；控制面只在文件发布成功后提交分区记录。`partition_hash` 必须是确定性 Parquet 字节 Hash，正式引用后只提升 `retention_class` 和引用计数，不改写分区内容或固定引用。
+
+WP-0302 本地 Worker 的文件定位包含逻辑分区键、确定性 `feature_partition_id` 和 Parquet 内容 Hash；同字节 correction 可以拥有不同 revision/lineage 定位，旧引用不变。控制面唯一键使用领域、定义版本、频率、分区键、规范化股票池和 revision，StorageRef 另有唯一约束。
+
+同一 runtime root 的发布以持久锁文件 `.feature-publication.lock` 进行跨进程排他保护，覆盖临时写入、rename、PostgreSQL transaction 与失败回收；锁竞争时 fail-closed，调用方须重试，不静默跳过、不返回伪成功。锁文件不得在正常清理中删除；当前实现只支持具备可靠本地排他锁及同文件系统 rename 的隔离目录，不声称分布式文件系统或对象存储发布认证。
 
 ## 10. 时间模型和 Point-in-time
 
@@ -390,6 +396,8 @@ Worker 先写 Attempt 临时目录，完成 Schema、行数、唯一键、Hash�
 
 Research 重建不能冒充生产历史复现。运行报告必须显示 `LIVE_PUBLISHED`、`PRODUCTION_REPLAY` 或 `HISTORICAL_REBUILD`。
 
+WP-0302 的 Resolver 与直接 Materializer 默认只接受 `a_share` Definition，Resolver 同时拒绝全球域 Dataset Catalog；调用方传入扩大的 `allowed_domains` 也不能放开全球输入。Formal Store 和 PostgreSQL Repository 均检查 Snapshot 与 Partition 的 `published_at <= cutoff_at`，晚计算的 Preview/research 仍可使用历史重建模式。
+
 ### 10.2 As-of join
 
 财务、融资融券、公告、新闻和题材等稀疏数据必须按 `available_at` 做 as-of join。允许沿用最近一期的指标必须在 Definition 中声明：
@@ -405,34 +413,36 @@ lag_trading_days
 
 ## 11. FeatureSnapshot
 
-FeatureSnapshot 是不可变 Manifest，而不是整套特征数据的副本：
+FeatureSnapshot 是不可变 Manifest，而不是整套特征数据的副本。WP-0302 的正式字段如下；其中 `dependency_plan_hash`、`definition_refs` 和分区引用共同固定依赖解析结果：
 
 ```yaml
 feature_snapshot_id: fs_<uuidv7>
 snapshot_type: CLOSE_CORE
 as_of_trade_date: 2026-08-27
-decision_cutoff_at: 2026-08-27T18:00:00+08:00
+cutoff_at: 2026-08-27T18:00:00+08:00
 published_at: 2026-08-27T17:30:00+08:00
 data_snapshot_ids:
   - ds_<uuidv7>
-feature_partition_ids:
-  - fpart_<uuidv7>
-  - fpart_<uuidv7>
-  - fpart_<uuidv7>
-definition_versions:
-  stock.rsi: 1.0.0
-  market.breadth: 1.0.0
-certified_capabilities:
-  stock_daily_core: certified
-  market_emotion: certified
-  sector_capital: certified
+feature_partition_refs: []
+dependency_plan_hash: sha256:...
+definition_refs:
+  - stock.rsi@1.0.0
+certified_capabilities: []
 missing_capabilities: []
 max_source_available_at: 2026-08-27T17:24:12+08:00
+quality_status: COMPLETE
+publication_status: CERTIFIED
 quality_report_id: quality_<uuidv7>
+revision: 1
+revision_kind: INITIAL
+supersedes_id: null
 manifest_hash: sha256:...
+manifest_version: 1.0.0
 ```
 
-Manifest Hash 覆盖规范化后的全部引用和状态。相同输入、Definition、参数和数值策略重复计算必须生成相同分区 Hash；任务时间、Attempt ID 等运行元数据不进入数值内容 Hash。
+`feature_partition_refs` 保存分区 Hash、Schema Hash、StorageRef、revision 和所需列，引用必须指向已发布且 PIT 一致的分区。Manifest Hash 覆盖规范化后的状态、依赖计划和固定引用，但不覆盖资源 ID、创建时间和发布时刻等运行元数据。Correction 只能追加新 revision，必须保留未受影响引用并由新分区的 `supersedes_id` 闭合替换关系；旧 Snapshot 不改写。
+
+Correction 复制未受影响分区的原始固定引用（包括 retention 声明），不能从已提升为 PINNED 的可变 Catalog 重新生成引用。正式 Bundle 中的 PINNED 是固定保留声明；只有 `FeatureRepository.add_bundle` 在同一事务完成引用记录、分区保留提升和 reference_count 累加后，才具有持久固定证据。Bundle 所需列必须被固定 PartitionRef 恰好覆盖。
 
 ### 11.1 快照类型
 
@@ -452,14 +462,15 @@ Manifest Hash 覆盖规范化后的全部引用和状态。相同输入、Defini
 ```text
 feature_bundle_id
 feature_snapshot_ids[]
-dependency_plan_id / projection_hash
-required_partition_ids[] / required_columns[]
-date_range / decision_time_policy
-universe_hash
-bundle_manifest_hash
+dependency_plan_hash
+required_partition_refs[] / required_columns[]
+consumer_ref / consumer_kind
+cutoff_at / date_from / date_to
+universe_scope_hash
+bundle_hash / bundle_version
 ```
 
-FeatureBundle 只做投影和冻结，不改变事实值。Hikyuu、Preview 和 Formal 必须从同一 DependencyPlan 解析，不能各自选择不同列或不同修订版。
+FeatureBundle 只做投影和冻结，不改变事实值。Hash 覆盖排序后的 Snapshot ID、所需列、固定分区引用和消费者/PIT边界；正式 `FORMAL_BACKTEST` Bundle 必须引用 `CERTIFIED`、完整且 `PINNED` 的分区。Hikyuu、Preview 和 Formal 必须从同一 DependencyPlan 解析，不能各自选择不同列或不同修订版。
 
 ## 12. 能力认证与失败语义
 

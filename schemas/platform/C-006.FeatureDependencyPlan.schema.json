@@ -95,6 +95,32 @@
       "title": "Dataset Refs",
       "type": "array"
     },
+    "date_from": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Date From"
+    },
+    "date_to": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Date To"
+    },
     "dependency_edges": {
       "default": [],
       "items": {
@@ -103,10 +129,17 @@
       "title": "Dependency Edges",
       "type": "array"
     },
+    "lookback_requirement": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Lookback Requirement",
+      "type": "integer"
+    },
     "ordered_instances": {
       "items": {
         "$ref": "#/$defs/FeatureInstanceKey"
       },
+      "minItems": 1,
       "title": "Ordered Instances",
       "type": "array"
     },
@@ -127,6 +160,7 @@
       "items": {
         "$ref": "#/$defs/FeatureInstanceKey"
       },
+      "minItems": 1,
       "title": "Required Instances",
       "type": "array"
     },
@@ -141,6 +175,12 @@
       ],
       "default": null,
       "title": "Universe Scope Hash"
+    },
+    "warmup_requirement": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Warmup Requirement",
+      "type": "integer"
     }
   },
   "required": [
