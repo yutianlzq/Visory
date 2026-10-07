@@ -1,7 +1,16 @@
 # Visory 实现状态
+
+## 2026-10-07 WP-0302 PR 准备与状态收敛
+
+- 实时 fetch 核验：远程 `main@6aa9fa82e31ad0ad175cc1f6650ad7db67fa0222`；准备起点 `codex/wp-0302-feature-bundle@2ac0f6e6103d91c829893b4ad9da48dd3332f40c`，包含两个 WP-0302 提交，基线差异为 `0 behind / 2 ahead`。主 checkout 的三个既有文档改动保持不变，收敛仅在 WP-0302 隔离 worktree 进行。
+- WP-0301 已通过 PR #40 合入；实现 head `50b15b7f13b2787bde92f5ff96f093014165002f`，普通 merge commit `6aa9fa82e31ad0ad175cc1f6650ad7db67fa0222`，`merged_at=2026-09-29T16:52:37Z`。合入后 Run `36601155597` 的 Governance、Python、Web 三项 `completed / success`，WP-0301 修正为 `VERIFIED / MERGED`，不是 `NOT_STARTED`。
+- 本文当前 WP 表的唯一条目计数：`VERIFIED=15`、`IN_PROGRESS=1`、`NOT_STARTED=29`、`RELEASED=0`，合计 `45`。implemented work packages 为 `15/45`（含本分支已验收但未合入的 WP-0302）；远程 main 已合入并验收的 WP 为 `14/45`。WP-0207 保持 `IN_PROGRESS`，不计入；同一 WP 的多次 Goal、hardening 或状态 PR 不重复计数。
+- WP-0302 仍为实现分支代码/契约 `VERIFIED`，不是 `MERGED` 或 `RELEASED`。既有 Run `37568286328` 对应实现 head `a7ba8d055b3fccc8bfd5bd14eeabb27680ab0b8a`；它不是准备起点 `2ac0f6e` 或后续 PR 当前 HEAD 的 CI。PR 创建须单独授权，只有 PR 当前 HEAD 的三项阻断 CI 均成功后才可判为 merge-ready；本任务不执行 merge。
+- 本节及下方当前结论/状态表为当前汇总；后续带日期的 G020/WP-0207 记录和其中 `13/45` 是历史快照，不覆盖当前计数。生产保持 `NOT CERTIFIED`、`RELEASED=false`；完整范围、验证限制及回滚计划见 [WP-0302 验收记录](WP-0302-IMPLEMENTATION.md)。
+
 ## 2026-10-07 WP-0302 实现分支验收
 
-WP-0302 在 `codex/wp-0302-feature-bundle` 完成代码/契约验收，状态为 `VERIFIED`；[完整验收记录](WP-0302-IMPLEMENTATION.md) 包含指定基线、实现提交、Migration、Contract/Golden、反例、隔离 PostgreSQL、行执行覆盖率和远程阻断 CI 证据。该分支已推送但未合并 `main`，未创建 PR、未部署；历史合入统计和 WP-0207 的记录未改写，不将分支验收当作主线发布或生产认证。生产始终 `NOT CERTIFIED`、`RELEASED=false`。
+WP-0302 在 `codex/wp-0302-feature-bundle` 完成代码/契约验收，状态为 `VERIFIED`；[完整验收记录](WP-0302-IMPLEMENTATION.md) 包含指定基线、实现提交、Migration、Contract/Golden、反例、隔离 PostgreSQL、行执行覆盖率和远程阻断 CI 证据。该分支已推送但未合并 `main`；本节记录 PR 创建前的实现验收，未部署；WP-0207 的历史记录未改写；当前汇总已纳入 WP-0301 与 WP-0302 的独立验收条目，不将分支验收当作主线发布或生产认证。生产始终 `NOT CERTIFIED`、`RELEASED=false`。
 
 ## 2026-09-29 Visory-G020 合入后状态闭环
 
@@ -52,9 +61,9 @@ WP-0302 在 `codex/wp-0302-feature-bundle` 完成代码/契约验收，状态为
 
 工程底座状态：DSA 固定提交 `fb4735a1055caefa2396982af3b09121feb9ff30` 已完成导入和双基线验收，状态为 `IMPORTED / VERIFIED`。导入代码中的 React/FastAPI、Legacy SQLite、内存 Task Queue、分析、LLM、报告、通知和数据 Fetcher 仍是迁移基线，不能作为 Visory 新契约已实现的证据。
 
-目标架构状态：implemented work packages 为 `13/45`；`WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201`、`WP-0202`、`WP-0203`、`WP-0204`、`WP-0205`、`WP-0206` 为 `VERIFIED`；除 WP-0207 外其余 WP 为 `NOT_STARTED`；WP-0207 当前为 `IN_PROGRESS`，尚未通过全部 Exit Gate。G013 Provider Raw Schema Hardening 已完成并通过最终 CI，仍计入同一 `WP-0202`。
+目标架构状态：implemented work packages 为 `15/45`；`WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201`、`WP-0202`、`WP-0203`、`WP-0204`、`WP-0205`、`WP-0206`、`WP-0301`、`WP-0302` 为 `VERIFIED`；WP-0207 为 `IN_PROGRESS`，其余 29 项 `NOT_STARTED`。其中 WP-0301 已合入且通过合入后 CI，WP-0302 仅为本分支已验收、未合入；远程 main 已合入并验收计数为 `14/45`。G013 等同一 WP 的 hardening 或状态闭环不重复计数；没有 WP 为 `RELEASED`。
 
-最近完成的 Work Package：`WP-0206 P-DATA 数据质量页面`。`Visory-G019` 在既有 Snapshot、Capability、Provider、Canonical 与 Durable Task Control Plane 上增加只读数据质量 Projection/API、能力/数据集/血缘下钻、15:50—20:30 调度时间线、Snapshot/Correction 对比与受控 Recheck/Rebuild/Correction Task 入口；不新增 Migration，不接入真实 Provider、生产数据库、真实 `/data` 或生产调度。P-DATA 定向测试、平台契约/治理/Flake8/py_compile/Web 验证通过；PR #36 的 Run `34581431121` 三项阻断 Job 全绿，普通 merge commit `3db5057acd0029c6fb3557fe6a90ebfb2c288acd`；状态为 `COMPLETE / MERGED / VERIFIED / 13/45`，生产 Provider、真实 `/data` 和生产 `backtest_core` 数据仍未认证。
+最近合入并验收的 Work Package：`WP-0301 Indicator Registry 与 DAG`。PR #40 的实现 head `50b15b7f13b2787bde92f5ff96f093014165002f` 已以普通 merge commit `6aa9fa82e31ad0ad175cc1f6650ad7db67fa0222` 合入，合入后 Run `36601155597` 的三项阻断 Job 均成功。当前准备的是 `WP-0302 Feature Partition/Snapshot/Bundle` 专用 PR；其分支验收与 PR 合入门禁分开记录，不宣称 M3 整体完成或生产认证。
 
 交付阶段：MVP 一期为本地核心功能版（M0—M6 + WP-0701—0703）；MVP 二期为本地生产预演与服务器发布版（WP-0704 + M8）。未过 Local Release Gate 不得将 WP 标记为 `RELEASED`。
 
@@ -80,9 +89,9 @@ WP-0302 在 `codex/wp-0302-feature-bundle` 完成代码/契约验收，状态为
 | Visory-G017 | COMPLETE / MERGED | [G017 / WP-0204 Backtest Core Certification](GOAL-G017-STATUS.md)；Migration `0012_wp0204_benchmark_dataset_extension`；独立 `benchmark_index_1d` Dataset/Provider/Raw/Canonical/Quality/Snapshot 血缘与 Formal Consumer Gate 完成；本地平台测试 `381 passed, 5 skipped` 与真实 PostgreSQL 16 集成 `61 passed`；PR #32 的 Run `34176102715` 中 Governance/Python deterministic gate/Web lint and build 三项阻断 Job 全部成功；实现提交 `6d28889b11e128f7d963acab469218c5c7955a8a` 以普通 merge commit `38bb737067e4e89bf766fb1b73023c3193cfa8ea` 合入 `main`；WP-0204 `VERIFIED`，`backtest_core` 代码能力门禁 `VERIFIED`，生产 `backtest_core` 数据 `NOT CERTIFIED` |
 | Visory-G018 | COMPLETE / MERGED | [G018 / WP-0205 Daily Scheduler 与补充源](GOAL-G018-STATUS.md)；`Asia/Shanghai` 九阶段盘后调度、非交易日跳过、幂等依赖链、`a_stock_data` 主源与 `financial_api` 显式补充、19:00 Formal Deadline 和 20:30 Correction Audit 完成；本地平台 `390 passed, 5 skipped`、PostgreSQL 16 集成 `63 passed`；PR #34 head `d9255474dc52a4e36bf9eb33c5e967383a06f7a8`，Run `34264795037` 三项阻断 Job 全绿，普通 merge commit `76194dc378f689c0e0f34cc88d7a3989431a96fc`；WP-0205 `VERIFIED`，进度 `12/45`，生产数据 `NOT CERTIFIED` |
 | DSA Baseline | IMPORTED / VERIFIED | 1126/1126 blob 验签；Python/Web 双基线；`baseline_regression_delta=0`；`web_lint_build_regression_delta=0` |
-| Implemented Work Packages | 13/45 | `WP-0001`、`WP-0002`、`WP-0003`、`WP-0101`、`WP-0102`、`WP-0103`、`WP-0104`、`WP-0201`、`WP-0202`、`WP-0203`、`WP-0204`、`WP-0205`、`WP-0206` 为 `VERIFIED`；`WP-0207` 为 `IN_PROGRESS`；其余 31 项 `NOT_STARTED` |
+| Implemented Work Packages | 15/45 | 按下方 45 个唯一 WP 条目计数：15 个 `VERIFIED`、1 个 `IN_PROGRESS`、29 个 `NOT_STARTED`、0 个 `RELEASED`；15 个中 14 个已合入 main，WP-0302 为已验收未合入分支；WP-0207 和同一 WP 的重复 Goal/状态 PR 不计入 |
 
-Current Goal: Visory-G020 / WP-0207 分批 Backfill is `COMPLETE / MERGED` after PR #38 merge commit `a1d31f9c3d16e62ea4fd78217c992bfe96dc33a8`; the current worktree adds BackfillBatch/TaskRequirements/Projection contracts, a fixed seven-stage Durable Task control chain, controlled Backfill Task creation, deterministic MONTH/YEAR partition planning, existing Durable Task child-task coordination, checkpoint validation, idempotent fixture publication, and Operations/P-DATA observation entry points. Implemented work packages remain `13/45`; WP-0207 is not `VERIFIED` or `RELEASED`; no real Provider, production database, real `/data`, production scheduler, or production backfill certification is included.
+Historical Goal snapshot (2026-09-29): Visory-G020 / WP-0207 分批 Backfill is `COMPLETE / MERGED` after PR #38 merge commit `a1d31f9c3d16e62ea4fd78217c992bfe96dc33a8`; the WP-0207 implementation added BackfillBatch/TaskRequirements/Projection contracts, a fixed seven-stage Durable Task control chain, controlled Backfill Task creation, deterministic MONTH/YEAR partition planning, existing Durable Task child-task coordination, checkpoint validation, idempotent fixture publication, and Operations/P-DATA observation entry points. Implemented work packages were `13/45`; WP-0207 is not `VERIFIED` or `RELEASED`; no real Provider, production database, real `/data`, production scheduler, or production backfill certification is included.
 
 ### WP-0207 当前回合复核（2026-09-28，远程基线与定向套件）
 
@@ -133,6 +142,8 @@ VERIFIED     代码、Migration、测试和本地/集成证据通过
 RELEASED     已部署且通过运行观察和回滚/恢复要求
 ```
 
+implemented work packages 仅统计当前 WP 表中状态为 `VERIFIED` 或 `RELEASED` 的唯一 WP；不统计 `IN_PROGRESS`，不按 Goal/PR 数量计数。`VERIFIED` 可以是未合入的实现分支，必须另列已合入计数与 CI 所属 HEAD；`MERGED` 不自动等于 `RELEASED`。
+
 状态不能由文档存在、代码行数、单个单元测试或主观描述更新。`VERIFIED/RELEASED`必须在“证据”列链接到代码、Migration、测试命令结果和运行产物。
 
 ## 3. Work Package状态
@@ -153,8 +164,8 @@ RELEASED     已部署且通过运行观察和回滚/恢复要求
 | WP-0205 | 16:00 Scheduler与补充源 | VERIFIED | [G018 / WP-0205](GOAL-G018-STATUS.md)；既有 Durable Task Control Plane 上的 `Asia/Shanghai` 九阶段盘后调度、交易日跳过、幂等/依赖、`a_stock_data` 主源与 `financial_api` 显式补充、19:00 Formal Deadline、20:30 Correction Audit 和 Operations 投影完成；无新增 Migration，Alembic head `0012_wp0204_benchmark_dataset_extension`；平台 `390 passed, 5 skipped`、PostgreSQL 16 integration `63 passed`；PR #34 / Run `34264795037` 三项阻断 Job 全绿；普通 merge commit `76194dc378f689c0e0f34cc88d7a3989431a96fc`；生产数据 `NOT CERTIFIED` |
 | WP-0206 | P-DATA数据质量页面 | VERIFIED | [G019 / WP-0206](GOAL-G019-STATUS.md)；PR #36；Run `34581431121` 三项阻断 Job 全绿；普通 merge commit `3db5057acd0029c6fb3557fe6a90ebfb2c288acd`；生产数据 `NOT CERTIFIED` |
 | WP-0207 | 分批Backfill | IN_PROGRESS | 当前工作树：BackfillBatch/TaskRequirements/Projection、受控 `backfill` Task 创建 API、七阶段固定顺序 Durable Task 控制链、依赖阻断/解阻断、YEAR 月分区 worker、既有 Durable Task 子任务协调器与 BackfillWorker 分区回收、稳定 checkpoint、幂等恢复、父 attempt lease/cancel 发布 fence、Web Operations/P-DATA 只读观察入口和 Contract Registry；实际 PR head `528baa072d32f0242cfdcfa8bb7b1314de19db78`；PR #38 已以普通 merge 合入，merge commit `a1d31f9c3d16e62ea4fd78217c992bfe96dc33a8`；合入后 Run `36520276484` 的 Governance/Python deterministic gate/Web lint and build 三项阻断 Job 全部成功。当前本地定向 Python `188 passed, 3 warnings`，隔离 PostgreSQL Backfill integration `16 passed, 1 warning`，Backfill Web Vitest `9 passed`，修改文件定向 ESLint、`tsc -b`、Vite build、generated exports、治理检查、受影响 Python `py_compile` 和 `git diff --check` 通过；全量 Web ESLint 仍有 41 个未修改路径既有错误。覆盖 MONTH 1/YEAR 12 pilot、dry-run/plan-only 无业务发布、checkpoint 恢复、幂等、取消/失败、fallback/quarantine/unavailable、Correction 不覆盖旧 Snapshot 与依赖 Task 原子阻断创建。七类数据完整逐阶段真实对象发布、完整脱敏矩阵和生产 Provider/数据库/`/data`/调度认证仍未完成；生产数据 `NOT CERTIFIED`，不得标记 `VERIFIED` 或 `RELEASED`。
-| WP-0301 | Indicator Registry与DAG | NOT_STARTED | — |
-| WP-0302 | Feature Partition/Snapshot/Bundle | VERIFIED | [WP-0302 实现与验收](WP-0302-IMPLEMENTATION.md)；基于 `6aa9fa82e31ad0ad175cc1f6650ad7db67fa0222`，实际实现提交 `a7ba8d055b3fccc8bfd5bd14eeabb27680ab0b8a` 已推送隔离分支；核心契约、增量/warmup/PIT、Schema/质量/覆盖率、correction lineage、固定引用、Formal pin 同事务、跨进程发布锁与 Migration `0013_wp0302_feature_store` 通过完整验收；2026-10-07 本地平台 `761 passed, 5 skipped`，Feature 定向/隔离 PostgreSQL `56 passed`，核心行执行覆盖率 `87.86%`；Run `37568286328` Governance/Python/Web 全部成功，远程 Python `7119 passed`；尚未合并或部署，生产 `NOT CERTIFIED`，`RELEASED=false` |
+| WP-0301 | Indicator Registry与DAG | VERIFIED | PR #40；实现 head `50b15b7f13b2787bde92f5ff96f093014165002f`；普通 merge commit `6aa9fa82e31ad0ad175cc1f6650ad7db67fa0222`；合入后 Run `36601155597` 三项阻断 Job 均 `completed / success`。IndicatorDefinition/Builtin Registry/确定性 DAG、参数与定义 Hash、PIT/Capability/universe 门禁及 C-006/Golden 完成；无新增 Migration 或 runtime API。测试入口 `tests/platform/test_indicator_registry.py` 与 generated contract 均由该 CI 覆盖；生产 `NOT CERTIFIED`，`RELEASED=false`；若单独回滚 WP-0301，使用 `git revert -m 1 6aa9fa82e31ad0ad175cc1f6650ad7db67fa0222`，不包含在 WP-0302 回滚中 |
+| WP-0302 | Feature Partition/Snapshot/Bundle | VERIFIED | [WP-0302 实现与验收](WP-0302-IMPLEMENTATION.md)；基于 `6aa9fa82e31ad0ad175cc1f6650ad7db67fa0222`；核心契约、增量/warmup/PIT、Schema/质量/覆盖率、correction lineage、固定引用、Formal pin 同事务、跨进程发布锁与 Migration `0013_wp0302_feature_store` 已验收。实现阶段：Feature 定向/隔离 PostgreSQL `56 passed`、核心行执行覆盖率 `87.86%`，Run `37568286328` 三项成功、Python `7119 passed`，均为实现提交 `a7ba8d055b3fccc8bfd5bd14eeabb27680ab0b8a` 的历史证据。本轮 PR-PREP：平台及隔离 PostgreSQL `761 passed, 5 skipped, 11 warnings`，治理/generated/syntax/flake8/deterministic/Web lint/build/diff 校验通过；未重测覆盖率；这些是 PR 创建前的准备证据，不能代替 PR 当前 HEAD 的阻断 CI。代码/契约 `VERIFIED` 不等于 merge-ready；尚未合并或部署，生产 `NOT CERTIFIED`，`RELEASED=false` |
 | WP-0303 | 市场宽度与情绪F2 | NOT_STARTED | — |
 | WP-0304 | 板块与资金F2 | NOT_STARTED | — |
 | WP-0305 | Hikyuu Cache Builder | NOT_STARTED | — |
