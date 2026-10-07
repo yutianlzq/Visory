@@ -6,7 +6,7 @@
 - 分支：`codex/wp-0302-feature-bundle`；隔离 worktree，未修改 WP-0207 实现。
 - 仅增加 WP-0302 的类型、物化/发布边界、PostgreSQL 控制面及验证资产；不实现 WP-0303/0304/0305、Hikyuu Cache 或前端迁移。
 - Worker 输入为调用方显式提供的 FeatureRow，未连接真实 Provider、生产数据库、真实 `/data` 或生产调度。
-- 本地实现验收不代表远程阻断 CI 通过；WP 保持 `IN_PROGRESS`，生产 `NOT CERTIFIED`，`RELEASED=false`。
+- 本分支代码/契约验收 `VERIFIED`：本地与隔离集成证据完成，实际实现提交的远程三项阻断 CI 全部成功；未合并 `main`，未部署，生产 `NOT CERTIFIED`，`RELEASED=false`。
 
 领域契约以 [Feature Store 架构](feature-store-architecture.md) 为准；总状态见 [IMPLEMENTATION-STATUS](IMPLEMENTATION-STATUS.md)。
 
@@ -38,13 +38,24 @@
 | Python syntax / critical flake8 / deterministic gate | 通过；Git-for-Windows Bash 复用已有 `.venv`，未安装依赖 |
 | Web ESLint / `tsc -b` / Vite build | 通过；复用已安装依赖，bundled Node.js 24.19.0；未重新执行 `npm ci`，未改变 lockfile |
 | `git diff --check` | 通过 |
-| 远程 Governance / backend / web | 尚待本分支推送后独立验证，不用本地结果替代 |
+| 远程 Governance / backend / web | Run `37568286328` 三项 `completed / success`；实际实现 head `a7ba8d055b3fccc8bfd5bd14eeabb27680ab0b8a`，不是 main 的既有 CI |
 
 首次完整平台收集因系统 Python 缺少 `markdown2`/`lxml_html_clean` 失败，临时混合依赖下 flake8 metadata 也不可用；切换已有完整 `.venv` 后以上检查实际通过。新增 migration 同时更新 foundation 测试的最新 head/table 清单；定点升级 `0012` 的断言仍保持对该固定 revision 校验。未修改 WP-0207 的实现或既有状态说明。
 
 5 个 skipped 为既有符号链接测试（4 项，Windows 无创建权限）和 POSIX 密码文件权限测试（1 项，Windows mode bits 不权威），不是 WP-0302 的 Feature 测试；Feature Repository/Store 集成测试实际运行。警告为既有 TestClient collection 与 Pydantic 字段 alias 警告，未以静默忽略换取绿色。
 
 隔离数据库由 fixture 创建随机库并清理；测试用容器及临时凭据在收尾清理，不保留生产连接信息。
+
+## 远程推送与验收闭环
+
+- 实现提交：`a7ba8d055b3fccc8bfd5bd14eeabb27680ab0b8a`，基于指定基线；推送分支 `origin/codex/wp-0302-feature-bundle`，实时 `git ls-remote` 确认该分支与本地实现 HEAD 一致。
+- 现有 `Visory Baseline CI` 仅由 `pull_request` / `workflow_dispatch` 触发，因此推送后对本分支显式触发既有 `ci.yml`，未创建 PR、未修改 workflow、未启用生产调度。
+- Run `37568286328`，`workflow_dispatch`，head 为上述实现提交；北京时间 2026-10-07 11:46:09 创建，11:54:48 全部完成。
+- Governance Job `112620936221`、Python deterministic gate Job `112620936313`、Web lint and build Job `112620936449` 均为 `completed / success`。
+- 远程 Python：`7119 passed, 4 deselected, 56 warnings, 572 subtests passed`，382.97 秒；`backend-gate: all checks passed`。包含隔离 PostgreSQL service 集成，Feature 定向用例实际运行；未将 Windows 跳过的符号链接/POSIX 权限测试当作本地已验证项。
+- 远程 Web 使用工作流既有 Node 20，实际执行 `npm ci` / lint / build；依赖声明和 lockfile 未改变。
+- 本记录的收尾变更只更新验收文档与 WP-0302 状态，运行代码、Migration、测试和 generated contracts 与已通过远程 CI 的实现提交相同；文档收尾单独执行 Governance/baseline/generated/diff 校验。
+- `VERIFIED` 只表示本次 WP-0302 的代码与契约验收，不表示已合并、已发布、M3 整体 Exit Gate 或生产认证。WP-0207 及 WP-0303/0304/0305 不变；真实数据历史全量物化、Hikyuu Cache、服务器 Benchmark 和生产恢复演练不在本次授权范围。
 
 ## 核心行执行覆盖率与最终契约复核
 
