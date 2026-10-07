@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/yutianlzq/Visory/releases) page.
 
 ## [Unreleased]
+- [文档] WP-0302 PR 准备收敛状态：WP-0301 已通过 PR #40 合入并通过合入后 CI，修正为 VERIFIED；按唯一 WP 条目统计本分支已验收 15/45（其中 main 已合入 14/45），WP-0302 未合入且 RELEASED=false；区分实现提交与 PR 当前 HEAD 的 CI，补全整组代码/契约/文档 revert 及独立数据库回滚边界。
+- [新功能] WP-0302 增加 FeaturePartition、不可变 FeatureSnapshot Manifest、固定引用 FeatureBundle 与 FeatureDependencyPlan 的增量物化、warmup/PIT、质量门禁、Correction lineage、原子发布和确定性 Contract/Golden 测试；提供隔离 PostgreSQL 控制面与本地临时 Parquet 集成验收，不连接真实 Provider、生产数据库、真实 `/data` 或生产调度。
 - [新功能] WP-0301 增加 C-006 IndicatorDefinition、受控 Builtin Registry、确定性依赖 DAG、参数与定义 Hash 及 PIT/Capability/universe 门禁；未新增 runtime API，未连接生产资源。
 - [文档] Visory-G020 2026-09-29 合入后闭环：PR #38 以普通 merge 合入，实际 head `528baa072d32f0242cfdcfa8bb7b1314de19db78`，merge commit `a1d31f9c3d16e62ea4fd78217c992bfe96dc33a8`，`merged_at=2026-09-29T04:01:18Z`；合入后 Run `36520276484` 的 Governance/Python deterministic gate/Web lint and build 全部成功；Goal-G020 为 `COMPLETE`，WP-0207 继续 `IN_PROGRESS / NOT CERTIFIED`，implemented work packages 保持 `13/45`，`RELEASED=false`，生产资源未连接。
 - [测试] WP-0207 2026-09-28 复验：实时 `git ls-remote origin refs/heads/main` 成功返回 `46804661dbb897433f114c25898c8da7021254a1`；隔离临时 `postgres:16` 容器执行 Backfill integration 为 `16 passed, 2 warnings`，容器与测试凭据已清理，未连接生产资源。

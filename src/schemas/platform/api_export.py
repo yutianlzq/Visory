@@ -16,6 +16,7 @@ from .artifact import (
     OrphanDryRunResult,
 )
 from .asset_identity import AssetResolutionCandidate, AssetResolutionRequest, AssetResolutionResult
+from .feature import FeatureBundle, FeaturePartition, FeatureSnapshot
 from .data_quality import (
     DataQualityActionRequest,
     DataQualityActionResult,
@@ -63,6 +64,9 @@ _API_MODELS = (
     BackfillStageChainProjection,
     BackfillStageChainRequest,
     BackfillTaskRequirements,
+    FeatureBundle,
+    FeaturePartition,
+    FeatureSnapshot,
     DatasetDefinition,
     ProviderCapability,
     ProviderDefinition,

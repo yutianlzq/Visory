@@ -385,3 +385,20 @@ def test_resolver_rejects_mixed_root_universe_scopes() -> None:
             available_capabilities={"market_bars_daily"},
         )
     assert error.value.code == "INDICATOR_UNIVERSE_MISMATCH"
+
+
+@pytest.mark.parametrize("allowed_domains", [None, {"a_share"}, {"a_share", "global"}])
+def test_resolver_never_admits_global_definitions_into_a_share_plans(allowed_domains) -> None:
+    registry = IndicatorRegistry((_definition(domain="global"),))
+    with pytest.raises(IndicatorResolutionError, match="INDICATOR_GLOBAL_DOMAIN_NOT_ALLOWED"):
+        FeatureDependencyResolver(registry).resolve(("test_indicator",), allowed_domains=allowed_domains)
+
+
+def test_resolver_rejects_global_dataset_catalog_by_default() -> None:
+    from dataclasses import replace
+
+    catalog = dict(DEFAULT_DATASET_CATALOG)
+    catalog["bar_1d_raw"] = replace(catalog["bar_1d_raw"], domain="global")
+    resolver = FeatureDependencyResolver(IndicatorRegistry((_definition(),)), dataset_catalog=catalog)
+    with pytest.raises(IndicatorResolutionError, match="INDICATOR_GLOBAL_DOMAIN_NOT_ALLOWED"):
+        resolver.resolve(("test_indicator",))

@@ -75,7 +75,14 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "DataQualityQuery",
         "DataQualityQueryResult",
         "DataQualityTimelineStage",
+        "ConsumerKind",
+        "FeatureBundle",
+        "FeaturePartition",
+        "FeaturePartitionRef",
+        "FeatureSnapshot",
+        "FeatureSnapshotType",
         "IdentityStatus",
+        "PublicationStatus",
         "QualityStatus",
         "RevisionKind",
         "SnapshotCapabilityStatus",
@@ -153,6 +160,25 @@ def test_checked_in_c010_openapi_and_frontend_types_match_source_models() -> Non
     assert "C-010.openapi.json" in render_contract_exports()
     assert check_exported_contracts(SCHEMA_EXPORT_ROOT) == []
     assert check_frontend_type_export(FRONTEND_TYPE_EXPORT) is False
+
+
+def test_feature_contract_schemas_require_non_empty_reference_sets() -> None:
+    expected = {
+        "C-006.FeaturePartition.schema.json": {"data_snapshot_ids": 1},
+        "C-006.FeatureSnapshot.schema.json": {
+            "data_snapshot_ids": 1,
+            "definition_refs": 1,
+            "feature_partition_refs": 1,
+        },
+        "C-006.FeatureBundle.schema.json": {
+            "feature_snapshot_ids": 1,
+            "required_columns": 1,
+            "required_partition_refs": 1,
+        },
+    }
+    for filename, minimums in expected.items():
+        schema = json.loads((SCHEMA_EXPORT_ROOT / filename).read_text(encoding="utf-8"))
+        assert {name: schema["properties"][name]["minItems"] for name in minimums} == minimums
 
 
 def test_frontend_type_drift_is_detected(tmp_path: Path) -> None:

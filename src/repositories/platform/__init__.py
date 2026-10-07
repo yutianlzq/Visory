@@ -15,6 +15,7 @@ from .task import TaskControlRepository
 from .provider import ProviderRegistryRepository
 from .raw_ingestion import RawIngestionRepository
 from .snapshot import SnapshotRepository
+from .feature import FeatureRepository
 
 __all__ = [
     "ArtifactRepository",
@@ -36,6 +37,7 @@ __all__ = [
     "ProviderRegistryRepository",
     "RawIngestionRepository",
     "SnapshotRepository",
+    "FeatureRepository",
     "build_postgres_url",
     "create_postgres_engine",
     "downgrade_database",

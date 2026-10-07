@@ -1704,6 +1704,55 @@
       ]
     },
     {
+      "business_key": "feature_bundle_id",
+      "compatibility": "bundle references are fixed after creation; changing a dependency requires a new bundle",
+      "consumers": [
+        "strategy compiler",
+        "formal backtest",
+        "research preview"
+      ],
+      "contract_id": "C-006/FeatureBundle",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/feature-bundle.json",
+        "tests/golden/platform/contracts/rejected/feature-bundle-formal-unpinned.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-006.FeatureBundle.schema.json",
+      "lineage_fields": [
+        "feature_snapshot_ids",
+        "required_partition_refs",
+        "dependency_plan_hash",
+        "consumer_ref"
+      ],
+      "owner_module": "src.schemas.platform.feature",
+      "producer": "Feature Bundle Resolver",
+      "quality_semantics": [
+        "fixed partition references",
+        "formal bundles require PINNED partitions",
+        "deterministic bundle hash"
+      ],
+      "resource_id_field": "feature_bundle_id",
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "immutable consumer projection; no physical data copy",
+      "time_semantics": [
+        "cutoff_at",
+        "date_from",
+        "date_to"
+      ],
+      "version_semantics": [
+        "bundle_version",
+        "dependency_plan_hash",
+        "feature_snapshot_ids"
+      ]
+    },
+    {
       "business_key": "plan_hash",
       "compatibility": "plan fields are additive; dependency semantics require a new schema version",
       "consumers": [
@@ -1742,6 +1791,115 @@
       ],
       "version_semantics": [
         "required_instances[].definition_version"
+      ]
+    },
+    {
+      "business_key": "domain + indicator_id + definition_version + frequency + partition_key + universe_scope_hash + revision",
+      "compatibility": "partition content and schema hashes are immutable; corrections create a new revision",
+      "consumers": [
+        "feature snapshot publisher",
+        "formal consumers",
+        "research consumers"
+      ],
+      "contract_id": "C-006/FeaturePartition",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/feature-partition.json",
+        "tests/golden/platform/contracts/rejected/feature-partition-available-after-cutoff.json",
+        "tests/golden/platform/contracts/rejected/feature-partition-duplicate-key.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-006.FeaturePartition.schema.json",
+      "lineage_fields": [
+        "data_snapshot_ids",
+        "input_partition_ids",
+        "supersedes_id",
+        "quality_report_id"
+      ],
+      "owner_module": "src.schemas.platform.feature",
+      "producer": "Feature Store Worker",
+      "quality_semantics": [
+        "schema_hash",
+        "unique key",
+        "coverage_ratio",
+        "available_at <= cutoff_at",
+        "quality_status"
+      ],
+      "resource_id_field": "feature_partition_id",
+      "retention_class": "REBUILDABLE",
+      "schema_version": "1.0.0",
+      "storage_profile": "content-addressed feature partition StorageRef; worker-local atomic publication",
+      "time_semantics": [
+        "min_date",
+        "max_date",
+        "cutoff_at",
+        "min_available_at",
+        "max_available_at",
+        "created_at",
+        "published_at"
+      ],
+      "version_semantics": [
+        "definition_version",
+        "revision",
+        "revision_kind"
+      ]
+    },
+    {
+      "business_key": "feature_snapshot_id",
+      "compatibility": "manifest identities are immutable; corrections append a new revision and never rewrite prior snapshots",
+      "consumers": [
+        "feature bundle resolver",
+        "formal consumers",
+        "research consumers"
+      ],
+      "contract_id": "C-006/FeatureSnapshot",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/feature-snapshot.json",
+        "tests/golden/platform/contracts/rejected/feature-snapshot-correction-without-lineage.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-006.FeatureSnapshot.schema.json",
+      "lineage_fields": [
+        "data_snapshot_ids",
+        "feature_partition_refs",
+        "dependency_plan_hash",
+        "supersedes_id"
+      ],
+      "owner_module": "src.schemas.platform.feature",
+      "producer": "Feature Snapshot Publisher",
+      "quality_semantics": [
+        "quality_status",
+        "publication_status",
+        "certified_capabilities",
+        "missing_capabilities"
+      ],
+      "resource_id_field": "feature_snapshot_id",
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "immutable manifest referencing published feature partitions",
+      "time_semantics": [
+        "as_of_trade_date",
+        "cutoff_at",
+        "max_source_available_at",
+        "created_at",
+        "published_at"
+      ],
+      "version_semantics": [
+        "manifest_version",
+        "revision",
+        "revision_kind",
+        "supersedes_id"
       ]
     },
     {

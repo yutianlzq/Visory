@@ -18,7 +18,7 @@ from src.repositories.platform import (
 )
 
 
-HEAD_REVISION = "0012_wp0204_benchmark_dataset_extension"
+HEAD_REVISION = "0013_wp0302_feature_store"
 
 
 def _table_names(database: PostgresDatabase) -> tuple[str, ...]:
@@ -88,6 +88,11 @@ def test_empty_database_upgrade_is_idempotent_and_reversible(isolated_postgres_d
         "consumer_requirement",
         "data_snapshot",
         "dataset_definition",
+        "feature_bundle",
+        "feature_bundle_partition_ref",
+        "feature_partition",
+        "feature_snapshot",
+        "feature_snapshot_partition_ref",
         "identity_quarantine",
         "platform_task",
         "provider_capability",
@@ -188,7 +193,7 @@ def test_benchmark_dataset_extension_is_independent_and_reversible(
         assert status not in downgraded_status
 
     upgrade_database(database.engine, "0012_wp0204_benchmark_dataset_extension")
-    assert get_migration_status(database.engine).current_revision == HEAD_REVISION
+    assert get_migration_status(database.engine).current_revision == "0012_wp0204_benchmark_dataset_extension"
     assert "benchmark_dataset_extension" in _table_names(database)
     assert expected_quality_columns.issubset(set(_column_names(database, "canonical_quality_report")))
     assert expected_quality_columns.issubset(set(_column_names(database, "snapshot_partition_ref")))

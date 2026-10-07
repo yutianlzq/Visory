@@ -1,0 +1,43 @@
+{
+  "contract_id": "C-006/FeatureBundle",
+  "payload": {
+    "feature_bundle_id": "bundle_018bcfe5-6805-7000-8000-000000000005",
+    "feature_snapshot_ids": [
+      "fs_018bcfe5-6804-7000-8000-000000000004"
+    ],
+    "dependency_plan_hash": "sha256:b8fb19a03d3c61043cc987fd673be67141f8c5fced952bfe2e17211d3d19559c",
+    "required_partition_refs": [
+      {
+        "feature_partition_id": "fpart_018bcfe5-6802-7000-8000-000000000002",
+        "partition_hash": "sha256:00b02c20870ee6dec9e3dd17e823e8b722f283d39395a072f2add6483ad7845d",
+        "schema_hash": "sha256:f20f19b48fdffa90138941fe3a38e6c21ef033ce2cf6d39e424b91d6fb22fa52",
+        "revision": 1,
+        "storage_ref": {
+          "storage_backend": "local_fs",
+          "storage_namespace": "app",
+          "relative_path": "features/moving_average/2026-01-03.parquet",
+          "content_hash": "sha256:00b02c20870ee6dec9e3dd17e823e8b722f283d39395a072f2add6483ad7845d",
+          "media_type": "application/vnd.apache.parquet",
+          "size_bytes": 128
+        },
+        "indicator_id": "moving_average",
+        "definition_version": "1.0.0",
+        "required_columns": [
+          "moving_average.value"
+        ],
+        "retention_class": "REBUILDABLE"
+      }
+    ],
+    "required_columns": [
+      "moving_average.value"
+    ],
+    "consumer_ref": "strategy:golden",
+    "consumer_kind": "FORMAL_BACKTEST",
+    "cutoff_at": "2026-01-03T18:00:00Z",
+    "date_from": "2026-01-03",
+    "date_to": "2026-01-03",
+    "bundle_hash": "sha256:680e85bc81f91ddb1c0cbae85da9ed5b79b324da6c2284676a877458b9e87215",
+    "bundle_version": "1.0.0"
+  },
+  "expected_error_fields": []
+}

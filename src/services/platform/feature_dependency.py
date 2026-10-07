@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Mapping, Sequence
 
 from src.schemas.platform.hashing import canonical_json_bytes, compute_content_hash
@@ -137,10 +137,16 @@ class FeatureDependencyResolver:
         available_capabilities: set[str] | frozenset[str] | None = None,
         dataset_available_at: Mapping[str, datetime] | None = None,
         universe_scope_hash: str | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
         allowed_domains: set[str] | frozenset[str] | None = None,
         allow_retired: bool = False,
     ) -> FeatureDependencyPlan:
         self._validate_cutoff(cutoff_at)
+        if date_to is not None and date_from is None:
+            raise IndicatorResolutionError("INDICATOR_PARAMETER_INVALID", "date_to requires date_from")
+        if date_from is not None and date_to is not None and date_to < date_from:
+            raise IndicatorResolutionError("INDICATOR_PARAMETER_INVALID", "date_to must not precede date_from")
         if consumer_kind not in {"PREVIEW", "FORMAL"}:
             raise IndicatorResolutionError("INDICATOR_PARAMETER_INVALID", "consumer_kind must be PREVIEW or FORMAL")
         roots = [self._coerce_instance(item, universe_scope_hash) for item in required_instances]
@@ -220,6 +226,10 @@ class FeatureDependencyResolver:
             dataset_refs=tuple(dataset_refs),
             capability_ids=tuple(capability_ids),
             cutoff_at=cutoff_at,
+            date_from=date_from,
+            date_to=date_to,
+            lookback_requirement=max((definition.lookback_requirement for definition in all_definitions), default=0),
+            warmup_requirement=max((definition.warmup_requirement for definition in all_definitions), default=0),
             universe_scope_hash=universe_scope_hash or next((item.universe_scope_hash for item in root_keys if item.universe_scope_hash), None),
         )
 
@@ -278,7 +288,7 @@ class FeatureDependencyResolver:
             raise IndicatorResolutionError("INDICATOR_DEFINITION_NOT_PUBLISHED", "indicator definition is not published")
         if consumer_kind == "FORMAL" and not definition.point_in_time:
             raise IndicatorResolutionError("INDICATOR_PIT_NOT_ALLOWED", "formal consumers require point-in-time definitions")
-        if allowed_domains is not None and definition.domain not in allowed_domains:
+        if definition.domain != "a_share" or (allowed_domains is not None and definition.domain not in allowed_domains):
             raise IndicatorResolutionError("INDICATOR_GLOBAL_DOMAIN_NOT_ALLOWED", "indicator domain is outside the consumer domain")
         if definition.universe_policy == "FROZEN_REQUIRED" and instance.universe_scope_hash is None:
             raise IndicatorResolutionError("INDICATOR_UNIVERSE_NOT_FROZEN", "cross-sectional indicator requires a frozen universe scope")
@@ -288,6 +298,8 @@ class FeatureDependencyResolver:
             catalog = self.dataset_catalog.get(dataset_ref.dataset_id)
             if catalog is None:
                 raise IndicatorResolutionError("INDICATOR_UNREGISTERED_INPUT", "input dataset is not registered", details={"dataset_id": dataset_ref.dataset_id})
+            if catalog.domain != "a_share":
+                raise IndicatorResolutionError("INDICATOR_GLOBAL_DOMAIN_NOT_ALLOWED", "input dataset domain is outside A-share feature scope")
             if catalog.schema_version != dataset_ref.schema_version:
                 raise IndicatorResolutionError("INDICATOR_INPUT_TYPE_MISMATCH", "input dataset schema version does not match")
             missing_fields = sorted(set(dataset_ref.required_fields) - set(catalog.fields))

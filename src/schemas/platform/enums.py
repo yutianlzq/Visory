@@ -145,6 +145,7 @@ class ResourceType(PlatformStringEnum):
     RAW_OBJECT = "raw_object"
     CANONICAL_PARTITION = "canonical_partition"
     FEATURE_PARTITION = "feature_partition"
+    FEATURE_BUNDLE = "feature_bundle"
     FACT_BLOCK = "fact_block"
     CLAIM = "claim"
     WATCH_CONDITION = "watch_condition"

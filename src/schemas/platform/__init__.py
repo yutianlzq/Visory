@@ -85,6 +85,17 @@ from .enums import (
     RawSchemaDriftClassification,
 )
 from .hashing import ContentHashValue, DEFAULT_HASH_PROFILE, HashProfile, canonical_json_bytes, compute_content_hash
+from .feature import (
+    FeatureBundle,
+    FeatureMaterializationError,
+    FeaturePartition,
+    FeaturePartitionRef,
+    FeatureRow,
+    FeatureSnapshot,
+    FeatureSnapshotType,
+    compute_feature_bundle_hash,
+    compute_feature_snapshot_manifest_hash,
+)
 from .identity import EntityIdentity, build_entity_key, parse_entity_key
 from .indicator import (
     DatasetInputRef,
@@ -200,6 +211,15 @@ __all__ = [
     "AvailabilityBasis",
     "AvailabilityMetadata",
     "ContentHashValue",
+    "FeatureBundle",
+    "FeatureMaterializationError",
+    "FeaturePartition",
+    "FeaturePartitionRef",
+    "FeatureRow",
+    "FeatureSnapshot",
+    "FeatureSnapshotType",
+    "compute_feature_bundle_hash",
+    "compute_feature_snapshot_manifest_hash",
     "ContractRegistration",
     "ContractRegistry",
     "DEFAULT_HASH_PROFILE",

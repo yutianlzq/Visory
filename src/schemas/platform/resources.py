@@ -32,6 +32,7 @@ _RESOURCE_PREFIXES: dict[ResourceType, str] = {
     ResourceType.RAW_OBJECT: "raw",
     ResourceType.CANONICAL_PARTITION: "cpart",
     ResourceType.FEATURE_PARTITION: "fpart",
+    ResourceType.FEATURE_BUNDLE: "bundle",
     ResourceType.FACT_BLOCK: "fblock",
     ResourceType.CLAIM: "claim",
     ResourceType.WATCH_CONDITION: "watch",

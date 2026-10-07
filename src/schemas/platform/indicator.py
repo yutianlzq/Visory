@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import date
 from typing import Any
 
 from pydantic import AwareDatetime, Field, field_validator, model_validator
@@ -427,13 +428,17 @@ class FeatureDependencyEdge(PlatformContractModel):
 
 
 class FeatureDependencyPlan(PlatformContractModel):
-    required_instances: tuple[FeatureInstanceKey, ...]
-    ordered_instances: tuple[FeatureInstanceKey, ...]
+    required_instances: tuple[FeatureInstanceKey, ...] = Field(min_length=1)
+    ordered_instances: tuple[FeatureInstanceKey, ...] = Field(min_length=1)
     dependency_edges: tuple[FeatureDependencyEdge, ...] = ()
     required_columns: tuple[str, ...] = ()
     dataset_refs: tuple[str, ...] = ()
     capability_ids: tuple[str, ...] = ()
     cutoff_at: AwareDatetime | None = None
+    date_from: date | None = None
+    date_to: date | None = None
+    lookback_requirement: int = Field(default=0, ge=0)
+    warmup_requirement: int = Field(default=0, ge=0)
     universe_scope_hash: str | None = None
     plan_hash: str = ""
 
@@ -453,6 +458,8 @@ class FeatureDependencyPlan(PlatformContractModel):
 
     @model_validator(mode="after")
     def validate_plan(self) -> "FeatureDependencyPlan":
+        if not self.required_instances or not self.ordered_instances:
+            raise ValueError("FeatureDependencyPlan requires non-empty required_instances and ordered_instances")
         required = set(self.required_instances)
         ordered = set(self.ordered_instances)
         if len(required) != len(self.required_instances):
@@ -463,6 +470,10 @@ class FeatureDependencyPlan(PlatformContractModel):
             raise ValueError("ordered_instances must contain all required_instances")
         if self.universe_scope_hash is not None and not _HASH.fullmatch(self.universe_scope_hash):
             raise ValueError("universe_scope_hash must use sha256 format")
+        if self.date_to is not None and self.date_from is None:
+            raise ValueError("date_to requires date_from")
+        if self.date_from is not None and self.date_to is not None and self.date_to < self.date_from:
+            raise ValueError("date_to must not precede date_from")
         edge_keys = {(edge.dependency, edge.consumer) for edge in self.dependency_edges}
         if len(edge_keys) != len(self.dependency_edges):
             raise ValueError("dependency_edges must not contain duplicates")
