@@ -2,6 +2,14 @@
 
 日期：2026-10-16。状态：本地 WP-only 候选补丁达到 `PR-ready`（非 ready for merge）；`WP-0207=IN_PROGRESS`，生产 `NOT CERTIFIED`，`RELEASED=false`。以下最新记录覆盖历史轮次的当前验收结论，不改写历史证据。
 
+## 2026-10-16 PR #42 后端 CI：固定契约生成依赖
+
+远端 run `38862135744` 的后端在契约导出检查停止，未进入 pytest。对纯基线 `efe8e9b362cba13eca183c55be57bbbbc832b60b` 与初始 PR `fa04d3c4d77d345cdfccde5ee578734b3901d061` 使用同一隔离 Linux Python 3.11.17 / Pydantic 2.14.1 / pydantic-core 2.50.1，均重现完全相同的七个 schema 漂移（exit 1；Windows Python 3.11.15 亦复现）。逐项 JSON 差异仅为 `coverage_ratio` Decimal 字符串分支丢失 `pattern`：C-004 的 CanonicalQualityReport、CanonicalNormalizationTaskResult、SnapshotPartitionRef、DataSnapshot、SnapshotBuildTaskResult，C-006 FeaturePartition，以及 C-010 OpenAPI 内嵌 FeaturePartition。2.14.1 的 `GenerateJsonSchema.get_decimal_pattern()` 默认返回 `None`，而 2.13.5 自动生成正则；不是 WP-0207 新增模型导致的漂移。
+
+同一解释器降为 Pydantic 2.13.5 / pydantic-core 2.46.5 后，纯基线与初始 PR 的导出检查均 exit 0。最小修复在共同的 `requirements.txt` 固定 `pydantic==2.13.5`，使 runtime、API 与契约生成使用同一已验证版本；不是仅固定 CI，也不通过旧正则后处理掩盖新版生成语义。新增回归要求安装版本与精确依赖 pin 一致：缺 pin 时 1 failed，修复后 Contract/Registry/Golden/generated 在 Linux 3.11.17 与 Windows 3.11.15 各 139 passed（exit 0）。完整 CI 依赖安装与依赖兼容检查、导出、AI assets、baseline、受影响 Python compile/flake8 和 diff 检查均 exit 0。Pydantic 后续升级须单独审查 Decimal schema/客户端兼容性；本轮不改七个生成物、不改相邻 WP 模型、API 载荷或 Web。
+
+本轮授权 commit/push 更新 PR，仍排除 `AGENTS.md` 与 CHANGELOG 治理条目。远端最终 CI 结果和执行环境见 PR #42；未通过全部阻断检查前不得合入。回滚本轮修复时按最新到最旧顺序 revert 修复提交和回归测试提交（具体 SHA 见 PR），随后重装目标依赖并重跑导出/后端门禁；不覆盖本地治理文件，不自动执行数据库 downgrade。真实来源、Coverage/PIT 与生产边界仍为 `IN_PROGRESS / NOT CERTIFIED / RELEASED=false`。
+
 ## 2026-10-16 dirty delta 续验：父门禁与来源证据
 
 在下方初次审查后，已于同一 WP-0207 范围内关闭父 Backfill fixture 门禁反例：实际 pipeline plan 生成后、进度累计和业务子任务创建前，父入口复用 Raw `_configuration` 与 adapter 解析，按来源/Capability/Raw Schema 缺口投影 `UNAVAILABLE_*`；无效 plan 保持失败，不返回空成功。Raw 对经 Pydantic `model_copy(update=...)` 绕过校验的 route 重新验证类型、状态和 hash。新增离线与真实隔离 PostgreSQL 负向测试，确保无业务子任务、ProviderRun 或 RawObject 伪发布。之前的 `BLOCKED` 父门禁说明仅为当时历史发现，不再作为当前未修问题。
