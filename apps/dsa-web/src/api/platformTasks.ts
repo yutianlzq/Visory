@@ -1,6 +1,6 @@
 import apiClient from './index';
 import { formatPlatformError } from './platformErrors';
-import type { PlatformListEnvelope, PlatformSuccessEnvelope, TaskDetails, TaskListQuery, TaskRecord } from '../types/generated/platform-api';
+import type { PlatformListEnvelope, PlatformSuccessEnvelope, PublicTaskDetails, PublicTaskDetailsResponse, TaskListQuery, TaskRecord } from '../types/generated/platform-api';
 
 type ListParams = Partial<Omit<TaskListQuery, 'tab'>> & { tab?: TaskListQuery['tab'] };
 
@@ -20,9 +20,9 @@ export const platformTasksApi = {
       hasMore: response.data.page.has_more,
     };
   },
-  get: async (taskId: string): Promise<TaskDetails> => {
-    const response = await apiClient.get<PlatformSuccessEnvelope>(`/api/platform/v1/tasks/${encodeURIComponent(taskId)}`);
-    return unwrap<TaskDetails>(response.data);
+  get: async (taskId: string): Promise<PublicTaskDetails> => {
+    const response = await apiClient.get<PublicTaskDetailsResponse>(`/api/platform/v1/tasks/${encodeURIComponent(taskId)}`);
+    return response.data.data;
   },
   cancel: async (taskId: string): Promise<TaskRecord> => {
     const response = await apiClient.post<PlatformSuccessEnvelope>(`/api/platform/v1/tasks/${encodeURIComponent(taskId)}/cancellations`, {});

@@ -1,6 +1,53 @@
 # WP-0207 端到端闭环验收记录
 
-日期：2026-10-16。状态：本地 WP-only 候选补丁达到 `PR-ready`（非 ready for merge）；`WP-0207=IN_PROGRESS`，生产 `NOT CERTIFIED`，`RELEASED=false`。以下最新记录覆盖历史轮次的当前验收结论，不改写历史证据。
+日期：2026-10-16。状态：WP-only draft PR 等待当前 head 的 CI 与最终审查（非 ready for merge）；`WP-0207=IN_PROGRESS`，生产 `NOT CERTIFIED`，`RELEASED=false`。以下最新记录覆盖历史轮次的当前验收结论，不改写历史证据。
+
+## 2026-10-16 PR #42 公开边界与安全回滚修复
+
+本节优先于下方历史轮次。API/SSE 和 Web 错误格式化统一拒绝 `api_key`、`api-key`、`apiKey` 的赋值及带引号 JSON 诊断，不改变稳定错误 code、retryable 和 request_id。真实 HTTP 路由回归使用合法的内部 Task/Attempt/Checkpoint 和事件，经 FastAPI 序列化后同时校验运行时 OpenAPI、已生成 JSON Schema/OpenAPI；不是只测手写字典或空 attempts/checkpoints。
+
+`C-010/TaskDetails` 升至 1.1.0，绑定 `PublicTaskDetails`；公开 `TaskAttemptProjection` / `TaskCheckpointProjection` 从定义上不存在 lease/resume verifier 字段，GET 响应使用有类型的 `PublicTaskDetailsResponse`。内部 `TaskDetails`、`TaskAttemptRecord.lease_token_hash`、`TaskCheckpointRecord.resume_token_hash` 保持必填、持久化和恢复语义；公开导出不再包含内部 TaskLease/Record。Operations 使用生成的公开 DTO，非空 Golden 同步覆盖 attempt/checkpoint。客户端若错误依赖内部 hash 或旧生成类型，须切换公开 DTO，不能为兼容性重新泄漏凭证校验材料。通用 envelope 版本仍为 1.0.0；不修改其他 WP 契约。
+
+本轮本地验证（Python 3.11.15 / Pydantic 2.13.5，Web Node 24.19.0；远端当前 head 结果以 PR 描述为准）：
+
+| 命令/路径 | 结果 |
+| --- | --- |
+| API/Task/Backfill/Raw/Registry/Contract/Golden 定向 pytest | exit 0，514 passed / 0 skipped；其中公开边界、生成契约和回滚 revision 专项 76 passed。 |
+| 隔离 PostgreSQL：真实 Task HTTP、Raw、Backfill、Task lease/checkpoint | exit 0，125 passed / 0 skipped；非空 checkpoint 经真实服务写入/读回、HTTP 公开 DTO 校验后，内部 resume 验证仍有效。loopback/tmpfs 测试容器和临时密码文件已清理。 |
+| 生成导出 --check、AI assets、baseline、9 文件 py_compile、critical flake8、diff --check | 均 exit 0；637 links / 0 broken / 0 imported secrets。OpenAPI 的 96 个非 Task 组件逐对象保持不变，没有刷新 C-006 等相邻 WP 生成文件。 |
+| 受影响文件完整 flake8 | exit 1，8 条既有诊断；开工原字节同配置为 9 条，按文件/诊断逐项对比 current-only=0。不将 critical 通过写成完整 lint 通过，不修复 Legacy。 |
+| 受影响 Web Vitest / ESLint / tsc -b / Vite build | 73 passed / exit 0 / exit 0 / exit 0；已安装 Chrome 的桌面/移动 Operations fixture 2 passed，截图仅在仓库外测试证据目录，不进入 PR 产品 diff。 |
+| 已应用 0014 的代码回滚演练 | exit 0；仓库外临时 index 应用逆向业务补丁后，相对纯 main 仅保留原始 0014 文件，Alembic history head 仍为 0014、可解析 down_revision；未连接数据库执行回滚。 |
+
+RED 证据为 Python 34 failed / Web 18 failed（API Key 泄漏、非空公开 DTO 校验失败、公开目录含 worker 凭证契约），GREEN 见表。过程中的一次 pytest 路径拼写错误 exit 4（0 tests），修正后定向集通过；首次浏览器 CLI 混用了本地两套 Playwright 导致收集失败 exit 1，改用与 `@playwright/test` 相同的 CLI 和仓库外 Chrome preload 后 2 passed。未安装依赖或浏览器、不修改 workflow，不把这些失败算通过。
+
+### 已应用 0014 时的默认安全回滚
+
+先由获授权的运维确认目标环境是否已应用 `0014_wp0207_source_binding`，保存可恢复备份、当前 revision、列和来源证据校验结果。**不能把整组提交直接 revert 后仅保留数据库列**：若删除 `migrations/versions/0014_wp0207_provider_source_binding.py`，数据库 `alembic_version` 仍指向 0014，旧代码无法解析 revision，后续迁移和状态检查会失败。
+
+- 未合入/未应用：关闭 PR 不影响 main；若未来撤回未应用的代码，可按实际合入方式撤回 WP-0207 补丁。不要修改本地独立治理成果。
+- **已应用 0014：默认只回退业务代码/契约/客户端，保留 0014 迁移文件及其原始 revision/down_revision、已有版本链、`alembic_version=0014_wp0207_source_binding`、nullable `provider_run.source_route_evidence` 列及数据。**旧 ORM 不使用此 nullable 列，已有记录不需补造证据；不要删除迁移历史、stamp 到 0013、手工改 alembic_version 或执行 downgrade。
+- 如已有后续迁移/其他 WP 依赖，先评估完整链和运行时兼容性；不把下方固定基线补丁盲目套到更新的 main。冲突或未评估依赖时停止，另行设计回滚，不强制覆盖。
+
+以下是针对**此 PR 已审查 head**、单独干净回滚 checkout 的代码逆向补丁步骤（Bash；`PR_HEAD` 填写 PR 中核验的完整 SHA，`PATCH` 是仓库外新文件）。仅演练代码/index，不连接数据库；在真实环境执行仍需单独授权：
+
+```bash
+BASE=efe8e9b362cba13eca183c55be57bbbbc832b60b
+PR_HEAD=<reviewed-full-pr-head-sha>
+PATCH=<absolute-path-outside-repository>/wp0207-runtime-rollback.patch
+test -z "$(git status --porcelain)" || exit 1
+test "$(git rev-parse HEAD)" = "$PR_HEAD" || exit 1
+git diff --binary "$PR_HEAD" "$BASE" -- . \
+  ':(exclude)migrations/versions/0014_wp0207_provider_source_binding.py' > "$PATCH"
+git apply --check --index "$PATCH" || exit 1
+git apply --index "$PATCH" || exit 1
+git cat-file -e :migrations/versions/0014_wp0207_provider_source_binding.py || exit 1
+git diff --cached --check || exit 1
+```
+
+审核暂存路径仅为 PR 文件且排除 0014 后，检查代码 Alembic history 仍能解析 0014、既有数据库状态仍匹配、列/来源证据未丢失，再做目标版本依赖安装与回归。后续 commit/发布由回滚授权单独控制；本轮不执行这组实际回滚命令。只有另行授权、备份恢复演练及依赖评估完成后，才可考虑物理 downgrade 到 0013；0014 downgrade 会 drop 来源证据列并丢失数据，不是本次交付或默认路径。
+
+本轮仅对仓库外临时 Git index/迁移目录演练逆向补丁和 Alembic revision 解析，不执行任何数据库 downgrade/stamp/版本表写入。中文专题无对应英文版本，不扩展双语首页。保持 draft、`WP-0207=IN_PROGRESS / NOT CERTIFIED / RELEASED=false`。
 
 ## 2026-10-16 PR #42 后端 CI：固定契约生成依赖
 

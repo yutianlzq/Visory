@@ -4739,6 +4739,69 @@
         "title": "ProviderSourceRouteEvidence",
         "type": "object"
       },
+      "PublicTaskDetails": {
+        "additionalProperties": false,
+        "description": "C-010 details, separate from internal lease and checkpoint recovery records.",
+        "properties": {
+          "attempts": {
+            "items": {
+              "$ref": "#/components/schemas/TaskAttemptProjection"
+            },
+            "title": "Attempts",
+            "type": "array"
+          },
+          "checkpoints": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/TaskCheckpointProjection"
+            },
+            "title": "Checkpoints",
+            "type": "array"
+          },
+          "diagnostic_artifact_refs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Diagnostic Artifact Refs",
+            "type": "array"
+          },
+          "state_events": {
+            "items": {
+              "$ref": "#/components/schemas/TaskStateEventRecord"
+            },
+            "title": "State Events",
+            "type": "array"
+          },
+          "task": {
+            "$ref": "#/components/schemas/TaskRecord"
+          }
+        },
+        "required": [
+          "task",
+          "attempts",
+          "state_events"
+        ],
+        "title": "PublicTaskDetails",
+        "type": "object"
+      },
+      "PublicTaskDetailsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PublicTaskDetails"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PlatformResponseMeta"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ],
+        "title": "PublicTaskDetailsResponse",
+        "type": "object"
+      },
       "PublicationStatus": {
         "enum": [
           "DRAFT",
@@ -5231,7 +5294,7 @@
         "title": "StorageRef",
         "type": "object"
       },
-      "TaskAttemptRecord": {
+      "TaskAttemptProjection": {
         "additionalProperties": false,
         "properties": {
           "attempt_id": {
@@ -5312,11 +5375,6 @@
             "title": "Lease Expires At",
             "type": "string"
           },
-          "lease_token_hash": {
-            "pattern": "^sha256:[0-9a-f]{64}$",
-            "title": "Lease Token Hash",
-            "type": "string"
-          },
           "leased_at": {
             "format": "date-time",
             "title": "Leased At",
@@ -5386,14 +5444,13 @@
           "phase_progress",
           "worker_id",
           "worker_capabilities",
-          "lease_token_hash",
           "leased_at",
           "lease_expires_at",
           "heartbeat_at",
           "resource_usage",
           "diagnostic_artifact_refs"
         ],
-        "title": "TaskAttemptRecord",
+        "title": "TaskAttemptProjection",
         "type": "object"
       },
       "TaskCancelRequest": {
@@ -5408,7 +5465,7 @@
         "title": "TaskCancelRequest",
         "type": "object"
       },
-      "TaskCheckpointRecord": {
+      "TaskCheckpointProjection": {
         "additionalProperties": false,
         "properties": {
           "attempt_id": {
@@ -5449,11 +5506,6 @@
             "title": "Phase",
             "type": "string"
           },
-          "resume_token_hash": {
-            "pattern": "^sha256:[0-9a-f]{64}$",
-            "title": "Resume Token Hash",
-            "type": "string"
-          },
           "sequence": {
             "minimum": 1,
             "title": "Sequence",
@@ -5473,7 +5525,6 @@
           "attempt_id",
           "phase",
           "sequence",
-          "resume_token_hash",
           "input_hash",
           "handler_version",
           "storage_ref",
@@ -5481,7 +5532,7 @@
           "created_at",
           "expires_at"
         ],
-        "title": "TaskCheckpointRecord",
+        "title": "TaskCheckpointProjection",
         "type": "object"
       },
       "TaskCreateRequest": {
@@ -5587,51 +5638,6 @@
         "title": "TaskCreateRequest",
         "type": "object"
       },
-      "TaskDetails": {
-        "additionalProperties": false,
-        "properties": {
-          "attempts": {
-            "items": {
-              "$ref": "#/components/schemas/TaskAttemptRecord"
-            },
-            "title": "Attempts",
-            "type": "array"
-          },
-          "checkpoints": {
-            "default": [],
-            "items": {
-              "$ref": "#/components/schemas/TaskCheckpointRecord"
-            },
-            "title": "Checkpoints",
-            "type": "array"
-          },
-          "diagnostic_artifact_refs": {
-            "default": [],
-            "items": {
-              "type": "string"
-            },
-            "title": "Diagnostic Artifact Refs",
-            "type": "array"
-          },
-          "state_events": {
-            "items": {
-              "$ref": "#/components/schemas/TaskStateEventRecord"
-            },
-            "title": "State Events",
-            "type": "array"
-          },
-          "task": {
-            "$ref": "#/components/schemas/TaskRecord"
-          }
-        },
-        "required": [
-          "task",
-          "attempts",
-          "state_events"
-        ],
-        "title": "TaskDetails",
-        "type": "object"
-      },
       "TaskEventRecord": {
         "additionalProperties": false,
         "description": "C-010 event projection for resumable task notifications.",
@@ -5695,30 +5701,6 @@
           "payload"
         ],
         "title": "TaskEventRecord",
-        "type": "object"
-      },
-      "TaskLease": {
-        "additionalProperties": false,
-        "properties": {
-          "attempt": {
-            "$ref": "#/components/schemas/TaskAttemptRecord"
-          },
-          "lease_token": {
-            "maxLength": 512,
-            "minLength": 32,
-            "title": "Lease Token",
-            "type": "string"
-          },
-          "task": {
-            "$ref": "#/components/schemas/TaskRecord"
-          }
-        },
-        "required": [
-          "task",
-          "attempt",
-          "lease_token"
-        ],
-        "title": "TaskLease",
         "type": "object"
       },
       "TaskListQuery": {
@@ -6889,7 +6871,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PlatformSuccessEnvelope"
+                  "$ref": "#/components/schemas/PublicTaskDetailsResponse"
                 }
               }
             },

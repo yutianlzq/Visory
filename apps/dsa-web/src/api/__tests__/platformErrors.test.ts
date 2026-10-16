@@ -21,6 +21,7 @@ const privateTexts = [
   '{"api_key":"fixture-secret"}',
   "{'api-key': 'fixture-secret'}",
   '{"apiKey" : "fixture-secret"}',
+  'API Key: fixture-secret',
 ];
 
 describe.each([

@@ -73,7 +73,7 @@ _TOKEN_LIKE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _PLATFORM_PRIVATE_TEXT = re.compile(
-    r"bearer\s+|(?:token|lease|password|secret|credential|authorization|cookie)[\"']?\s*[:=]|"
+    r"bearer\s+|(?:api[_ -]?key|token|lease|password|secret|credential|authorization|cookie)[\"']?\s*[:=]|"
     r"https?://[^\s/@]+:[^\s/@]+@|"
     r"(?:postgres(?:ql)?|mysql|redis|mongodb)(?:\+[a-z0-9]+)?://|"
     r"[a-z]:[\\/]|\\\\|file://|(?:^|\s)/(?!api(?:/|$))[a-z0-9_.-]+/|"

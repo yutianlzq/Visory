@@ -27,6 +27,7 @@ from src.schemas.platform import (
 from src.repositories.platform.errors import PlatformDatabaseError
 from src.utils.sanitize import sanitize_platform_public_payload
 from src.schemas.platform import AssetResolutionRequest, PlatformSuccessEnvelope
+from src.schemas.platform.task import PublicTaskDetails, PublicTaskDetailsResponse
 
 
 router = APIRouter(prefix="/platform/v1", tags=["Platform"])
@@ -395,10 +396,8 @@ def _raise_task_error(exc: TaskControlError) -> None:
 
 def _public_task_details(details: TaskDetails) -> dict[str, object]:
     payload = details.model_dump(mode="json")
-    for attempt in payload.get("attempts", []):
-        if isinstance(attempt, dict):
-            attempt.pop("lease_token_hash", None)
-    return sanitize_platform_public_payload(payload)
+    payload = sanitize_platform_public_payload(payload)
+    return PublicTaskDetails.model_validate(payload).model_dump(mode="json")
 
 
 def _sse_response(events: tuple[object, ...]) -> StreamingResponse:
@@ -504,7 +503,7 @@ def stream_task_events_for_task(
     return _sse_response(events)
 
 
-@router.get("/tasks/{task_id}", response_model=PlatformSuccessEnvelope, summary="Get a durable platform task")
+@router.get("/tasks/{task_id}", response_model=PublicTaskDetailsResponse, summary="Get a durable platform task")
 def get_task(task_id: str, request: Request) -> PlatformSuccessEnvelope:
     service = _task_service(request)
     try:

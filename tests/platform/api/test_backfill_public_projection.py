@@ -6,10 +6,11 @@ from types import SimpleNamespace
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
+from pydantic import ValidationError
 import pytest
 
 from api.middlewares.error_handler import add_error_handlers
-from api.platform.router import router, _public_task_details, _sse_response
+from api.platform.router import router
 from src.services.platform.backfill import BackfillError
 from src.schemas.platform import PLATFORM_CONTRACTS, TaskDetails, TaskEventRecord
 from src.utils.sanitize import sanitize_platform_public_payload
@@ -26,6 +27,7 @@ PRIVATE_TEXTS = (
     "api_key=fixture-secret", "api-key: fixture-secret", "apiKey = fixture-secret",
     '{"api_key":"fixture-secret"}', "{'api-key': 'fixture-secret'}",
     '{"apiKey" : "fixture-secret"}',
+    "API Key: fixture-secret",
 )
 
 
@@ -69,29 +71,24 @@ def test_real_http_task_details_and_sse_match_public_contract(private_text):
     public.model_validate(data)
     schema = json.loads((ROOT / "schemas/platform/C-010.TaskDetails.schema.json").read_text(encoding="utf-8"))
     Draft202012Validator(schema).validate(data)
+    for spec in (app.openapi(), json.loads((ROOT / "schemas/platform/C-010.openapi.json").read_text(encoding="utf-8"))):
+        response_schema = spec["paths"]["/api/platform/v1/tasks/{task_id}"]["get"]["responses"]["200"]["content"]["application/json"]["schema"]
+        assert response_schema["$ref"] == "#/components/schemas/PublicTaskDetailsResponse"
+        Draft202012Validator({**spec, **response_schema}).validate(response.json())
 
 
-@pytest.mark.parametrize("private_text", PRIVATE_TEXTS)
-def test_task_details_and_sse_remove_private_diagnostics(private_text):
-    payload = {
-        "task": {"requirements": {"diagnostic": private_text}, "failure_code": "BACKFILL_WORKER_ERROR"},
-        "attempts": [{"lease_token_hash": "fixture-secret"}],
-        "checkpoints": [{"resume_token_hash": "fixture-secret"}],
-        "event_id": "tevent_public", "event_type": "task_state_changed",
-    }
-    details = SimpleNamespace(model_dump=lambda **kwargs: payload)
-    projected = _public_task_details(details)
-    assert "lease_token_hash" not in projected["attempts"][0]
-    assert "resume_token_hash" not in projected["checkpoints"][0]
-    assert projected["task"]["failure_code"] == "BACKFILL_WORKER_ERROR"
-    assert "fixture-secret" not in str(projected)
-    response = _sse_response((payload,))
-    import asyncio
-    async def read():
-        return "".join([value async for value in response.body_iterator])
-    body = asyncio.run(read())
-    assert "fixture-secret" not in body
-    assert "BACKFILL_WORKER_ERROR" in body
+@pytest.mark.parametrize("contract,name,secret", (
+    ("C-007/TaskAttemptRecord", "task-attempt-record", "lease_token_hash"),
+    ("C-011/TaskCheckpointRecord", "task-checkpoint-record", "resume_token_hash"),
+))
+def test_internal_worker_verifiers_remain_required(contract, name, secret):
+    payload = _golden(name)
+    model = PLATFORM_CONTRACTS.get(contract).schema_model
+    assert secret in model.model_json_schema()["required"]
+    del payload[secret]
+    with pytest.raises(ValidationError) as error:
+        model.model_validate(payload)
+    assert (secret,) in {item["loc"] for item in error.value.errors()}
 
 
 @pytest.mark.parametrize("private_text", PRIVATE_TEXTS)

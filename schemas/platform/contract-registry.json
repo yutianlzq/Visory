@@ -2895,7 +2895,7 @@
     },
     {
       "business_key": "task.task_id",
-      "compatibility": "new response fields must be additive and optional",
+      "compatibility": "1.1.0 corrects public DTO: lease/resume verifier hashes are never public; internal records remain strict",
       "consumers": [
         "Platform API client",
         "operations"
@@ -2925,8 +2925,8 @@
       ],
       "resource_id_field": null,
       "retention_class": "AUDIT",
-      "schema_version": "1.0.0",
-      "storage_profile": "C-010 response payload without arbitrary filesystem paths",
+      "schema_version": "1.1.0",
+      "storage_profile": "C-010 public projection; internal C-007/C-011 verifier fields are excluded",
       "time_semantics": [
         "task.created_at",
         "state_events.event_at"

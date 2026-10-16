@@ -2,7 +2,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-const PRIVATE_TEXT = /(?:bearer\s+|(?:authorization|cookie|password|passwd|secret|credential|token|lease)["']?\s*[:=]|https?:\/\/[^\s/@]+:[^\s/@]+@|(?:postgres(?:ql)?|mysql|redis|mongodb)(?:\+[a-z0-9]+)?:\/\/|[a-z]:[\\/]|\\\\|file:\/\/|(?:^|\s)\/(?!api(?:\/|$))[a-z0-9_.-]+\/|traceback|stack\s*trace|response[_ ]?(?:body|text)\s*[:=]|\beyJ[a-z0-9_-]+\.[a-z0-9_-]+\.[a-z0-9_-]+)/i;
+const PRIVATE_TEXT = /(?:bearer\s+|(?:api[_ -]?key|authorization|cookie|password|passwd|secret|credential|token|lease)["']?\s*[:=]|https?:\/\/[^\s/@]+:[^\s/@]+@|(?:postgres(?:ql)?|mysql|redis|mongodb)(?:\+[a-z0-9]+)?:\/\/|[a-z]:[\\/]|\\\\|file:\/\/|(?:^|\s)\/(?!api(?:\/|$))[a-z0-9_.-]+\/|traceback|stack\s*trace|response[_ ]?(?:body|text)\s*[:=]|\beyJ[a-z0-9_-]+\.[a-z0-9_-]+\.[a-z0-9_-]+)/i;
 
 export function projectPlatformError(cause: unknown) {
   if (!isRecord(cause)) return undefined;

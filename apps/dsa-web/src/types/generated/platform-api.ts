@@ -741,6 +741,20 @@ export interface ProviderSourceRouteEvidence {
   readonly unavailable_reason_code?: string | null;
 }
 
+/** C-010 details, separate from internal lease and checkpoint recovery records. */
+export interface PublicTaskDetails {
+  readonly attempts: ReadonlyArray<TaskAttemptProjection>;
+  readonly checkpoints?: ReadonlyArray<TaskCheckpointProjection>;
+  readonly diagnostic_artifact_refs?: ReadonlyArray<string>;
+  readonly state_events: ReadonlyArray<TaskStateEventRecord>;
+  readonly task: TaskRecord;
+}
+
+export interface PublicTaskDetailsResponse {
+  readonly data: PublicTaskDetails;
+  readonly meta: PlatformResponseMeta;
+}
+
 export type PublicationStatus = "DRAFT" | "PROVISIONAL" | "CERTIFIED" | "RETIRED";
 
 export type QualityStatus = "COMPLETE" | "PARTIAL" | "FAILED" | "UNAVAILABLE" | "STALE";
@@ -834,7 +848,7 @@ export interface StorageRef {
   readonly storage_namespace: StorageNamespace;
 }
 
-export interface TaskAttemptRecord {
+export interface TaskAttemptProjection {
   readonly attempt_id: string;
   readonly attempt_number: number;
   readonly attempt_outcome?: AttemptOutcome | null;
@@ -845,7 +859,6 @@ export interface TaskAttemptRecord {
   readonly finished_at?: string | null;
   readonly heartbeat_at: string;
   readonly lease_expires_at: string;
-  readonly lease_token_hash: string;
   readonly leased_at: string;
   readonly phase_progress: number;
   readonly resource_usage: Readonly<Record<string, number>>;
@@ -860,7 +873,7 @@ export interface TaskCancelRequest {
   readonly reason_code?: string;
 }
 
-export interface TaskCheckpointRecord {
+export interface TaskCheckpointProjection {
   readonly attempt_id: string;
   readonly checkpoint_hash: string;
   readonly checkpoint_id: string;
@@ -869,7 +882,6 @@ export interface TaskCheckpointRecord {
   readonly handler_version: string;
   readonly input_hash: string;
   readonly phase: string;
-  readonly resume_token_hash: string;
   readonly sequence: number;
   readonly storage_ref: StorageRef;
   readonly task_id: string;
@@ -890,14 +902,6 @@ export interface TaskCreateRequest {
   readonly task_type: "artifact_orphan_dry_run" | "raw_ingestion" | "canonical_normalization" | "data_snapshot_build" | "daily_schedule_phase" | "backfill";
 }
 
-export interface TaskDetails {
-  readonly attempts: ReadonlyArray<TaskAttemptRecord>;
-  readonly checkpoints?: ReadonlyArray<TaskCheckpointRecord>;
-  readonly diagnostic_artifact_refs?: ReadonlyArray<string>;
-  readonly state_events: ReadonlyArray<TaskStateEventRecord>;
-  readonly task: TaskRecord;
-}
-
 /** C-010 event projection for resumable task notifications. */
 export interface TaskEventRecord {
   readonly attempt_id?: string | null;
@@ -909,12 +913,6 @@ export interface TaskEventRecord {
   readonly resource_ref: ResourceRef;
   readonly sequence: number;
   readonly task_id: string;
-}
-
-export interface TaskLease {
-  readonly attempt: TaskAttemptRecord;
-  readonly lease_token: string;
-  readonly task: TaskRecord;
 }
 
 /** Stable, bounded task list query used by Operations. */

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/yutianlzq/Visory/releases) page.
 
 ## [Unreleased]
+- [修复] WP-0207 API/SSE 与 Web 补齐 API Key 诊断脱敏；公开 Task DTO 与内部 lease/checkpoint verifier 分离并同步生成契约和真实 HTTP 回归；明确已应用 0014 时保留迁移历史、版本和来源证据列的默认代码回滚路径，不执行数据库回滚，保持 IN_PROGRESS/NOT CERTIFIED/RELEASED=false。
 - [修复] WP-0207 Raw preflight 失败写入 Task 终态；Raw 对 route 类型/身份/状态/hash 再验证，父 Backfill 在实际 plan 创建业务子任务前复用 Raw 配置与 Schema 门禁，缺口投影 UNAVAILABLE、不伪造业务完成。仅合成来源隔离 PostgreSQL 与定向测试通过，完整 gate/strict lint 未通过，仍 IN_PROGRESS/NOT CERTIFIED/RELEASED=false，详见专题验收记录。
 - [改进] WP-0207 将 `a-stock-data` Release 3.10.2 固定为受控 Adapter/toolkit，新增不可变 source-route 证据、ProviderRun route Hash/upstream 绑定、执行前 fail-closed 门禁和 migration/生成契约；8 条真实候选 route 仍全部 BLOCKED，Capability 仍 UNVERIFIED，不把参考仓库或 fixture 当成真实历史来源。
 - [测试] WP-0207 本轮临时 PostgreSQL Raw→Backfill 96 passed/0 skipped、scoped backend 303 passed、Web 52 passed，受影响 lint/types/build、27 文件 py_compile、契约与治理检查通过；完整 gate 因既有 Windows Codex 进程测试失败未通过，临时容器/凭据已清理，远程 fetch 失败，保持 IN_PROGRESS/NOT CERTIFIED/RELEASED=false。

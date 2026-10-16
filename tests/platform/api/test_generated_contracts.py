@@ -147,14 +147,14 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "StorageNamespace",
         "StorageRef",
         "PriorityClass",
-        "TaskAttemptRecord",
+        "TaskAttemptProjection",
         "TaskCancelRequest",
-        "TaskCheckpointRecord",
+        "TaskCheckpointProjection",
         "TaskCreateRequest",
-        "TaskDetails",
+        "PublicTaskDetails",
+        "PublicTaskDetailsResponse",
         "TaskEventRecord",
         "TaskListQuery",
-        "TaskLease",
         "TaskRecord",
         "TaskRetryRequest",
         "TaskState",
@@ -242,8 +242,8 @@ def test_generated_frontend_types_are_strict_and_cover_c010_fields() -> None:
     assert "export interface DataQualityDiff" in generated
     assert "export interface DataQualityActionRequest" in generated
     assert "export interface TaskRecord" in generated
-    assert "export interface TaskAttemptRecord" in generated
-    assert "export interface TaskCheckpointRecord" in generated
+    assert "export interface TaskAttemptProjection" in generated
+    assert "export interface TaskCheckpointProjection" in generated
     assert ": any" not in generated
     assert "<any>" not in generated
 

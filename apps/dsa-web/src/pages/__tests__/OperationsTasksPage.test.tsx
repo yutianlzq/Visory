@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import OperationsTasksPage from '../OperationsTasksPage';
-import type { TaskDetails } from '../../types/generated/platform-api';
+import type { PublicTaskDetails } from '../../types/generated/platform-api';
 
 const { list, get } = vi.hoisted(() => ({ list: vi.fn(), get: vi.fn() }));
 
@@ -88,7 +88,7 @@ describe('Operations task error ownership', () => {
     const { readFileSync } = await vi.importActual<{ readFileSync(path: URL, encoding: 'utf8'): string }>('node:fs');
     const { URL: NodeURL } = await vi.importActual<{ URL: new (path: string, base: string) => URL }>('node:url');
     const goldenDetailsText = readFileSync(new NodeURL('../../../../../tests/golden/platform/contracts/success/task-details.json', import.meta.url), 'utf8');
-    const payload = (JSON.parse(goldenDetailsText) as { payload: TaskDetails }).payload;
+    const payload = (JSON.parse(goldenDetailsText) as { payload: PublicTaskDetails }).payload;
     get.mockResolvedValue({ ...payload, task: { ...payload.task, task_id: 'task_browser_counterexample' } });
     act(() => sources.at(-1)?.emit());
     await screen.findByRole('heading', { name: payload.task.task_type });

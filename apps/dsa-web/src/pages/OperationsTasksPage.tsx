@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { formatPlatformTaskError, platformTasksApi } from '../api/platformTasks';
 import type {
   PriorityClass,
-  TaskDetails,
+  PublicTaskDetails,
   TaskListQuery,
   TaskRecord,
   TaskState,
@@ -68,7 +68,7 @@ export default function OperationsTasksPage() {
   const filters = useMemo(() => readFilters(searchParams), [searchParams]);
   const scope = useMemo<DetailScope>(() => ({ taskId }), [taskId]);
   const [listResult, setListResult] = useState<{ query: TaskListQuery; items: TaskRecord[]; error: string | null } | null>(null);
-  const [detailResult, setDetailResult] = useState<{ scope: DetailScope; data: TaskDetails | null; error: string | null } | null>(null);
+  const [detailResult, setDetailResult] = useState<{ scope: DetailScope; data: PublicTaskDetails | null; error: string | null } | null>(null);
   const [commandResult, setCommandResult] = useState<{ scope: DetailScope; error: string | null } | null>(null);
   const [busyResult, setBusyResult] = useState<{ scope: DetailScope; kind: 'cancel' | 'retry' } | null>(null);
   const [connection, setConnection] = useState<{ query: TaskListQuery; scope: DetailScope; healthy: boolean } | null>(null);
