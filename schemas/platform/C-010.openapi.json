@@ -599,6 +599,12 @@
             "default": null,
             "title": "Completed Range"
           },
+          "coverage_state": {
+            "const": "UNPROVEN",
+            "default": "UNPROVEN",
+            "title": "Coverage State",
+            "type": "string"
+          },
           "dataset": {
             "maxLength": 128,
             "minLength": 1,
@@ -711,6 +717,26 @@
             "default": null,
             "title": "Failure Code"
           },
+          "gap_ranges": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "format": "date",
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Gap Ranges",
+            "type": "array"
+          },
           "plan_only": {
             "title": "Plan Only",
             "type": "boolean"
@@ -740,12 +766,28 @@
             "title": "Provider Run Refs",
             "type": "array"
           },
+          "publication_evidence": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/BackfillPublicationEvidence"
+            },
+            "title": "Publication Evidence",
+            "type": "array"
+          },
           "quality_events": {
             "default": [],
             "items": {
               "type": "string"
             },
             "title": "Quality Events",
+            "type": "array"
+          },
+          "quarantine_evidence": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/BackfillQuarantineEvidence"
+            },
+            "title": "Quarantine Evidence",
             "type": "array"
           },
           "raw_object_refs": {
@@ -756,12 +798,28 @@
             "title": "Raw Object Refs",
             "type": "array"
           },
+          "rejection_evidence": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/BackfillRejectionEvidence"
+            },
+            "title": "Rejection Evidence",
+            "type": "array"
+          },
           "resource_usage": {
             "additionalProperties": {
               "type": "number"
             },
             "title": "Resource Usage",
             "type": "object"
+          },
+          "retry_plan": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Retry Plan",
+            "type": "array"
           },
           "skipped_range": {
             "anyOf": [
@@ -1002,6 +1060,594 @@
         ],
         "title": "BackfillBatchType",
         "type": "string"
+      },
+      "BackfillCoverageProjection": {
+        "additionalProperties": false,
+        "properties": {
+          "batches": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/BackfillBatchProjection"
+            },
+            "title": "Batches",
+            "type": "array"
+          },
+          "coverage_state": {
+            "const": "UNPROVEN",
+            "default": "UNPROVEN",
+            "title": "Coverage State",
+            "type": "string"
+          },
+          "dataset": {
+            "pattern": "^[a-z][a-z0-9_]{0,127}$",
+            "title": "Dataset",
+            "type": "string"
+          },
+          "date_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date From"
+          },
+          "date_to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date To"
+          },
+          "execution_ranges": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/BackfillExecutionRangeProjection"
+            },
+            "title": "Execution Ranges",
+            "type": "array"
+          },
+          "gap_ranges": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "format": "date",
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Gap Ranges",
+            "type": "array"
+          },
+          "retry_plan": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Retry Plan",
+            "type": "array"
+          },
+          "trade_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Trade Date"
+          }
+        },
+        "required": [
+          "dataset",
+          "gap_ranges",
+          "retry_plan"
+        ],
+        "title": "BackfillCoverageProjection",
+        "type": "object"
+      },
+      "BackfillExecutionRangeProjection": {
+        "additionalProperties": false,
+        "description": "Recorded execution and recovery actions, separate from historical coverage.",
+        "properties": {
+          "batch_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Batch Id"
+          },
+          "blocking_codes": {
+            "default": [],
+            "items": {
+              "pattern": "^[A-Z][A-Z0-9_]{2,79}$",
+              "type": "string"
+            },
+            "title": "Blocking Codes",
+            "type": "array"
+          },
+          "date_from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date From"
+          },
+          "date_to": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Date To"
+          },
+          "execution_state": {
+            "enum": [
+              "UNATTEMPTED",
+              "PENDING",
+              "FAILED",
+              "SKIPPED",
+              "UNPROVEN",
+              "PUBLISHED_UNCERTIFIED"
+            ],
+            "title": "Execution State",
+            "type": "string"
+          },
+          "next_action": {
+            "enum": [
+              "CREATE_MONTH_BATCH",
+              "WAIT_EXISTING_TASK",
+              "RETRY_EXISTING_TASK",
+              "RESOLVE_DEPENDENCY",
+              "REVIEW_SKIPPED_RANGE",
+              "REVIEW_FAILURE",
+              "REVIEW_CANCELLED",
+              "VERIFY_COVERAGE",
+              "REVIEW_INCOMPLETE_PUBLICATION"
+            ],
+            "title": "Next Action",
+            "type": "string"
+          },
+          "provider_policy_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provider Policy Id"
+          },
+          "snapshot_refs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Snapshot Refs",
+            "type": "array"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Task Id"
+          },
+          "task_state": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TaskState"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "trade_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Trade Date"
+          }
+        },
+        "required": [
+          "execution_state",
+          "next_action"
+        ],
+        "title": "BackfillExecutionRangeProjection",
+        "type": "object"
+      },
+      "BackfillPublicationEvidence": {
+        "additionalProperties": false,
+        "description": "Fixed publication evidence; a published fixture never proves historical coverage.",
+        "properties": {
+          "canonical_manifest_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Canonical Manifest Hash",
+            "type": "string"
+          },
+          "canonical_partition_id": {
+            "title": "Canonical Partition Id",
+            "type": "string"
+          },
+          "canonical_storage_ref": {
+            "$ref": "#/components/schemas/StorageRef"
+          },
+          "coverage_state": {
+            "const": "PUBLISHED_UNCERTIFIED",
+            "default": "PUBLISHED_UNCERTIFIED",
+            "title": "Coverage State",
+            "type": "string"
+          },
+          "dataset_id": {
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "dataset_schema_version": {
+            "pattern": "^\\d+\\.\\d+\\.\\d+$",
+            "title": "Dataset Schema Version",
+            "type": "string"
+          },
+          "date_from": {
+            "format": "date",
+            "title": "Date From",
+            "type": "string"
+          },
+          "date_to": {
+            "format": "date",
+            "title": "Date To",
+            "type": "string"
+          },
+          "failed_provider_run_hashes": {
+            "additionalProperties": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            "title": "Failed Provider Run Hashes",
+            "type": "object"
+          },
+          "mapping_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Mapping Hash",
+            "type": "string"
+          },
+          "mapping_version": {
+            "title": "Mapping Version",
+            "type": "string"
+          },
+          "provider_policy_version": {
+            "pattern": "^\\d+\\.\\d+\\.\\d+$",
+            "title": "Provider Policy Version",
+            "type": "string"
+          },
+          "provider_run_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Provider Run Hash",
+            "type": "string"
+          },
+          "provider_run_id": {
+            "title": "Provider Run Id",
+            "type": "string"
+          },
+          "quality_report_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Quality Report Hash",
+            "type": "string"
+          },
+          "quality_report_id": {
+            "title": "Quality Report Id",
+            "type": "string"
+          },
+          "raw_manifest_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Raw Manifest Hash",
+            "type": "string"
+          },
+          "raw_object_id": {
+            "title": "Raw Object Id",
+            "type": "string"
+          },
+          "raw_storage_ref": {
+            "$ref": "#/components/schemas/StorageRef"
+          },
+          "row_count": {
+            "exclusiveMinimum": 0,
+            "title": "Row Count",
+            "type": "integer"
+          },
+          "snapshot_file_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Snapshot File Hash",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "snapshot_manifest_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Snapshot Manifest Hash",
+            "type": "string"
+          }
+        },
+        "required": [
+          "date_from",
+          "date_to",
+          "dataset_id",
+          "dataset_schema_version",
+          "provider_policy_version",
+          "provider_run_id",
+          "raw_object_id",
+          "canonical_partition_id",
+          "quality_report_id",
+          "snapshot_id",
+          "provider_run_hash",
+          "quality_report_hash",
+          "raw_storage_ref",
+          "canonical_storage_ref",
+          "raw_manifest_hash",
+          "canonical_manifest_hash",
+          "snapshot_manifest_hash",
+          "snapshot_file_hash",
+          "mapping_version",
+          "mapping_hash",
+          "row_count"
+        ],
+        "title": "BackfillPublicationEvidence",
+        "type": "object"
+      },
+      "BackfillQuarantineEvidence": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_storage_ref": {
+            "$ref": "#/components/schemas/StorageRef"
+          },
+          "failed_provider_run_hashes": {
+            "additionalProperties": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            "title": "Failed Provider Run Hashes",
+            "type": "object"
+          },
+          "manifest_file_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Manifest File Hash",
+            "type": "string"
+          },
+          "provider_run_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Provider Run Hash",
+            "type": "string"
+          },
+          "provider_run_id": {
+            "title": "Provider Run Id",
+            "type": "string"
+          },
+          "raw_ingestion_quarantine_id": {
+            "title": "Raw Ingestion Quarantine Id",
+            "type": "string"
+          },
+          "reason_code": {
+            "pattern": "^[A-Z][A-Z0-9_]{2,79}$",
+            "title": "Reason Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_run_id",
+          "raw_ingestion_quarantine_id",
+          "provider_run_hash",
+          "evidence_storage_ref",
+          "manifest_file_hash",
+          "reason_code"
+        ],
+        "title": "BackfillQuarantineEvidence",
+        "type": "object"
+      },
+      "BackfillRejectionEvidence": {
+        "additionalProperties": false,
+        "description": "Fixed inputs and diagnosis for a child that refused business publication.",
+        "properties": {
+          "batch_id": {
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "canonical_manifest_hash": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Canonical Manifest Hash"
+          },
+          "canonical_partition_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Canonical Partition Id"
+          },
+          "canonical_storage_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StorageRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "canonical_task_id": {
+            "title": "Canonical Task Id",
+            "type": "string"
+          },
+          "child_attempt_id": {
+            "title": "Child Attempt Id",
+            "type": "string"
+          },
+          "child_input_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Child Input Hash",
+            "type": "string"
+          },
+          "child_task_id": {
+            "title": "Child Task Id",
+            "type": "string"
+          },
+          "dataset_id": {
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "date_from": {
+            "format": "date",
+            "title": "Date From",
+            "type": "string"
+          },
+          "date_to": {
+            "format": "date",
+            "title": "Date To",
+            "type": "string"
+          },
+          "failed_provider_run_hashes": {
+            "additionalProperties": {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            "title": "Failed Provider Run Hashes",
+            "type": "object"
+          },
+          "failure_code": {
+            "pattern": "^[A-Z][A-Z0-9_]{2,79}$",
+            "title": "Failure Code",
+            "type": "string"
+          },
+          "parent_task_id": {
+            "title": "Parent Task Id",
+            "type": "string"
+          },
+          "phase": {
+            "enum": [
+              "CANONICAL",
+              "SNAPSHOT"
+            ],
+            "title": "Phase",
+            "type": "string"
+          },
+          "provider_run_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Provider Run Hash",
+            "type": "string"
+          },
+          "provider_run_id": {
+            "title": "Provider Run Id",
+            "type": "string"
+          },
+          "quality_report_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Quality Report Hash",
+            "type": "string"
+          },
+          "quality_report_id": {
+            "title": "Quality Report Id",
+            "type": "string"
+          },
+          "raw_manifest_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Raw Manifest Hash",
+            "type": "string"
+          },
+          "raw_object_id": {
+            "title": "Raw Object Id",
+            "type": "string"
+          },
+          "raw_storage_ref": {
+            "$ref": "#/components/schemas/StorageRef"
+          }
+        },
+        "required": [
+          "date_from",
+          "date_to",
+          "dataset_id",
+          "batch_id",
+          "parent_task_id",
+          "phase",
+          "child_task_id",
+          "child_attempt_id",
+          "child_input_hash",
+          "canonical_task_id",
+          "failure_code",
+          "provider_run_id",
+          "provider_run_hash",
+          "raw_object_id",
+          "raw_storage_ref",
+          "raw_manifest_hash",
+          "quality_report_id",
+          "quality_report_hash"
+        ],
+        "title": "BackfillRejectionEvidence",
+        "type": "object"
       },
       "BackfillStage": {
         "enum": [
@@ -1248,6 +1894,14 @@
             "title": "Provider Run Refs",
             "type": "array"
           },
+          "publication_evidence": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/BackfillPublicationEvidence"
+            },
+            "title": "Publication Evidence",
+            "type": "array"
+          },
           "quality_events": {
             "default": [],
             "items": {
@@ -1256,12 +1910,28 @@
             "title": "Quality Events",
             "type": "array"
           },
+          "quarantine_evidence": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/BackfillQuarantineEvidence"
+            },
+            "title": "Quarantine Evidence",
+            "type": "array"
+          },
           "raw_object_refs": {
             "default": [],
             "items": {
               "type": "string"
             },
             "title": "Raw Object Refs",
+            "type": "array"
+          },
+          "rejection_evidence": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/BackfillRejectionEvidence"
+            },
+            "title": "Rejection Evidence",
             "type": "array"
           },
           "resource_usage": {
@@ -3761,6 +4431,17 @@
             ],
             "default": null
           },
+          "source_route_evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProviderSourceRouteEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "started_at": {
             "format": "date-time",
             "title": "Started At",
@@ -3885,6 +4566,177 @@
           "provider_kind"
         ],
         "title": "ProviderSettingsProvider",
+        "type": "object"
+      },
+      "ProviderSourceEvidenceState": {
+        "enum": [
+          "PROVEN",
+          "UNPROVEN",
+          "FAILED",
+          "NOT_APPLICABLE"
+        ],
+        "title": "ProviderSourceEvidenceState",
+        "type": "string"
+      },
+      "ProviderSourceExecutionState": {
+        "enum": [
+          "AVAILABLE",
+          "BLOCKED",
+          "UNAVAILABLE",
+          "FIXTURE_ONLY"
+        ],
+        "title": "ProviderSourceExecutionState",
+        "type": "string"
+      },
+      "ProviderSourceKind": {
+        "enum": [
+          "HTTP",
+          "TCP",
+          "SDK",
+          "FILE",
+          "FIXTURE"
+        ],
+        "title": "ProviderSourceKind",
+        "type": "string"
+      },
+      "ProviderSourceRouteEvidence": {
+        "additionalProperties": false,
+        "description": "Immutable binding from a controlled adapter to its real upstream source.",
+        "properties": {
+          "actual_upstream": {
+            "title": "Actual Upstream",
+            "type": "string"
+          },
+          "adapter_blob": {
+            "pattern": "^[0-9a-f]{40}$",
+            "title": "Adapter Blob",
+            "type": "string"
+          },
+          "adapter_commit": {
+            "pattern": "^[0-9a-f]{40}$",
+            "title": "Adapter Commit",
+            "type": "string"
+          },
+          "adapter_entrypoint": {
+            "title": "Adapter Entrypoint",
+            "type": "string"
+          },
+          "adapter_name": {
+            "title": "Adapter Name",
+            "type": "string"
+          },
+          "adapter_release": {
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "title": "Adapter Release",
+            "type": "string"
+          },
+          "adapter_repository": {
+            "title": "Adapter Repository",
+            "type": "string"
+          },
+          "adapter_version": {
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "title": "Adapter Version",
+            "type": "string"
+          },
+          "coverage_evidence_state": {
+            "$ref": "#/components/schemas/ProviderSourceEvidenceState"
+          },
+          "dataset_id": {
+            "title": "Dataset Id",
+            "type": "string"
+          },
+          "documented_history_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Documented History Start"
+          },
+          "execution_state": {
+            "$ref": "#/components/schemas/ProviderSourceExecutionState"
+          },
+          "license_blob": {
+            "pattern": "^[0-9a-f]{40}$",
+            "title": "License Blob",
+            "type": "string"
+          },
+          "license_id": {
+            "title": "License Id",
+            "type": "string"
+          },
+          "market": {
+            "title": "Market",
+            "type": "string"
+          },
+          "pagination_evidence_state": {
+            "$ref": "#/components/schemas/ProviderSourceEvidenceState"
+          },
+          "pit_evidence_state": {
+            "$ref": "#/components/schemas/ProviderSourceEvidenceState"
+          },
+          "provider_id": {
+            "title": "Provider Id",
+            "type": "string"
+          },
+          "revision_evidence_state": {
+            "$ref": "#/components/schemas/ProviderSourceEvidenceState"
+          },
+          "source_kind": {
+            "$ref": "#/components/schemas/ProviderSourceKind"
+          },
+          "source_route_hash": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Source Route Hash",
+            "type": "string"
+          },
+          "source_route_id": {
+            "title": "Source Route Id",
+            "type": "string"
+          },
+          "unavailable_reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Unavailable Reason Code"
+          }
+        },
+        "required": [
+          "source_route_id",
+          "provider_id",
+          "dataset_id",
+          "adapter_name",
+          "adapter_version",
+          "adapter_repository",
+          "adapter_release",
+          "adapter_commit",
+          "adapter_blob",
+          "adapter_entrypoint",
+          "actual_upstream",
+          "source_kind",
+          "market",
+          "coverage_evidence_state",
+          "pit_evidence_state",
+          "pagination_evidence_state",
+          "revision_evidence_state",
+          "execution_state",
+          "license_id",
+          "license_blob",
+          "source_route_hash"
+        ],
+        "title": "ProviderSourceRouteEvidence",
         "type": "object"
       },
       "PublicationStatus": {
@@ -5467,6 +6319,53 @@
         "summary": "Create a controlled historical backfill batch"
       }
     },
+    "/api/platform/v1/backfills/coverage": {
+      "get": {
+        "operationId": "getBackfillCoverage",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dataset",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9_]{0,127}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformSuccessEnvelope"
+                }
+              }
+            },
+            "description": "Unproven historical coverage, monthly execution and task recovery actions"
+          }
+        },
+        "summary": "Read historical gaps, monthly execution and existing task recovery actions"
+      }
+    },
     "/api/platform/v1/backfills/stage-chain": {
       "post": {
         "operationId": "createBackfillStageChain",
@@ -5530,7 +6429,7 @@
             "description": "Historical backfill projection"
           }
         },
-        "summary": "Read a historical backfill batch"
+        "summary": "Read a historical backfill batch with fixed publication and child rejection evidence"
       }
     },
     "/api/platform/v1/data-quality": {

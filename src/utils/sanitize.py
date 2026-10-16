@@ -72,6 +72,40 @@ _TOKEN_LIKE_PATTERN = re.compile(
     r"\b(?:sk-[a-z0-9_\-]{16,}|xox[baprs]-[a-z0-9\-]{16,}|gh[pousr]_[a-z0-9_]{20,})\b",
     re.IGNORECASE,
 )
+_PLATFORM_PRIVATE_TEXT = re.compile(
+    r"bearer\s+|(?:token|lease|password|secret|credential|authorization|cookie)[\"']?\s*[:=]|"
+    r"https?://[^\s/@]+:[^\s/@]+@|"
+    r"(?:postgres(?:ql)?|mysql|redis|mongodb)(?:\+[a-z0-9]+)?://|"
+    r"[a-z]:[\\/]|\\\\|file://|(?:^|\s)/(?!api(?:/|$))[a-z0-9_.-]+/|"
+    r"traceback|stack\s*trace|response[_ ]?(?:body|text)\s*[:=]|"
+    r"\beyJ[a-z0-9_-]+\.[a-z0-9_-]+\.[a-z0-9_-]+",
+    re.IGNORECASE,
+)
+_PLATFORM_PRIVATE_KEYS = frozenset({
+    "lease", "lease_token_hash", "resume_token_hash", "connection_string",
+    "dsn", "response_body", "response_text", "raw_body", "traceback",
+    "stack", "stack_trace", "absolute_path", "physical_path",
+})
+
+
+def sanitize_platform_public_payload(obj: Any) -> Any:
+    """Keep logical resource references, excluding private diagnostics at public boundaries."""
+    if isinstance(obj, dict):
+        result = {}
+        for key, value in obj.items():
+            normalized = "_".join(_mapping_key_parts(str(key)))
+            if _is_sensitive_mapping_key(key) or normalized in _PLATFORM_PRIVATE_KEYS:
+                continue
+            if _PLATFORM_PRIVATE_TEXT.search(str(key)):
+                continue
+            result[key] = sanitize_platform_public_payload(value)
+        return result
+    if isinstance(obj, (list, tuple)):
+        return [sanitize_platform_public_payload(item) for item in obj]
+    if isinstance(obj, str):
+        if _PLATFORM_PRIVATE_TEXT.search(obj) or _TOKEN_LIKE_PATTERN.search(obj):
+            return _REDACTED
+    return obj
 
 
 def sanitize_diagnostic_text(text: Any, *, max_length: int = 300) -> str:

@@ -25,6 +25,7 @@ from src.schemas.platform import (
     TaskRetryRequest,
 )
 from src.repositories.platform.errors import PlatformDatabaseError
+from src.utils.sanitize import sanitize_platform_public_payload
 from src.schemas.platform import AssetResolutionRequest, PlatformSuccessEnvelope
 
 
@@ -118,6 +119,26 @@ def create_backfill_stage_chain(
     except PlatformDatabaseError as exc:
         _raise_task_database_error(exc)
     return build_success_envelope(request=request, data=result.model_dump(mode="json"), data_snapshot_id=None)
+
+
+@router.get("/backfills/coverage", response_model=PlatformSuccessEnvelope, summary="Read historical gaps, monthly execution and existing task recovery actions")
+def get_backfill_coverage(
+    request: Request,
+    dataset: str = Query(pattern=r"^[a-z][a-z0-9_]{0,127}$"),
+    date_from: date = Query(),
+    date_to: date = Query(),
+) -> PlatformSuccessEnvelope:
+    try:
+        projection = _backfill_service(request).get_coverage(dataset, date_from, date_to)
+    except BackfillError as exc:
+        raise platform_error(exc.status_code, code=exc.error_code, message=exc.public_message, retryable=exc.retryable) from exc
+    except TaskControlError as exc:
+        _raise_task_error(exc)
+    except PlatformDatabaseError as exc:
+        _raise_task_database_error(exc)
+    except ValueError as exc:
+        raise platform_error(422, details={"field": "coverage_range"}) from exc
+    return build_success_envelope(request=request, data=projection.model_dump(mode="json"), data_snapshot_id=None)
 
 
 @router.get("/backfills/{batch_id}", response_model=PlatformSuccessEnvelope, summary="Read a historical backfill batch")
@@ -377,13 +398,15 @@ def _public_task_details(details: TaskDetails) -> dict[str, object]:
     for attempt in payload.get("attempts", []):
         if isinstance(attempt, dict):
             attempt.pop("lease_token_hash", None)
-    return payload
+    return sanitize_platform_public_payload(payload)
 
 
 def _sse_response(events: tuple[object, ...]) -> StreamingResponse:
     def generate():
         for event in events:
-            data = event.model_dump(mode="json") if hasattr(event, "model_dump") else event
+            data = sanitize_platform_public_payload(
+                event.model_dump(mode="json") if hasattr(event, "model_dump") else event
+            )
             encoded = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
             yield f"id: {data['event_id']}\nevent: {data['event_type']}\ndata: {encoded}\n\n"
         yield ": heartbeat\n\n"

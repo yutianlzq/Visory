@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta, timezone
 from calendar import monthrange
@@ -10,6 +11,8 @@ from types import SimpleNamespace
 from typing import Any, Callable, Mapping, Protocol
 
 from src.artifacts.hashing import compute_bytes_hash
+from src.schemas.platform.backfill import BackfillPublicationEvidence, BackfillQuarantineEvidence, BackfillRejectionEvidence, BackfillCoverageProjection, BackfillExecutionRangeProjection
+from src.utils.sanitize import sanitize_platform_public_payload
 
 from src.schemas.platform import (
     BackfillBatchProjection, BackfillBatchRequest, BackfillBatchType, BackfillStage,
@@ -28,6 +31,7 @@ class BackfillError(Exception):
         self.public_message = public_message
         self.status_code = status_code
         self.retryable = retryable
+        self.checkpoint_result: BackfillProviderResult | None = None
 
 
 def _stable_resource_id(resource_type: ResourceType, key: str) -> str:
@@ -61,6 +65,9 @@ class BackfillProviderResult:
     snapshot_refs: tuple[str, ...] = ()
     provider_fallback: bool = False
     unavailable: bool = False
+    publication_evidence: tuple[BackfillPublicationEvidence, ...] = ()
+    quarantine_evidence: tuple[BackfillQuarantineEvidence, ...] = ()
+    rejection_evidence: tuple[BackfillRejectionEvidence, ...] = ()
 
 
 _BACKFILL_STAGE_ORDER: tuple[BackfillStage, ...] = tuple(BackfillStage)
@@ -88,17 +95,23 @@ def _merge_difference_summary(current: str | None, incoming: str | None) -> str 
     return "; ".join(parts)[:2048]
 
 
+def _month_ranges(date_from: date, date_to: date) -> tuple[tuple[date, date], ...]:
+    ranges: list[tuple[date, date]] = []
+    cursor = date(date_from.year, date_from.month, 1)
+    while cursor <= date_to:
+        month_end = date(cursor.year, cursor.month, monthrange(cursor.year, cursor.month)[1])
+        ranges.append((max(cursor, date_from), min(month_end, date_to)))
+        if month_end >= date_to:
+            break
+        cursor = date(cursor.year + (cursor.month == 12), 1 if cursor.month == 12 else cursor.month + 1, 1)
+    return tuple(ranges)
+
+
 def plan_backfill_ranges(request: BackfillBatchRequest | BackfillTaskRequirements) -> tuple[tuple[date, date], ...]:
     """Expand a batch into deterministic calendar partitions without external I/O."""
     if request.batch_type is not BackfillBatchType.YEAR:
         return ((request.date_from, request.date_to),)
-    ranges: list[tuple[date, date]] = []
-    cursor = date(request.date_from.year, request.date_from.month, 1)
-    while cursor <= request.date_to:
-        month_end = date(cursor.year, cursor.month, monthrange(cursor.year, cursor.month)[1])
-        ranges.append((max(cursor, request.date_from), min(month_end, request.date_to)))
-        cursor = date(cursor.year + (cursor.month == 12), 1 if cursor.month == 12 else cursor.month + 1, 1)
-    return tuple(ranges)
+    return _month_ranges(request.date_from, request.date_to)
 
 
 class BackfillProvider(Protocol):
@@ -360,13 +373,16 @@ class BackfillPipelineCoordinator:
         partition_index: int,
         requested_by: str,
         raw_requirements: Mapping[str, Any],
+        raw_suffix: str = "raw",
     ) -> BackfillPipelineSubmission:
         if partition_index < 0:
+            raise BackfillError("BACKFILL_PARTITION_INVALID", "Backfill partition is invalid.", status_code=422)
+        if raw_suffix not in {"raw", "raw-supplement"}:
             raise BackfillError("BACKFILL_PARTITION_INVALID", "Backfill partition is invalid.", status_code=422)
         raw = self._submit(
             task_type="raw_ingestion", payload=raw_requirements, requirements=requirements,
             parent_task=parent_task, partition_index=partition_index, requested_by=requested_by,
-            suffix="raw", refs=self._refs(requirements, parent_task),
+            suffix=raw_suffix, refs=self._refs(requirements, parent_task),
         )
         return BackfillPipelineSubmission(raw_task_id=raw.task_id)
 
@@ -379,13 +395,14 @@ class BackfillPipelineCoordinator:
         partition_index: int,
         requested_by: str,
         canonical_requirements: Mapping[str, Any],
+        raw_suffix: str = "raw",
     ) -> BackfillPipelineSubmission:
         if partition_index < 0:
             raise BackfillError("BACKFILL_PARTITION_INVALID", "Backfill partition is invalid.", status_code=422)
         raw_id = self._task_id(raw_task)
         self._require_predecessor(
             raw_id, task_type="raw_ingestion", requirements=requirements,
-            partition_index=partition_index, requested_by=requested_by, suffix="raw",
+            partition_index=partition_index, requested_by=requested_by, suffix=raw_suffix,
             refs=self._refs(requirements, parent_task),
         )
         canonical = self._submit(
@@ -405,6 +422,7 @@ class BackfillPipelineCoordinator:
         partition_index: int,
         requested_by: str,
         snapshot_requirements: Mapping[str, Any],
+        raw_suffix: str = "raw",
     ) -> BackfillPipelineSubmission:
         if partition_index < 0:
             raise BackfillError("BACKFILL_PARTITION_INVALID", "Backfill partition is invalid.", status_code=422)
@@ -412,7 +430,7 @@ class BackfillPipelineCoordinator:
         canonical_id = self._task_id(canonical_task)
         self._require_predecessor(
             raw_id, task_type="raw_ingestion", requirements=requirements,
-            partition_index=partition_index, requested_by=requested_by, suffix="raw",
+            partition_index=partition_index, requested_by=requested_by, suffix=raw_suffix,
             refs=self._refs(requirements, parent_task),
         )
         self._require_predecessor(
@@ -470,6 +488,395 @@ class BackfillPipelineExecutor:
         self.snapshot_worker = snapshot_worker
         self.result_loader = result_loader or self._default_result_loader()
         self.last_provider_run_refs: tuple[str, ...] = ()
+        self.last_publication_evidence: BackfillPublicationEvidence | None = None
+
+    def _publication_evidence(self, requirements, raw, run, partition, report, snapshot, *, failed_provider_runs=()):
+        from src.schemas.platform import RawObject, CanonicalNormalizationTaskRequirements, CanonicalQualityReport
+
+        # 测试替身没有真实对象证据，不能进入历史覆盖证明。
+        if not isinstance(raw, RawObject):
+            return None
+        try:
+            if (
+                raw.dataset_id != requirements.dataset
+                or partition.dataset_id != raw.dataset_id
+                or partition.dataset_schema_version != raw.dataset_schema_version
+                or run.provider_policy_id != requirements.provider_policy_id
+                or partition.provider_policy_version != run.provider_policy_version
+                or report.quality_report_id != partition.quality_report_id
+                or report.canonical_partition_id != partition.canonical_partition_id
+                or report.raw_object_refs != partition.raw_object_refs
+                or report.provider_run_refs != partition.provider_run_refs
+                or raw.raw_object_id not in partition.raw_object_refs
+                or run.provider_run_id not in partition.provider_run_refs
+                or partition.row_count <= 0
+                or report.quality_status.value in {"FAILED", "UNAVAILABLE"}
+                or partition.canonical_partition_id not in {
+                    ref.canonical_partition_id for ref in snapshot.canonical_partitions
+                }
+            ):
+                raise ValueError("publication lineage mismatch")
+            canonical_requirements = CanonicalNormalizationTaskRequirements(
+                provider_id=raw.provider_id, dataset_id=raw.dataset_id,
+                dataset_schema_version=raw.dataset_schema_version,
+                raw_object_id=raw.raw_object_id, provider_run_id=run.provider_run_id,
+                provider_policy_id=run.provider_policy_id,
+                provider_policy_version=run.provider_policy_version,
+                mapping_version=report.mapping_version,
+                partition_key=partition.partition_key,
+            )
+            self.canonical_worker._load_verified_raw(canonical_requirements)
+            mapping = self.canonical_worker._load_mapping_from_registry(canonical_requirements)
+            if mapping.mapping_hash != report.mapping_hash:
+                raise ValueError("publication mapping mismatch")
+            snapshot_service = self.snapshot_worker.snapshot_service
+            snapshot_service._validate_persisted_snapshot_files(snapshot)
+            resolver = self.canonical_worker.normalizer.resolver
+            raw_manifest = resolver.resolve(raw.storage_ref, require_exists=True).parent / "manifest.json"
+            canonical_manifest = resolver.resolve(partition.storage_ref, require_exists=True).parent / "manifest.json"
+            canonical_body = json.loads(canonical_manifest.read_bytes())
+            if CanonicalQualityReport.model_validate(canonical_body.get("quality_report")) != report:
+                raise ValueError("publication quality report mismatch")
+            snapshot_manifest = resolver.resolve(
+                snapshot_service.manifest_publisher.relative_manifest_path(snapshot),
+                require_exists=True,
+            )
+            return BackfillPublicationEvidence(
+                date_from=requirements.date_from, date_to=requirements.date_to,
+                dataset_id=raw.dataset_id, dataset_schema_version=raw.dataset_schema_version,
+                provider_policy_version=run.provider_policy_version,
+                provider_run_id=run.provider_run_id, raw_object_id=raw.raw_object_id,
+                canonical_partition_id=partition.canonical_partition_id,
+                quality_report_id=report.quality_report_id, snapshot_id=snapshot.snapshot_id,
+                provider_run_hash=compute_content_hash(run.model_dump(mode="json")),
+                quality_report_hash=compute_content_hash(canonical_body["quality_report"]),
+                raw_storage_ref=raw.storage_ref, canonical_storage_ref=partition.storage_ref,
+                raw_manifest_hash=compute_bytes_hash(raw_manifest.read_bytes()),
+                canonical_manifest_hash=compute_bytes_hash(canonical_manifest.read_bytes()),
+                snapshot_manifest_hash=snapshot.manifest_hash,
+                snapshot_file_hash=compute_bytes_hash(snapshot_manifest.read_bytes()),
+                mapping_version=report.mapping_version, mapping_hash=report.mapping_hash,
+                row_count=partition.row_count,
+                failed_provider_run_hashes={
+                    value.provider_run_id: compute_content_hash(value.model_dump(mode="json"))
+                    for value in failed_provider_runs
+                },
+            )
+        except Exception as exc:
+            raise BackfillError(
+                "BACKFILL_PUBLICATION_INTEGRITY_FAILED",
+                "Backfill publication evidence cannot be verified.", status_code=409,
+            ) from exc
+
+    def validate_publication_evidence(self, evidence: BackfillPublicationEvidence) -> None:
+        from src.repositories.platform import CanonicalRepository, RawIngestionRepository, SnapshotRepository
+
+        database = self.coordinator.task_control_service.database
+        with database.transaction() as session:
+            raw = RawIngestionRepository.get_raw_object(session, evidence.raw_object_id)
+            run = RawIngestionRepository.get_provider_run(session, evidence.provider_run_id)
+            partition = CanonicalRepository.get_partition(session, evidence.canonical_partition_id)
+            report = CanonicalRepository.get_quality_report(session, evidence.quality_report_id)
+            snapshot = SnapshotRepository.get_snapshot(session, evidence.snapshot_id)
+            failed_runs = tuple(
+                RawIngestionRepository.get_provider_run(session, ref)
+                for ref in evidence.failed_provider_run_hashes
+            )
+        if any(value is None for value in (raw, run, partition, report, snapshot, *failed_runs)):
+            raise BackfillError("BACKFILL_PUBLICATION_INTEGRITY_FAILED", "Backfill publication evidence cannot be verified.", status_code=409)
+        requirements = SimpleNamespace(
+            dataset=evidence.dataset_id, provider_policy_id=run.provider_policy_id,
+            date_from=evidence.date_from, date_to=evidence.date_to,
+        )
+        if self._publication_evidence(requirements, raw, run, partition, report, snapshot, failed_provider_runs=failed_runs) != evidence:
+            raise BackfillError("BACKFILL_PUBLICATION_INTEGRITY_FAILED", "Backfill publication evidence cannot be verified.", status_code=409)
+
+    def _failed_primary_hashes(self, run, failed_runs, *, parent_task_id=None):
+        """Rebuild supplemental-source bindings from durable inputs, never executor memory."""
+        from src.repositories.platform.provider import ProviderRegistryRepository
+
+        control = self.coordinator.task_control_service
+        raw_task = control.get_task(run.task_id).task
+        parent_refs = tuple(ref.resource_id for ref in raw_task.input_refs if ref.resource_type is ResourceType.TASK)
+        if len(parent_refs) != 1:
+            raise ValueError("Raw child parent mismatch")
+        parent = control.get_task(parent_refs[0]).task
+        requirements = BackfillTaskRequirements.model_validate(parent.requirements)
+        prefix = f"backfill:{requirements.batch_id}:"
+        candidates = [
+            index for index, _ in enumerate(plan_backfill_ranges(requirements))
+            if raw_task.idempotency_key in {f"{prefix}{index}:raw", f"{prefix}{index}:raw-supplement"}
+        ]
+        if (
+            parent.task_type != "backfill" or len(candidates) != 1
+            or parent_task_id is not None and parent.task_id != parent_task_id
+            or raw_task.task_type != "raw_ingestion" or raw_task.request_source != "backfill:child"
+            or raw_task.requested_by != parent.requested_by
+            or raw_task.input_refs != self.coordinator._refs(requirements, parent.task_id)
+            or run.dataset_id != requirements.dataset or run.provider_policy_id != requirements.provider_policy_id
+            or any(raw_task.requirements.get(field) != getattr(run, field) for field in (
+                "provider_id", "dataset_id", "dataset_schema_version", "provider_policy_id",
+            ))
+            or run.source_route_evidence is None
+            or run.request_fingerprint != compute_content_hash({
+                "provider_id": raw_task.requirements["provider_id"],
+                "dataset_id": raw_task.requirements["dataset_id"], "request": raw_task.requirements["request"],
+                "source_route_hash": run.source_route_evidence.source_route_hash,
+            })
+        ):
+            raise ValueError("Raw child input mismatch")
+        supplemental = raw_task.idempotency_key.endswith(":raw-supplement")
+        if len(failed_runs) != (1 if supplemental else 0):
+            raise ValueError("failed primary evidence missing or unexpected")
+        if not supplemental:
+            return {}
+        failed = failed_runs[0]
+        details = control.get_task(failed.task_id)
+        primary = details.task
+        attempt = next(value for value in details.attempts if value.attempt_id == failed.attempt_id)
+        with control.database.transaction() as session:
+            policy = ProviderRegistryRepository.get_policy(session, run.provider_policy_id)
+        if (
+            policy is None or policy.policy_version != run.provider_policy_version
+            or policy.dataset_id != run.dataset_id or policy.dataset_schema_version != run.dataset_schema_version
+            or "PRIMARY_UNAVAILABLE" not in policy.fallback_triggers
+            or run.provider_id not in policy.supplemental_provider_ids
+            or failed.provider_id != policy.primary_provider_id
+            or failed.dataset_id != run.dataset_id or failed.dataset_schema_version != run.dataset_schema_version
+            or failed.provider_policy_id != run.provider_policy_id or failed.provider_policy_version != run.provider_policy_version
+            or failed.run_outcome.value != "FAILED" or failed.finished_at is None or failed.raw_object_refs
+            or failed.failure_code not in {"RAW_TIMEOUT", "RAW_PROVIDER_UNAVAILABLE"}
+            or primary.task_type != "raw_ingestion" or primary.task_state is not TaskState.CANCELLED
+            or primary.request_source != "backfill:child" or primary.requested_by != parent.requested_by
+            or primary.idempotency_key != f"{prefix}{candidates[0]}:raw"
+            or primary.input_refs != raw_task.input_refs
+            or primary.requirements["request"] != raw_task.requirements["request"]
+            or any(primary.requirements.get(field) != getattr(failed, field) for field in (
+                "provider_id", "dataset_id", "dataset_schema_version", "provider_policy_id",
+            ))
+            or attempt.attempt_outcome is None or attempt.attempt_outcome.value != "FAILED"
+            or failed.source_route_evidence is None
+            or failed.request_fingerprint != compute_content_hash({
+                "provider_id": primary.requirements["provider_id"],
+                "dataset_id": primary.requirements["dataset_id"], "request": primary.requirements["request"],
+                "source_route_hash": failed.source_route_evidence.source_route_hash,
+            })
+        ):
+            raise ValueError("failed primary lineage mismatch")
+        return {failed.provider_run_id: compute_content_hash(failed.model_dump(mode="json"))}
+
+    def validate_quarantine_evidence(self, evidence: BackfillQuarantineEvidence) -> None:
+        from src.repositories.platform import RawIngestionRepository
+
+        try:
+            with self.coordinator.task_control_service.database.transaction() as session:
+                run = RawIngestionRepository.get_provider_run(session, evidence.provider_run_id)
+                quarantine = RawIngestionRepository.get_quarantine_by_run(session, evidence.provider_run_id)
+                failed_runs = tuple(RawIngestionRepository.get_provider_run(session, ref) for ref in evidence.failed_provider_run_hashes)
+            if run is None or quarantine is None:
+                raise ValueError("quarantine registry missing")
+            details = self.coordinator.task_control_service.get_task(run.task_id)
+            attempt = max(details.attempts, key=lambda value: value.attempt_number)
+            if (
+                run is None or quarantine is None
+                or quarantine.raw_ingestion_quarantine_id != evidence.raw_ingestion_quarantine_id
+                or quarantine.evidence_storage_ref != evidence.evidence_storage_ref
+                or quarantine.reason_code != evidence.reason_code
+                or compute_content_hash(run.model_dump(mode="json")) != evidence.provider_run_hash
+                or self._failed_primary_hashes(run, failed_runs) != evidence.failed_provider_run_hashes
+                or run.raw_object_refs or run.run_outcome.value not in {"FAILED", "DEGRADED"}
+                or details.task.task_state.value != run.run_outcome.value
+                or details.task.failure_code != run.failure_code
+                or attempt.attempt_id != run.attempt_id or attempt.finished_at is None
+                or attempt.attempt_outcome is None or attempt.attempt_outcome.value != run.run_outcome.value
+            ):
+                raise ValueError("quarantine lineage mismatch")
+            path = self.raw_worker.publisher.resolver.resolve(
+                evidence.evidence_storage_ref, require_exists=True, allow_internal=True,
+            )
+            if (
+                compute_bytes_hash(path.read_bytes()) != evidence.evidence_storage_ref.content_hash
+                or path.stat().st_size != evidence.evidence_storage_ref.size_bytes
+                or compute_bytes_hash((path.parent / "manifest.json").read_bytes()) != evidence.manifest_file_hash
+                or json.loads((path.parent / "manifest.json").read_bytes()) != {
+                    **quarantine.model_dump(mode="json"), "media_type": quarantine.evidence_storage_ref.media_type,
+                }
+            ):
+                raise ValueError("quarantine file mismatch")
+        except Exception as exc:
+            raise BackfillError(
+                "BACKFILL_PUBLICATION_INTEGRITY_FAILED",
+                "Backfill quarantine evidence cannot be verified.", status_code=409,
+            ) from exc
+
+    def _quarantine_evidence(self, run, quarantine, failed_provider_runs):
+        try:
+            path = self.raw_worker.publisher.resolver.resolve(quarantine.evidence_storage_ref, require_exists=True, allow_internal=True)
+            evidence = BackfillQuarantineEvidence(
+                provider_run_id=run.provider_run_id, provider_run_hash=compute_content_hash(run.model_dump(mode="json")),
+                raw_ingestion_quarantine_id=quarantine.raw_ingestion_quarantine_id, reason_code=quarantine.reason_code,
+                evidence_storage_ref=quarantine.evidence_storage_ref,
+                manifest_file_hash=compute_bytes_hash((path.parent / "manifest.json").read_bytes()),
+                failed_provider_run_hashes=self._failed_primary_hashes(run, failed_provider_runs),
+            )
+            self.validate_quarantine_evidence(evidence)
+            return evidence
+        except BackfillError:
+            raise
+        except Exception as exc:
+            raise BackfillError("BACKFILL_PUBLICATION_INTEGRITY_FAILED", "Backfill quarantine evidence cannot be verified.", status_code=409) from exc
+
+    def _execute_raw_child(self, task_id, *, publication_guard, failed_provider_runs=()):
+        from src.repositories.platform import RawIngestionRepository
+        from src.services.platform.raw_ingestion import RawIngestionTaskWorker
+
+        try:
+            return self._execute_or_reuse(
+                task_id, "raw_ingestion", self.raw_worker,
+                kwargs={"publication_guard": publication_guard} if publication_guard is not None else None,
+            )
+        except BackfillError as exc:
+            if exc.error_code != "BACKFILL_DEPENDENCY_NOT_READY" or not isinstance(self.raw_worker, RawIngestionTaskWorker):
+                raise
+            # 终态 quarantine 只恢复拒绝证据，不能作为成功 Raw 进入下游。
+            with self.coordinator.task_control_service.database.transaction() as session:
+                run = RawIngestionRepository.get_provider_run_by_task(session, task_id)
+                quarantine = RawIngestionRepository.get_quarantine_by_run(session, run.provider_run_id) if run else None
+            if run is None or quarantine is None:
+                raise
+            self._quarantine_evidence(run, quarantine, failed_provider_runs)
+            return SimpleNamespace(provider_run=run, quarantine=quarantine)
+
+    def _rejection_evidence(self, requirements, child_task_id, canonical_task_id, raw, run, partition=None, *, parent_task_id, failed_provider_runs=()):
+        from src.repositories.platform import CanonicalRepository
+        from src.schemas.platform import CanonicalNormalizationTaskRequirements, CanonicalPartition, CanonicalQualityReport
+
+        try:
+            control = self.coordinator.task_control_service
+            details = control.get_task(child_task_id)
+            canonical_task = control.get_task(canonical_task_id).task
+            parent = control.get_task(parent_task_id).task
+            parent_inputs = BackfillTaskRequirements.model_validate(parent.requirements)
+            index = plan_backfill_ranges(parent_inputs).index((requirements.date_from, requirements.date_to))
+            child = details.task
+            phase = "CANONICAL" if child.task_type == "canonical_normalization" else "SNAPSHOT"
+            attempt = max(details.attempts, key=lambda value: value.attempt_number)
+            inputs = CanonicalNormalizationTaskRequirements.model_validate(canonical_task.requirements)
+            with control.database.transaction() as session:
+                report = CanonicalRepository.get_quality_report_by_task(session, canonical_task_id)
+            if (
+                child.task_state is not TaskState.FAILED
+                or parent.task_type != "backfill" or parent_inputs.batch_id != requirements.batch_id
+                or parent_inputs.dataset != requirements.dataset or parent_inputs.provider_policy_id != requirements.provider_policy_id
+                or canonical_task.request_source != "backfill:child" or child.request_source != "backfill:child"
+                or canonical_task.requested_by != parent.requested_by or child.requested_by != parent.requested_by
+                or canonical_task.idempotency_key != f"backfill:{requirements.batch_id}:{index}:canonical"
+                or canonical_task.input_refs != self.coordinator._refs(parent_inputs, parent_task_id, run.task_id)
+                or child.task_type not in {"canonical_normalization", "data_snapshot_build"}
+                or not child.failure_code or attempt.finished_at is None
+                or attempt.attempt_outcome is None or attempt.attempt_outcome.value != "FAILED"
+                or inputs.raw_object_id != raw.raw_object_id or inputs.provider_run_id != run.provider_run_id
+                or inputs.dataset_id != requirements.dataset or run.provider_policy_id != requirements.provider_policy_id
+                or report is None or report.task_id != canonical_task_id
+                or report.raw_object_refs != (raw.raw_object_id,) or report.provider_run_refs != (run.provider_run_id,)
+                or report.dataset_id != inputs.dataset_id or report.dataset_schema_version != inputs.dataset_schema_version
+                or report.mapping_version != inputs.mapping_version
+            ):
+                raise ValueError("rejection lineage mismatch")
+            if phase == "CANONICAL":
+                if (
+                    child_task_id != canonical_task_id or partition is not None
+                    or report.canonical_partition_id is not None
+                    or report.quality_status.value != "FAILED" or child.failure_code not in report.failure_reasons
+                    or report.attempt_id != attempt.attempt_id
+                ):
+                    raise ValueError("Canonical rejection mismatch")
+            elif (
+                partition is None or canonical_task.task_state is not TaskState.SUCCEEDED
+                or child.idempotency_key != f"backfill:{requirements.batch_id}:{index}:snapshot"
+                or child.input_refs != self.coordinator._refs(parent_inputs, parent_task_id, run.task_id, canonical_task_id)
+                or report.canonical_partition_id != partition.canonical_partition_id
+                or report.quality_report_id != partition.quality_report_id
+                or partition.raw_object_refs != (raw.raw_object_id,) or partition.provider_run_refs != (run.provider_run_id,)
+                or partition.dataset_id != inputs.dataset_id or partition.dataset_schema_version != inputs.dataset_schema_version
+                or partition.provider_policy_version != inputs.provider_policy_version
+                or partition.canonical_partition_id not in child.requirements.get("canonical_partition_ids", ())
+                or canonical_task_id not in {ref.resource_id for ref in child.input_refs}
+            ):
+                raise ValueError("Snapshot rejection mismatch")
+            self.canonical_worker._load_verified_raw(inputs)
+            resolver = self.canonical_worker.normalizer.resolver
+            raw_manifest = resolver.resolve(raw.storage_ref, require_exists=True).parent / "manifest.json"
+            canonical_ref = None
+            canonical_hash = None
+            if partition is not None:
+                canonical_ref = partition.storage_ref
+                path = resolver.resolve(canonical_ref, require_exists=True)
+                content = path.read_bytes()
+                if len(content) != canonical_ref.size_bytes or compute_bytes_hash(content) != canonical_ref.content_hash:
+                    raise ValueError("Canonical file integrity mismatch")
+                manifest = path.parent / "manifest.json"
+                body = json.loads(manifest.read_bytes())
+                if CanonicalPartition.model_validate(body.get("partition")) != partition or CanonicalQualityReport.model_validate(body.get("quality_report")) != report:
+                    raise ValueError("Canonical manifest mismatch")
+                canonical_hash = compute_bytes_hash(manifest.read_bytes())
+            return BackfillRejectionEvidence(
+                date_from=requirements.date_from, date_to=requirements.date_to, dataset_id=inputs.dataset_id,
+                batch_id=requirements.batch_id, parent_task_id=parent_task_id,
+                phase=phase, child_task_id=child_task_id, child_attempt_id=attempt.attempt_id,
+                child_input_hash=compute_content_hash(child.requirements), canonical_task_id=canonical_task_id,
+                failure_code=child.failure_code, provider_run_id=run.provider_run_id,
+                provider_run_hash=compute_content_hash(run.model_dump(mode="json")), raw_object_id=raw.raw_object_id,
+                raw_storage_ref=raw.storage_ref, raw_manifest_hash=compute_bytes_hash(raw_manifest.read_bytes()),
+                quality_report_id=report.quality_report_id, quality_report_hash=compute_content_hash(report.model_dump(mode="json")),
+                canonical_partition_id=partition.canonical_partition_id if partition is not None else None,
+                canonical_storage_ref=canonical_ref, canonical_manifest_hash=canonical_hash,
+                failed_provider_run_hashes=self._failed_primary_hashes(run, failed_provider_runs, parent_task_id=parent_task_id),
+            )
+        except Exception as exc:
+            raise BackfillError("BACKFILL_PUBLICATION_INTEGRITY_FAILED", "Backfill rejection evidence cannot be verified.", status_code=409) from exc
+
+    def validate_rejection_evidence(self, evidence: BackfillRejectionEvidence) -> None:
+        from src.repositories.platform import CanonicalRepository, RawIngestionRepository
+
+        with self.coordinator.task_control_service.database.transaction() as session:
+            raw = RawIngestionRepository.get_raw_object(session, evidence.raw_object_id)
+            run = RawIngestionRepository.get_provider_run(session, evidence.provider_run_id)
+            partition = CanonicalRepository.get_partition(session, evidence.canonical_partition_id) if evidence.canonical_partition_id else None
+            failed_runs = tuple(RawIngestionRepository.get_provider_run(session, ref) for ref in evidence.failed_provider_run_hashes)
+        requirements = SimpleNamespace(
+            dataset=evidence.dataset_id, batch_id=evidence.batch_id, provider_policy_id=run.provider_policy_id if run else None,
+            date_from=evidence.date_from, date_to=evidence.date_to,
+        )
+        if self._rejection_evidence(requirements, evidence.child_task_id, evidence.canonical_task_id, raw, run, partition, parent_task_id=evidence.parent_task_id, failed_provider_runs=failed_runs) != evidence:
+            raise BackfillError("BACKFILL_PUBLICATION_INTEGRITY_FAILED", "Backfill rejection evidence cannot be verified.", status_code=409)
+
+    def _execute_publication_child(self, task_id, task_type, worker, *, requirements, parent_task_id, canonical_task_id, raw, run, partition=None, kwargs=None, failed_provider_runs=()):
+        from src.schemas.platform import RawObject
+        from src.services.platform.canonical_normalization import CanonicalNormalizationError
+
+        try:
+            result = self._execute_or_reuse(task_id, task_type, worker, kwargs=kwargs)
+        except (BackfillError, CanonicalNormalizationError) as exc:
+            if (
+                not isinstance(raw, RawObject)
+                or isinstance(exc, BackfillError) and exc.error_code != "BACKFILL_DEPENDENCY_NOT_READY"
+                or self.coordinator.task_control_service.get_task(task_id).task.task_state is not TaskState.FAILED
+            ):
+                raise
+            result = None
+        if isinstance(raw, RawObject) and self.coordinator.task_control_service.get_task(task_id).task.task_state is TaskState.FAILED:
+            evidence = self._rejection_evidence(requirements, task_id, canonical_task_id, raw, run, partition, parent_task_id=parent_task_id, failed_provider_runs=failed_provider_runs)
+            error = BackfillError(evidence.failure_code, "Backfill child refused publication.", status_code=409)
+            error.checkpoint_result = BackfillProviderResult(
+                failed_range=(requirements.date_from, requirements.date_to),
+                provider_run_refs=(*evidence.failed_provider_run_hashes, evidence.provider_run_id),
+                quality_events=(evidence.failure_code, *(("PROVIDER_FALLBACK_EXPLICIT",) if evidence.failed_provider_run_hashes else ())),
+                provider_fallback=bool(evidence.failed_provider_run_hashes), differences_summary="CHILD_REJECTED_NO_COMPLETION",
+                rejection_evidence=(evidence,),
+            )
+            raise error
+        return result
 
     def _default_result_loader(self) -> Callable[[str, str], Any] | None:
         """Recover successful child results from existing immutable registries."""
@@ -543,6 +950,18 @@ class BackfillPipelineExecutor:
                 raise
 
     def _execute_or_reuse(self, task_id: str, task_type: str, worker: Any, *, kwargs: Mapping[str, Any] | None = None) -> Any:
+        control = self.coordinator.task_control_service
+        request_retry = getattr(control, "request_retry", None)
+        if callable(request_retry):
+            record = control.get_task(task_id).task
+            if record.task_type != task_type:
+                raise BackfillError("BACKFILL_DEPENDENCY_MISMATCH", "Backfill dependency does not match the child task.", status_code=409)
+            if record.task_state is TaskState.RETRY_WAIT:
+                try:
+                    request_retry(task_id, actor_ref="backfill:child-recovery")
+                except TaskControlError as exc:
+                    if exc.error_code != "TASK_RETRY_NOT_ALLOWED":
+                        raise
         lease = self._lease(task_id, task_type)
         if lease is not None:
             try:
@@ -597,7 +1016,15 @@ class BackfillPipelineExecutor:
         canonical_requirements: Any,
         snapshot_requirements: Any,
         partition_rows: Mapping[str, list[Mapping[str, Any]]] | None = None,
+        supplemental_raw_requirements: Mapping[str, Any] | None = None,
     ) -> tuple[str, str, str]:
+        from src.services.platform.raw_ingestion import RawIngestionError
+
+        self.last_publication_evidence = None
+        partition_scope = plan_backfill_ranges(requirements)[partition_index]
+        evidence_requirements = requirements.model_copy(update={
+            "date_from": partition_scope[0], "date_to": partition_scope[1],
+        })
         publication_guard: Callable[[object], None] | None = None
         if parent_lease is not None:
             parent_task_id = self.coordinator._task_id(parent_task)
@@ -636,28 +1063,79 @@ class BackfillPipelineExecutor:
             parent_task=parent_task, requirements=requirements, partition_index=partition_index,
             requested_by=requested_by, raw_requirements=raw_requirements,
         )
-        raw_result = self._execute_or_reuse(
-            raw_submission.raw_task_id,
-            "raw_ingestion",
-            self.raw_worker,
-            kwargs={"publication_guard": publication_guard} if publication_guard is not None else None,
-        )
+        failed_provider_runs = ()
+        raw_suffix = "raw"
+        try:
+            raw_result = self._execute_raw_child(raw_submission.raw_task_id, publication_guard=publication_guard)
+        except (RawIngestionError, BackfillError):
+            if supplemental_raw_requirements is None:
+                raise
+            from src.repositories.platform import RawIngestionRepository
+            from src.repositories.platform.provider import ProviderRegistryRepository
+            control = self.coordinator.task_control_service
+            with control.database.transaction() as session:
+                failed_run = RawIngestionRepository.get_provider_run_by_task(session, raw_submission.raw_task_id)
+                policy = ProviderRegistryRepository.get_policy(session, requirements.provider_policy_id)
+            if (
+                failed_run is None or policy is None
+                or failed_run.failure_code not in {"RAW_TIMEOUT", "RAW_PROVIDER_UNAVAILABLE"}
+                or failed_run.raw_object_refs
+                or failed_run.provider_id != policy.primary_provider_id
+                or "PRIMARY_UNAVAILABLE" not in policy.fallback_triggers
+                or supplemental_raw_requirements.get("provider_id") not in policy.supplemental_provider_ids
+                or supplemental_raw_requirements.get("dataset_id") != requirements.dataset
+                or supplemental_raw_requirements.get("dataset_schema_version") != policy.dataset_schema_version
+                or supplemental_raw_requirements.get("provider_policy_id") != policy.provider_policy_id
+            ):
+                raise BackfillError("BACKFILL_SUPPLEMENT_NOT_AUTHORIZED", "Backfill supplemental source is not authorized by the input policy.", status_code=409)
+            if control.get_task(raw_submission.raw_task_id).task.task_state is TaskState.RETRY_WAIT:
+                control.request_retry(raw_submission.raw_task_id, actor_ref="backfill:supplement")
+            control.request_cancel(
+                raw_submission.raw_task_id, reason_code="BACKFILL_SUPPLEMENT_SELECTED", actor_ref="backfill:supplement",
+            )
+            failed_provider_runs = (failed_run,)
+            raw_suffix = "raw-supplement"
+            raw_submission = self.coordinator.submit_partition(
+                parent_task=parent_task, requirements=requirements, partition_index=partition_index,
+                requested_by=requested_by, raw_requirements=supplemental_raw_requirements, raw_suffix=raw_suffix,
+            )
+            raw_result = self._execute_raw_child(
+                raw_submission.raw_task_id, publication_guard=publication_guard, failed_provider_runs=failed_provider_runs,
+            )
         raw_object = getattr(raw_result, "raw_object", None)
         provider_run = getattr(raw_result, "provider_run", None)
         provider_run_id = getattr(provider_run, "provider_run_id", None)
         if raw_object is None or provider_run is None or not isinstance(provider_run_id, str):
+            quarantine = getattr(raw_result, "quarantine", None)
+            if quarantine is not None and provider_run is not None:
+                evidence = self._quarantine_evidence(provider_run, quarantine, failed_provider_runs)
+                error = BackfillError("BACKFILL_QUARANTINED", "Backfill input was quarantined.", status_code=409)
+                error.checkpoint_result = BackfillProviderResult(
+                    failed_range=partition_scope,
+                    provider_run_refs=(*(value.provider_run_id for value in failed_provider_runs), provider_run.provider_run_id),
+                    quality_events=("QUARANTINE_RAW_SCHEMA_DRIFT", *(("PROVIDER_FALLBACK_EXPLICIT",) if failed_provider_runs else ())),
+                    provider_fallback=bool(failed_provider_runs),
+                    quarantine_evidence=(evidence,),
+                )
+                raise error
             raise BackfillError("BACKFILL_RAW_NOT_PUBLISHED", "Backfill raw input was not published.", status_code=409, retryable=True)
-        self.last_provider_run_refs = (provider_run_id,)
+        self.last_provider_run_refs = (*(
+            value.provider_run_id for value in failed_provider_runs
+        ), provider_run_id)
 
         canonical_payload = canonical_requirements(raw_result) if callable(canonical_requirements) else canonical_requirements
         canonical_submission = self.coordinator.submit_canonical(
             parent_task=parent_task, raw_task=raw_submission.raw_task_id, requirements=requirements,
             partition_index=partition_index, requested_by=requested_by, canonical_requirements=canonical_payload,
+            raw_suffix=raw_suffix,
         )
-        canonical_result = self._execute_or_reuse(
+        canonical_result = self._execute_publication_child(
             canonical_submission.canonical_task_id or "",
             "canonical_normalization",
             self.canonical_worker,
+            requirements=evidence_requirements, canonical_task_id=canonical_submission.canonical_task_id or "",
+            parent_task_id=self.coordinator._task_id(parent_task),
+            raw=raw_object, run=provider_run, failed_provider_runs=failed_provider_runs,
             kwargs={"publication_guard": publication_guard} if publication_guard is not None else None,
         )
         canonical_partition = getattr(canonical_result, "canonical_partition", None)
@@ -669,11 +1147,15 @@ class BackfillPipelineExecutor:
             parent_task=parent_task, raw_task=raw_submission.raw_task_id,
             canonical_task=canonical_submission.canonical_task_id or "", requirements=requirements,
             partition_index=partition_index, requested_by=requested_by, snapshot_requirements=snapshot_payload,
+            raw_suffix=raw_suffix,
         )
-        snapshot_result = self._execute_or_reuse(
+        snapshot_result = self._execute_publication_child(
             snapshot_submission.snapshot_task_id or "",
             "data_snapshot_build",
             self.snapshot_worker,
+            requirements=evidence_requirements, canonical_task_id=canonical_submission.canonical_task_id or "",
+            parent_task_id=self.coordinator._task_id(parent_task),
+            raw=raw_object, run=provider_run, partition=canonical_partition, failed_provider_runs=failed_provider_runs,
             kwargs={
                 "partition_rows": partition_rows,
                 **(
@@ -686,6 +1168,11 @@ class BackfillPipelineExecutor:
         snapshot = getattr(snapshot_result, "snapshot", None)
         if snapshot is None or not getattr(snapshot_result, "published", False):
             raise BackfillError("BACKFILL_SNAPSHOT_NOT_PUBLISHED", "Backfill snapshot was not published.", status_code=409, retryable=True)
+        self.last_publication_evidence = self._publication_evidence(
+            evidence_requirements, raw_object, provider_run, canonical_partition,
+            getattr(canonical_result, "quality_report", None), snapshot,
+            failed_provider_runs=failed_provider_runs,
+        )
         return (raw_object.raw_object_id, canonical_partition.canonical_partition_id, snapshot.snapshot_id)
 
 
@@ -721,6 +1208,72 @@ class BackfillWorker:
     @staticmethod
     def _checkpoint_hash(payload: dict[str, Any]) -> str:
         return compute_content_hash(payload)
+
+    def _unavailable_contract(self, requirements: BackfillTaskRequirements) -> tuple[str, str] | None:
+        from src.repositories.platform.provider import ProviderRegistryRepository
+        from src.schemas.platform import ProviderCapabilityStatus
+        from src.services.platform.provider_source_routes import ProviderSourceRouteError
+        from src.services.platform.raw_ingestion import RawIngestionTaskWorker
+
+        raw_worker = getattr(self.pipeline_executor, "raw_worker", None) if self.pipeline_executor is not None else None
+        if not isinstance(raw_worker, RawIngestionTaskWorker):
+            return None
+        with self.task_control.database.transaction() as session:
+            policy = ProviderRegistryRepository.get_policy(session, requirements.provider_policy_id)
+            if policy is None:
+                return ("UNAVAILABLE_DATASET_CONTRACT", "SOURCE_CONTRACT_REQUIRED_NO_PUBLICATION")
+            if policy.dataset_id != requirements.dataset:
+                raise BackfillError("BACKFILL_INPUT_VERSION_MISMATCH", "Backfill input contract does not match the batch.", status_code=409)
+            dataset = ProviderRegistryRepository.get_dataset(
+                session, policy.dataset_id, policy.dataset_schema_version,
+            )
+            if dataset is None:
+                return ("UNAVAILABLE_DATASET_CONTRACT", "SOURCE_CONTRACT_REQUIRED_NO_PUBLICATION")
+            provider = ProviderRegistryRepository.get_provider(session, policy.primary_provider_id)
+            if provider is None or not provider.enabled:
+                return ("UNAVAILABLE_PROVIDER_CONFIGURATION", "PROVIDER_CONFIGURATION_REQUIRED_NO_PUBLICATION")
+            fixture_route_factory = getattr(raw_worker.transport, "fixture_source_route", None)
+            fixture_mode = (
+                getattr(raw_worker.transport, "fixture_only", False) is True
+                and callable(fixture_route_factory)
+            )
+            capability = ProviderRegistryRepository.get_capability(
+                session,
+                provider.provider_id,
+                dataset.dataset_id,
+                dataset.schema_version,
+                "CN",
+                dataset.frequency,
+            )
+            if capability is None:
+                return ("UNAVAILABLE_PROVIDER_CAPABILITY", "PROVIDER_CAPABILITY_REQUIRED_NO_PUBLICATION")
+            if not fixture_mode and capability.provider_capability_status is ProviderCapabilityStatus.UNVERIFIED:
+                return (
+                    "UNAVAILABLE_PROVIDER_CAPABILITY_UNVERIFIED",
+                    "PROVIDER_CAPABILITY_EVIDENCE_REQUIRED_NO_PUBLICATION",
+                )
+            if not fixture_mode and capability.provider_capability_status is ProviderCapabilityStatus.UNAVAILABLE:
+                return ("UNAVAILABLE_PROVIDER_CAPABILITY", "PROVIDER_CAPABILITY_UNAVAILABLE_NO_PUBLICATION")
+            if not ProviderRegistryRepository.list_provider_raw_schemas(
+                session,
+                provider.provider_id,
+                provider.adapter_version,
+                dataset.dataset_id,
+                dataset.schema_version,
+            ):
+                return ("UNAVAILABLE_PROVIDER_RAW_SCHEMA", "PROVIDER_RAW_SCHEMA_REQUIRED_NO_PUBLICATION")
+            if fixture_mode:
+                return None
+        try:
+            raw_worker.source_route_registry.require_executable(
+                provider_id=provider.provider_id,
+                dataset_id=dataset.dataset_id,
+                adapter_name=provider.adapter_name,
+                adapter_version=provider.adapter_version,
+            )
+        except ProviderSourceRouteError:
+            return ("UNAVAILABLE_PROVIDER_SOURCE_ROUTE", "PROVIDER_SOURCE_ROUTE_REQUIRED_NO_PUBLICATION")
+        return None
 
     @classmethod
     def _checkpoint_input_hash(cls, requirements: BackfillTaskRequirements) -> str:
@@ -770,23 +1323,46 @@ class BackfillWorker:
                 raise ValueError("checkpoint payload mismatch")
         except Exception as exc:
             raise BackfillError("BACKFILL_CHECKPOINT_INVALID", "Backfill checkpoint cannot be resumed.", status_code=409) from exc
-        resume_payload = stored_payload
-        required = {"batch_id", "task_id", "handler_version", "stage", "date_from", "date_to", "dataset", "input_hash", "completed_partitions"}
-        if not required <= resume_payload.keys() or resume_payload["batch_id"] != requirements.batch_id or resume_payload["task_id"] != lease.task.task_id or resume_payload["handler_version"] != self.HANDLER_VERSION or resume_payload["stage"] != requirements.stage.value or resume_payload["date_from"] != requirements.date_from.isoformat() or resume_payload["date_to"] != requirements.date_to.isoformat() or resume_payload["dataset"] != requirements.dataset or resume_payload["input_hash"] != self._checkpoint_input_hash(requirements):
-            raise BackfillError("BACKFILL_CHECKPOINT_INVALID", "Backfill checkpoint cannot be resumed.", status_code=409)
-        partitions = resume_payload["completed_partitions"]
-        if not isinstance(partitions, list) or any(type(index) is not int for index in partitions):
-            raise BackfillError("BACKFILL_CHECKPOINT_INVALID", "Backfill checkpoint cannot be resumed.", status_code=409)
-        completed = set(partitions)
-        if any(index < 0 or index >= len(ranges) for index in completed):
-            raise BackfillError("BACKFILL_CHECKPOINT_INVALID", "Backfill checkpoint cannot be resumed.", status_code=409)
-        if partitions != list(range(len(partitions))):
-            raise BackfillError("BACKFILL_CHECKPOINT_INVALID", "Backfill checkpoint cannot be resumed.", status_code=409)
         try:
-            self._validate_checkpoint_accumulators(stored_payload, requirements, ranges, completed)
+            completed = self._validate_checkpoint_payload(stored_payload, requirements, lease.task.task_id, ranges)
         except (TypeError, ValueError, KeyError) as exc:
             raise BackfillError("BACKFILL_CHECKPOINT_INVALID", "Backfill checkpoint cannot be resumed.", status_code=409) from exc
+        for value in stored_payload.get("publication_evidence", ()):
+            evidence = BackfillPublicationEvidence.model_validate(value)
+            if self.pipeline_executor is None:
+                raise BackfillError("BACKFILL_PUBLICATION_INTEGRITY_FAILED", "Backfill publication evidence cannot be verified.", status_code=409)
+            self.pipeline_executor.validate_publication_evidence(evidence)
+        for value in stored_payload.get("quarantine_evidence", ()):
+            if self.pipeline_executor is None:
+                raise BackfillError("BACKFILL_PUBLICATION_INTEGRITY_FAILED", "Backfill quarantine evidence cannot be verified.", status_code=409)
+            self.pipeline_executor.validate_quarantine_evidence(BackfillQuarantineEvidence.model_validate(value))
+        for value in stored_payload.get("rejection_evidence", ()):
+            if self.pipeline_executor is None:
+                raise BackfillError("BACKFILL_PUBLICATION_INTEGRITY_FAILED", "Backfill rejection evidence cannot be verified.", status_code=409)
+            self.pipeline_executor.validate_rejection_evidence(BackfillRejectionEvidence.model_validate(value))
         return completed, stored_payload
+
+    @classmethod
+    def _validate_checkpoint_payload(
+        cls, payload: Mapping[str, Any], requirements: BackfillTaskRequirements,
+        task_id: str, ranges: tuple[tuple[date, date], ...],
+    ) -> set[int]:
+        expected = {
+            "batch_id": requirements.batch_id, "task_id": task_id,
+            "handler_version": cls.HANDLER_VERSION, "stage": requirements.stage.value,
+            "date_from": requirements.date_from.isoformat(), "date_to": requirements.date_to.isoformat(),
+            "dataset": requirements.dataset, "input_hash": cls._checkpoint_input_hash(requirements),
+        }
+        if any(payload.get(key) != value for key, value in expected.items()):
+            raise ValueError("checkpoint input binding is inconsistent")
+        partitions = payload.get("completed_partitions")
+        if not isinstance(partitions, list) or any(type(index) is not int for index in partitions):
+            raise ValueError("checkpoint partition indexes are invalid")
+        if len(partitions) > len(ranges) or partitions != list(range(len(partitions))):
+            raise ValueError("checkpoint must contain a contiguous partition prefix")
+        completed = set(partitions)
+        cls._validate_checkpoint_accumulators(payload, requirements, ranges, completed)
+        return completed
 
     @staticmethod
     def _serialize_checkpoint_payload(payload: dict[str, Any]) -> bytes:
@@ -823,12 +1399,17 @@ class BackfillWorker:
         range_to_index = {item: index for index, item in enumerate(ranges)}
         completed_range = payload.get("completed_range")
         if completed_range is not None:
+            if requirements.dry_run or requirements.plan_only:
+                raise ValueError("non-publishing checkpoint cannot claim business completion")
             if not isinstance(completed_range, list) or len(completed_range) != 2:
                 raise ValueError("completed_range is invalid")
             completed_value = tuple(date.fromisoformat(value) for value in completed_range)
             if not completed_partitions or completed_value[0] != requirements.date_from:
                 raise ValueError("completed_range is inconsistent")
-            completed_end_index = range_to_index.get(completed_value)
+            completed_end_index = next(
+                (index for index, (_, end) in enumerate(ranges) if end == completed_value[1]),
+                None,
+            )
             if completed_end_index is None or not set(range(completed_end_index + 1)) <= completed_partitions:
                 raise ValueError("completed_range is inconsistent")
 
@@ -885,7 +1466,8 @@ class BackfillWorker:
         present_lineage = [field_name for field_name in lineage_fields if field_name in ref_values]
         if present_lineage and (
             len(present_lineage) != len(lineage_fields)
-            or len({len(ref_values[field_name]) for field_name in lineage_fields}) != 1
+            or len(ref_values["raw_object_refs"]) != len(ref_values["canonical_partition_refs"])
+            or len(ref_values["provider_run_refs"]) < len(ref_values["raw_object_refs"])
         ):
             raise ValueError("checkpoint lineage is inconsistent")
         if "snapshot_refs" in ref_values and len(ref_values["snapshot_refs"]) > len(completed_partitions):
@@ -894,6 +1476,63 @@ class BackfillWorker:
             published_refs = payload["published_refs"]
             if not isinstance(published_refs, list) or any(not isinstance(value, str) for value in published_refs) or len(published_refs) != len(set(published_refs)):
                 raise ValueError("published_refs are invalid")
+        evidence_values = payload.get("publication_evidence", [])
+        if not isinstance(evidence_values, list):
+            raise ValueError("publication_evidence is invalid")
+        evidence_ranges = set()
+        for value in evidence_values:
+            evidence = BackfillPublicationEvidence.model_validate(value)
+            scope = (evidence.date_from, evidence.date_to)
+            if (
+                scope in evidence_ranges
+                or range_to_index.get(scope) not in completed_partitions
+                or evidence.dataset_id != requirements.dataset
+                or evidence.raw_object_id not in ref_values.get("raw_object_refs", [])
+                or evidence.provider_run_id not in ref_values.get("provider_run_refs", [])
+                or evidence.canonical_partition_id not in ref_values.get("canonical_partition_refs", [])
+                or evidence.snapshot_id not in ref_values.get("snapshot_refs", [])
+                or not set(evidence.failed_provider_run_hashes) <= set(ref_values.get("provider_run_refs", []))
+            ):
+                raise ValueError("publication_evidence is inconsistent")
+            evidence_ranges.add(scope)
+        quarantine_values = payload.get("quarantine_evidence", [])
+        if not isinstance(quarantine_values, list):
+            raise ValueError("quarantine_evidence is invalid")
+        quarantine_refs = set()
+        for value in quarantine_values:
+            evidence = BackfillQuarantineEvidence.model_validate(value)
+            if (
+                evidence.raw_ingestion_quarantine_id in quarantine_refs
+                or evidence.provider_run_id not in ref_values.get("provider_run_refs", [])
+                or not any(event.startswith("QUARANTINE") for event in payload.get("quality_events", []))
+                or not set(evidence.failed_provider_run_hashes) <= set(ref_values.get("provider_run_refs", []))
+                or evidence.failed_provider_run_hashes and (
+                    payload.get("provider_fallback") is not True or "PROVIDER_FALLBACK_EXPLICIT" not in payload.get("quality_events", [])
+                )
+            ):
+                raise ValueError("quarantine_evidence is inconsistent")
+            quarantine_refs.add(evidence.raw_ingestion_quarantine_id)
+        rejection_values = payload.get("rejection_evidence", [])
+        if not isinstance(rejection_values, list):
+            raise ValueError("rejection_evidence is invalid")
+        rejection_refs = set()
+        for value in rejection_values:
+            evidence = BackfillRejectionEvidence.model_validate(value)
+            if (
+                requirements.dry_run or requirements.plan_only
+                or evidence.child_task_id in rejection_refs
+                or (evidence.date_from, evidence.date_to) not in failed_ranges
+                or evidence.dataset_id != requirements.dataset
+                or evidence.batch_id != requirements.batch_id or evidence.parent_task_id != payload["task_id"]
+                or evidence.provider_run_id not in ref_values.get("provider_run_refs", [])
+                or evidence.failure_code not in payload.get("quality_events", [])
+                or not set(evidence.failed_provider_run_hashes) <= set(ref_values.get("provider_run_refs", []))
+                or evidence.failed_provider_run_hashes and (
+                    payload.get("provider_fallback") is not True or "PROVIDER_FALLBACK_EXPLICIT" not in payload.get("quality_events", [])
+                )
+            ):
+                raise ValueError("rejection_evidence is inconsistent")
+            rejection_refs.add(evidence.child_task_id)
 
     def _write_checkpoint(self, lease: TaskLease, requirements: BackfillTaskRequirements, result: BackfillProviderResult, *, completed_partitions: set[int] | None = None) -> None:
         if self.checkpoint_writer is None:
@@ -926,7 +1565,18 @@ class BackfillWorker:
             "unavailable": result.unavailable,
             "completed_partitions": sorted(completed_partitions or set()),
             "input_hash": self._checkpoint_input_hash(requirements),
+            "publication_evidence": [
+                value.model_dump(mode="json") for value in result.publication_evidence
+            ],
+            "quarantine_evidence": [
+                value.model_dump(mode="json") for value in result.quarantine_evidence
+            ],
+            "rejection_evidence": [
+                value.model_dump(mode="json") for value in result.rejection_evidence
+            ],
         }
+        for field in ("differences_summary", "quality_events", "resource_usage"):
+            payload[field] = sanitize_platform_public_payload(payload[field])
         content = self._serialize_checkpoint_payload(payload)
         storage_ref = self.checkpoint_writer(task_id=lease.task.task_id, attempt_id=lease.attempt.attempt_id, payload=content)
         input_hash = self._checkpoint_input_hash(requirements)
@@ -990,6 +1640,10 @@ class BackfillWorker:
             raw_refs: list[str] = list(resume_payload.get("raw_object_refs", []))
             canonical_refs: list[str] = list(resume_payload.get("canonical_partition_refs", []))
             snapshot_refs: list[str] = list(resume_payload.get("snapshot_refs", []))
+            publication_evidence = [
+                BackfillPublicationEvidence.model_validate(value)
+                for value in resume_payload.get("publication_evidence", ())
+            ]
             resource_usage: dict[str, float] = dict(resume_payload.get("resource_usage", {}))
             differences_summary: str | None = resume_payload.get("differences_summary")
             skipped: list[tuple[date, date]] = list(
@@ -1027,7 +1681,110 @@ class BackfillWorker:
                 if cancelled is not None:
                     return cancelled
                 part = requirements.model_copy(update={"date_from": date_from, "date_to": date_to})
-                result = self.provider.run(part, resume_payload=resume_payload)
+                unavailable_contract = (
+                    self._unavailable_contract(part)
+                    if not part.dry_run and not part.plan_only
+                    else None
+                )
+                result = (
+                    BackfillProviderResult(
+                        skipped_range=(date_from, date_to), unavailable=True,
+                        quality_events=(unavailable_contract[0],),
+                        differences_summary=unavailable_contract[1],
+                    )
+                    if unavailable_contract is not None
+                    else self.provider.run(part, resume_payload=resume_payload)
+                )
+                result = replace(
+                    result,
+                    differences_summary=sanitize_platform_public_payload(result.differences_summary),
+                    quality_events=tuple(
+                        event if re.fullmatch(r"[A-Z][A-Z0-9_]{2,79}", event)
+                        and sanitize_platform_public_payload(event) == event
+                        else "BACKFILL_DIAGNOSTIC_REDACTED"
+                        for event in result.quality_events
+                    ),
+                    resource_usage=sanitize_platform_public_payload(result.resource_usage),
+                )
+                if result.unavailable and not any(event.startswith("UNAVAILABLE") for event in result.quality_events):
+                    result = replace(
+                        result, completed_range=None,
+                        skipped_range=(date_from, date_to),
+                        quality_events=(*result.quality_events, "UNAVAILABLE_DATASET"),
+                    )
+                plan = None
+                if (
+                    self.pipeline_executor is not None
+                    and not requirements.dry_run and not requirements.plan_only
+                    and result.completed_range is not None and result.failed_range is None
+                    and not result.unavailable
+                    and not any(event.startswith("QUARANTINE") for event in result.quality_events)
+                ):
+                    if self.pipeline_plan_factory is None:
+                        raise BackfillError(
+                            "BACKFILL_PIPELINE_PLAN_UNAVAILABLE",
+                            "Backfill pipeline plan is unavailable.", status_code=503, retryable=True,
+                        )
+                    plan = self.pipeline_plan_factory(part, result, index)
+                    if not isinstance(plan, Mapping) or any(key not in plan for key in (
+                        "raw_requirements", "canonical_requirements", "snapshot_requirements", "partition_rows",
+                    )):
+                        raise BackfillError(
+                            "BACKFILL_PIPELINE_PLAN_INVALID", "Backfill pipeline plan is invalid.", status_code=422,
+                        )
+                    from src.schemas.platform import RawIngestionTaskRequirements
+                    from src.services.platform.raw_ingestion import RawIngestionError, RawIngestionTaskWorker
+
+                    raw_worker = getattr(self.pipeline_executor, "raw_worker", None)
+                    if isinstance(raw_worker, RawIngestionTaskWorker):
+                        try:
+                            provider_config, *_ = raw_worker._configuration(
+                                RawIngestionTaskRequirements.model_validate(plan["raw_requirements"])
+                            )
+                            raw_worker.adapter_registry.resolve(provider_config.adapter_name)
+                        except RawIngestionError as exc:
+                            unavailable = {
+                                "RAW_REGISTRY_CONFIGURATION_INVALID": (
+                                    "UNAVAILABLE_DATASET_CONTRACT", "SOURCE_CONTRACT_REQUIRED_NO_PUBLICATION",
+                                ),
+                                "RAW_CAPABILITY_UNAVAILABLE": (
+                                    "UNAVAILABLE_PROVIDER_CAPABILITY", "PROVIDER_CAPABILITY_REQUIRED_NO_PUBLICATION",
+                                ),
+                                "RAW_CAPABILITY_UNVERIFIED": (
+                                    "UNAVAILABLE_PROVIDER_CAPABILITY_UNVERIFIED",
+                                    "PROVIDER_CAPABILITY_EVIDENCE_REQUIRED_NO_PUBLICATION",
+                                ),
+                                "RAW_SCHEMA_REGISTRY_UNAVAILABLE": (
+                                    "UNAVAILABLE_PROVIDER_RAW_SCHEMA", "PROVIDER_RAW_SCHEMA_REQUIRED_NO_PUBLICATION",
+                                ),
+                                "RAW_ADAPTER_NOT_REGISTERED": (
+                                    "UNAVAILABLE_PROVIDER_CONFIGURATION", "PROVIDER_CONFIGURATION_REQUIRED_NO_PUBLICATION",
+                                ),
+                            }
+                            if exc.error_code == "RAW_POLICY_BINDING_INVALID":
+                                raise BackfillError(
+                                    "BACKFILL_PIPELINE_PLAN_INVALID", "Backfill pipeline plan is invalid.",
+                                    status_code=422,
+                                ) from exc
+                            if exc.error_code in {
+                                "RAW_SOURCE_ROUTE_FIXTURE_INVALID", "RAW_SOURCE_ROUTE_FIXTURE_ONLY",
+                                "RAW_SOURCE_ROUTE_BLOCKED", "RAW_SOURCE_ROUTE_UNAVAILABLE",
+                                "RAW_SOURCE_ROUTE_INVALID",
+                            }:
+                                unavailable_contract = (
+                                    "UNAVAILABLE_PROVIDER_SOURCE_ROUTE",
+                                    "PROVIDER_SOURCE_ROUTE_REQUIRED_NO_PUBLICATION",
+                                )
+                            else:
+                                unavailable_contract = unavailable.get(exc.error_code)
+                            if unavailable_contract is None:
+                                raise
+                            result = BackfillProviderResult(
+                                skipped_range=(date_from, date_to), unavailable=True,
+                                quality_events=(unavailable_contract[0],),
+                                differences_summary=unavailable_contract[1],
+                            )
+                            plan = None
                 quality_events.extend(result.quality_events)
                 differences_summary = _merge_difference_summary(differences_summary, result.differences_summary)
                 # When the existing task pipeline is configured, its registry
@@ -1061,7 +1818,7 @@ class BackfillWorker:
                         provider_run_refs=tuple(provider_runs),
                         raw_object_refs=tuple(raw_refs),
                         canonical_partition_refs=tuple(canonical_refs),
-                        snapshot_refs=tuple(snapshot_refs),
+                        snapshot_refs=tuple(snapshot_refs), publication_evidence=tuple(publication_evidence),
                         provider_fallback=any("FALLBACK" in event for event in quality_events),
                         unavailable=any("UNAVAILABLE" in event for event in quality_events),
                         retryable=result.retryable,
@@ -1086,7 +1843,7 @@ class BackfillWorker:
                         provider_run_refs=tuple(provider_runs),
                         raw_object_refs=tuple(raw_refs),
                         canonical_partition_refs=tuple(canonical_refs),
-                        snapshot_refs=tuple(snapshot_refs),
+                        snapshot_refs=tuple(snapshot_refs), publication_evidence=tuple(publication_evidence),
                         provider_fallback=any("FALLBACK" in event for event in quality_events),
                         unavailable=any("UNAVAILABLE" in event for event in quality_events),
                     ),
@@ -1103,43 +1860,54 @@ class BackfillWorker:
                 business_completed = False
                 if not requirements.dry_run and not requirements.plan_only and not quarantined and result.completed_range is not None:
                     if self.pipeline_executor is not None:
-                        if self.pipeline_plan_factory is None:
-                            raise BackfillError(
-                                "BACKFILL_PIPELINE_PLAN_UNAVAILABLE",
-                                "Backfill pipeline plan is unavailable.",
-                                status_code=503,
-                                retryable=True,
-                            )
-                        plan = self.pipeline_plan_factory(part, result, index)
-                        if not isinstance(plan, Mapping):
+                        if plan is None:
                             raise BackfillError(
                                 "BACKFILL_PIPELINE_PLAN_INVALID",
                                 "Backfill pipeline plan is invalid.",
                                 status_code=422,
                             )
-                        required_plan_keys = (
-                            "raw_requirements",
-                            "canonical_requirements",
-                            "snapshot_requirements",
-                            "partition_rows",
-                        )
-                        if any(key not in plan for key in required_plan_keys):
-                            raise BackfillError(
-                                "BACKFILL_PIPELINE_PLAN_INVALID",
-                                "Backfill pipeline plan is invalid.",
-                                status_code=422,
+                        from src.repositories.platform.errors import PlatformDatabaseError
+                        from src.services.platform.raw_ingestion import RawIngestionError
+                        from src.services.platform.canonical_normalization import CanonicalNormalizationError
+
+                        try:
+                            raw_id, canonical_id, snapshot_id = self.pipeline_executor.execute_partition(
+                                parent_task=lease.task,
+                                parent_lease=lease,
+                                requirements=requirements,
+                                partition_index=index,
+                                requested_by=lease.task.requested_by,
+                                raw_requirements=plan["raw_requirements"],
+                                canonical_requirements=plan["canonical_requirements"],
+                                snapshot_requirements=plan["snapshot_requirements"],
+                                partition_rows=plan["partition_rows"],
+                                **(
+                                    {"supplemental_raw_requirements": plan["supplemental_raw_requirements"]}
+                                    if "supplemental_raw_requirements" in plan else {}
+                                ),
                             )
-                        raw_id, canonical_id, snapshot_id = self.pipeline_executor.execute_partition(
-                            parent_task=lease.task,
-                            parent_lease=lease,
-                            requirements=requirements,
-                            partition_index=index,
-                            requested_by=lease.task.requested_by,
-                            raw_requirements=plan["raw_requirements"],
-                            canonical_requirements=plan["canonical_requirements"],
-                            snapshot_requirements=plan["snapshot_requirements"],
-                            partition_rows=plan["partition_rows"],
-                        )
+                        except (BackfillError, OSError, PlatformDatabaseError, RawIngestionError, CanonicalNormalizationError) as exc:
+                            if isinstance(exc, BackfillError):
+                                error = exc
+                            else:
+                                retryable = (
+                                    isinstance(exc, OSError)
+                                    or isinstance(exc, (PlatformDatabaseError, RawIngestionError)) and exc.retryable
+                                    or isinstance(exc, CanonicalNormalizationError) and exc.error_code == "CANONICAL_ATOMIC_PUBLISH_FAILED"
+                                )
+                                error = BackfillError(
+                                    "BACKFILL_WORKER_ERROR", "Backfill worker failed.",
+                                    status_code=503 if retryable else 500, retryable=retryable,
+                                )
+                            if error.checkpoint_result is None:
+                                error.checkpoint_result = BackfillProviderResult(
+                                    failed_range=(date_from, date_to),
+                                    quality_events=(error.error_code,),
+                                    differences_summary="PARTITION_FAILED_NO_COMPLETION",
+                                )
+                            if error is exc:
+                                raise
+                            raise error from exc
                         for provider_run_id in getattr(self.pipeline_executor, "last_provider_run_refs", ()):
                             if provider_run_id not in provider_runs:
                                 provider_runs.append(provider_run_id)
@@ -1153,6 +1921,11 @@ class BackfillWorker:
                             if ref not in published:
                                 published.append(ref)
                         business_completed = True
+                        evidence = getattr(self.pipeline_executor, "last_publication_evidence", None)
+                        if evidence is not None:
+                            publication_evidence.append(evidence)
+                            if evidence.failed_provider_run_hashes:
+                                quality_events.append("PROVIDER_FALLBACK_EXPLICIT")
                     else:
                         if self.publisher is None:
                             raise BackfillError("BACKFILL_PUBLICATION_UNAVAILABLE", "Backfill publication is unavailable.", status_code=503, retryable=True)
@@ -1171,9 +1944,9 @@ class BackfillWorker:
                 else:
                     completion_prefix_open = False
                 completed_partitions.add(index)
-                checkpoint_result = BackfillProviderResult(completed_range=(requirements.date_from, completed_end) if completed_end is not None else None, skipped_range=skipped[-1] if skipped else None, skipped_ranges=tuple(skipped), failed_ranges=tuple(failed_ranges), differences_summary=differences_summary, published_refs=tuple(published), quality_events=tuple(quality_events), resource_usage=resource_usage, provider_run_refs=tuple(provider_runs), raw_object_refs=tuple(raw_refs), canonical_partition_refs=tuple(canonical_refs), snapshot_refs=tuple(snapshot_refs), provider_fallback=any("FALLBACK" in event for event in quality_events), unavailable=any("UNAVAILABLE" in event for event in quality_events))
+                checkpoint_result = BackfillProviderResult(completed_range=(requirements.date_from, completed_end) if completed_end is not None else None, skipped_range=skipped[-1] if skipped else None, skipped_ranges=tuple(skipped), failed_ranges=tuple(failed_ranges), differences_summary=differences_summary, published_refs=tuple(published), quality_events=tuple(quality_events), resource_usage=resource_usage, provider_run_refs=tuple(provider_runs), raw_object_refs=tuple(raw_refs), canonical_partition_refs=tuple(canonical_refs), snapshot_refs=tuple(snapshot_refs), publication_evidence=tuple(publication_evidence), provider_fallback=any("FALLBACK" in event for event in quality_events), unavailable=any("UNAVAILABLE" in event for event in quality_events))
                 self._write_checkpoint(lease, requirements, checkpoint_result, completed_partitions=completed_partitions)
-            aggregate = BackfillProviderResult(completed_range=(requirements.date_from, completed_end) if completed_end is not None else None, skipped_range=skipped[-1] if skipped else None, skipped_ranges=tuple(skipped), failed_ranges=tuple(failed_ranges), differences_summary=differences_summary, resource_usage=resource_usage, quality_events=tuple(quality_events), published_refs=tuple(published), provider_run_refs=tuple(provider_runs), raw_object_refs=tuple(raw_refs), canonical_partition_refs=tuple(canonical_refs), snapshot_refs=tuple(snapshot_refs), provider_fallback=any("FALLBACK" in event for event in quality_events), unavailable=any("UNAVAILABLE" in event for event in quality_events))
+            aggregate = BackfillProviderResult(completed_range=(requirements.date_from, completed_end) if completed_end is not None else None, skipped_range=skipped[-1] if skipped else None, skipped_ranges=tuple(skipped), failed_ranges=tuple(failed_ranges), differences_summary=differences_summary, resource_usage=resource_usage, quality_events=tuple(quality_events), published_refs=tuple(published), provider_run_refs=tuple(provider_runs), raw_object_refs=tuple(raw_refs), canonical_partition_refs=tuple(canonical_refs), snapshot_refs=tuple(snapshot_refs), publication_evidence=tuple(publication_evidence), provider_fallback=any("FALLBACK" in event for event in quality_events), unavailable=any("UNAVAILABLE" in event for event in quality_events))
             self._write_checkpoint(lease, requirements, aggregate, completed_partitions=completed_partitions)
             degraded = bool(quality_events or skipped)
             with self.task_control.database.transaction() as session:
@@ -1184,6 +1957,25 @@ class BackfillWorker:
             state = BackfillStatus.QUARANTINED if any(item.startswith("QUARANTINE") for item in quality_events) else BackfillStatus.UNAVAILABLE if any(item.startswith("UNAVAILABLE") for item in quality_events) else BackfillStatus.PARTIAL if degraded else BackfillStatus.COMPLETED
             return BackfillExecutionResult(lease.task.task_id, requirements.batch_id, state, requirements.stage.value, published_refs=tuple(published))
         except BackfillError as exc:
+            if exc.checkpoint_result is not None:
+                rejection = exc.checkpoint_result
+                self._write_checkpoint(
+                    lease, requirements,
+                    replace(
+                        rejection,
+                        completed_range=(requirements.date_from, completed_end) if completed_end is not None else None,
+                        skipped_ranges=tuple(skipped),
+                        failed_ranges=(*failed_ranges, rejection.failed_range),
+                        provider_run_refs=(*provider_runs, *rejection.provider_run_refs),
+                        raw_object_refs=tuple(raw_refs), canonical_partition_refs=tuple(canonical_refs),
+                        snapshot_refs=tuple(snapshot_refs), published_refs=tuple(published),
+                        publication_evidence=tuple(publication_evidence),
+                        quality_events=(*quality_events, *rejection.quality_events),
+                        provider_fallback=any("FALLBACK" in event for event in (*quality_events, *rejection.quality_events)),
+                        differences_summary=_merge_difference_summary(differences_summary, rejection.differences_summary),
+                        resource_usage=resource_usage,
+                    ), completed_partitions=completed_partitions,
+                )
             self.task_control.record_failure(lease.attempt.attempt_id, lease.lease_token, failure_code=exc.error_code, retryable=exc.retryable)
             raise
         except TaskControlError as exc:
@@ -1203,11 +1995,21 @@ class BackfillWorker:
                     )
             raise
         except Exception as exc:
+            from src.repositories.platform.errors import PlatformDatabaseError
+            from src.services.platform.raw_ingestion import RawIngestionError
+            from src.services.platform.canonical_normalization import CanonicalNormalizationError
+
+            retryable = (
+                isinstance(exc, (PlatformDatabaseError, RawIngestionError)) and exc.retryable
+            ) or isinstance(exc, OSError) or (
+                isinstance(exc, CanonicalNormalizationError)
+                and exc.error_code == "CANONICAL_ATOMIC_PUBLISH_FAILED"
+            )
             try:
-                self.task_control.record_failure(lease.attempt.attempt_id, lease.lease_token, failure_code="BACKFILL_WORKER_ERROR", retryable=False)
+                self.task_control.record_failure(lease.attempt.attempt_id, lease.lease_token, failure_code="BACKFILL_WORKER_ERROR", retryable=retryable)
             except TaskControlError:
                 pass
-            raise BackfillError("BACKFILL_WORKER_ERROR", "Backfill worker failed.", status_code=500) from exc
+            raise BackfillError("BACKFILL_WORKER_ERROR", "Backfill worker failed.", status_code=503 if retryable else 500, retryable=retryable) from exc
 
 
 @dataclass(frozen=True, slots=True)
@@ -1314,6 +2116,7 @@ class BackfillStageChainExecutor:
                 worker_id=worker_id,
                 worker_capabilities=("backfill",),
                 lease_seconds=lease_seconds,
+                task_id=record.task_id,
             )
         if lease is None:
             return None
@@ -1453,6 +2256,132 @@ class BackfillService:
 
     def __init__(self, task_control_service: TaskControlService | Any) -> None:
         self.task_control_service = task_control_service
+
+    def get_coverage(self, dataset: str, date_from: date, date_to: date) -> BackfillCoverageProjection:
+        query_scope = BackfillCoverageProjection(
+            dataset=dataset, date_from=date_from, date_to=date_to,
+            gap_ranges=((date_from, date_to),),
+            retry_plan=(
+                "AUTHORIZE_VERSIONED_SOURCE_EVIDENCE",
+                "RUN_MONTH_AND_YEAR_PILOTS",
+                "VERIFY_FULL_UNIVERSE_AND_INTERVAL_COVERAGE",
+                "RETRY_MISSING_MONTH_PARTITIONS",
+            ),
+        )
+        cursor = None
+        seen_cursors = set()
+        seen_tasks = set()
+        batches = []
+        execution_ranges = []
+        while True:
+            tasks, next_cursor, has_more = self.task_control_service.list_tasks(
+                TaskListQuery(task_type="backfill", cursor=cursor, limit=100)
+            )
+            for task in tasks:
+                if task.task_id in seen_tasks:
+                    raise BackfillError("BACKFILL_COVERAGE_INCOMPLETE", "Backfill coverage query cannot be completed.", status_code=409)
+                seen_tasks.add(task.task_id)
+                if task.requirements.get("dataset") != dataset:
+                    continue
+                requirements = BackfillTaskRequirements.model_validate(task.requirements)
+                if requirements.date_from > date_to or requirements.date_to < date_from:
+                    continue
+                details = self.task_control_service.get_task(task.task_id)
+                current = getattr(details, "task", details)
+                projection = self._project(details)
+                if projection.task_id != task.task_id or projection.dataset != dataset:
+                    raise BackfillError("BACKFILL_COVERAGE_INCOMPLETE", "Backfill coverage query cannot be completed.", status_code=409)
+                batches.append(projection)
+                for start, end in plan_backfill_ranges(projection):
+                    if start <= date_to and end >= date_from:
+                        execution_ranges.append(self._execution_range(
+                            projection, current.task_state, (start, end),
+                            (max(start, date_from), min(end, date_to)),
+                        ))
+            if not has_more:
+                break
+            if not next_cursor or next_cursor in seen_cursors:
+                raise BackfillError("BACKFILL_COVERAGE_INCOMPLETE", "Backfill coverage query cannot be completed.", status_code=409)
+            seen_cursors.add(next_cursor)
+            cursor = next_cursor
+        for scope in _month_ranges(date_from, date_to):
+            for start, end in self._unattempted_ranges(scope, batches):
+                execution_ranges.append(BackfillExecutionRangeProjection(
+                    date_from=start, date_to=end, execution_state="UNATTEMPTED",
+                    next_action="CREATE_MONTH_BATCH",
+                    blocking_codes=("AUTHORIZE_VERSIONED_SOURCE_EVIDENCE", "SELECT_PROVIDER_POLICY_AND_DEPENDENCIES"),
+                ))
+        # 来源与全证券区间覆盖尚未认证，文件存在本身不能关闭缺口。
+        return BackfillCoverageProjection(
+            **query_scope.model_dump(exclude={"batches", "execution_ranges"}),
+            batches=tuple(sorted(batches, key=lambda item: (item.date_from, item.date_to, item.task_id))),
+            execution_ranges=tuple(sorted(execution_ranges, key=lambda item: (item.date_from, item.date_to, item.task_id or ""))),
+        )
+
+    @staticmethod
+    def _unattempted_ranges(scope, batches):
+        remaining = [scope]
+        for batch in batches:
+            next_remaining = []
+            for start, end in remaining:
+                if batch.date_from > end or batch.date_to < start:
+                    next_remaining.append((start, end))
+                    continue
+                if start < batch.date_from:
+                    next_remaining.append((start, batch.date_from - timedelta(days=1)))
+                if end > batch.date_to:
+                    next_remaining.append((batch.date_to + timedelta(days=1), end))
+            remaining = next_remaining
+        return remaining
+
+    @staticmethod
+    def _execution_range(batch, task_state, partition_scope, query_scope):
+        evidence = [item for item in batch.publication_evidence if (item.date_from, item.date_to) == partition_scope]
+        if evidence and (
+            len(evidence) != 1 or batch.dry_run or batch.plan_only
+            or evidence[0].dataset_id != batch.dataset
+            or evidence[0].snapshot_id not in batch.snapshot_refs
+            or evidence[0].provider_run_id not in batch.provider_run_refs
+            or evidence[0].raw_object_id not in batch.raw_object_refs
+            or evidence[0].canonical_partition_id not in batch.canonical_partition_refs
+        ):
+            raise BackfillError("BACKFILL_PUBLICATION_INTEGRITY_FAILED", "Backfill publication evidence cannot be verified.", status_code=409)
+        snapshots = tuple(item.snapshot_id for item in evidence)
+        skipped = partition_scope in (batch.skipped_ranges or ((batch.skipped_range,) if batch.skipped_range else ()))
+        failed = partition_scope in (batch.failed_ranges or ((batch.failed_range,) if batch.failed_range else ()))
+        if snapshots and (skipped or failed):
+            raise BackfillError("BACKFILL_PUBLICATION_INTEGRITY_FAILED", "Backfill publication evidence cannot be verified.", status_code=409)
+        codes = tuple(dict.fromkeys(
+            code for code in (batch.failure_code, batch.blocked_reason_code, *batch.quality_events)
+            if isinstance(code, str) and re.fullmatch(r"[A-Z][A-Z0-9_]{2,79}", code)
+            and sanitize_platform_public_payload(code) == code
+        ))
+        if snapshots:
+            state, action = "PUBLISHED_UNCERTIFIED", "VERIFY_COVERAGE"
+        elif skipped:
+            state, action = "SKIPPED", "REVIEW_SKIPPED_RANGE"
+        elif batch.dry_run or batch.plan_only:
+            state, action = "UNPROVEN", "CREATE_MONTH_BATCH"
+        else:
+            state = "FAILED" if failed else "UNATTEMPTED"
+            if task_state is TaskState.RETRY_WAIT:
+                action = "RETRY_EXISTING_TASK"
+            elif task_state is TaskState.BLOCKED:
+                action = "RESOLVE_DEPENDENCY"
+            elif task_state is TaskState.FAILED:
+                action = "REVIEW_FAILURE"
+            elif task_state is TaskState.CANCELLED:
+                action = "REVIEW_CANCELLED"
+            elif task_state in {TaskState.SUCCEEDED, TaskState.DEGRADED}:
+                state, action = "UNPROVEN", "REVIEW_INCOMPLETE_PUBLICATION"
+            else:
+                state, action = "PENDING", "WAIT_EXISTING_TASK"
+        return BackfillExecutionRangeProjection(
+            date_from=query_scope[0], date_to=query_scope[1],
+            batch_id=batch.batch_id, task_id=batch.task_id, task_state=task_state,
+            provider_policy_id=batch.provider_policy_id, execution_state=state,
+            next_action=action, snapshot_refs=snapshots, blocking_codes=codes,
+        )
 
     def create_batch(self, request: BackfillBatchRequest, *, idempotency_key: str) -> BackfillBatchProjection:
         return self._create_batch(
@@ -1865,8 +2794,10 @@ class BackfillService:
     def _checkpoint_payload(self, details: TaskDetails) -> dict[str, Any] | None:
         checkpoints = details.checkpoints
         resolver = getattr(self.task_control_service, "resolver", None)
-        if not checkpoints or resolver is None:
+        if not checkpoints:
             return None
+        if resolver is None:
+            raise BackfillError("BACKFILL_CHECKPOINT_UNAVAILABLE", "Backfill checkpoint storage is unavailable.", status_code=503, retryable=True)
         attempt_numbers = {attempt.attempt_id: attempt.attempt_number for attempt in details.attempts}
         checkpoint = max(
             checkpoints,
@@ -1878,18 +2809,24 @@ class BackfillService:
             if len(content) != checkpoint.storage_ref.size_bytes or compute_bytes_hash(content) != checkpoint.checkpoint_hash:
                 raise ValueError("checkpoint integrity mismatch")
             payload = json.loads(content)
+            if not isinstance(payload, dict):
+                raise ValueError("checkpoint payload is not an object")
+            requirements = BackfillTaskRequirements.model_validate(details.task.requirements)
+            if (
+                checkpoint.task_id != details.task.task_id
+                or checkpoint.handler_version != BackfillWorker.HANDLER_VERSION
+                or checkpoint.input_hash != BackfillWorker._checkpoint_input_hash(requirements)
+            ):
+                raise ValueError("checkpoint metadata input binding is inconsistent")
+            BackfillWorker._validate_checkpoint_payload(
+                payload, requirements, details.task.task_id, plan_backfill_ranges(requirements),
+            )
         except (OSError, ValueError, TypeError, json.JSONDecodeError, KeyError) as exc:
             raise BackfillError(
                 "BACKFILL_CHECKPOINT_INVALID",
                 "Backfill checkpoint cannot be read.",
                 status_code=409,
             ) from exc
-        if not isinstance(payload, dict):
-            raise BackfillError("BACKFILL_CHECKPOINT_INVALID", "Backfill checkpoint cannot be read.", status_code=409)
-        if payload.get("task_id") != details.task.task_id or payload.get("batch_id") != details.task.requirements.get("batch_id"):
-            raise BackfillError("BACKFILL_CHECKPOINT_INVALID", "Backfill checkpoint cannot be read.", status_code=409)
-        if payload.get("handler_version") != BackfillWorker.HANDLER_VERSION:
-            raise BackfillError("BACKFILL_CHECKPOINT_INVALID", "Backfill checkpoint cannot be read.", status_code=409)
         payload["checkpoint_phase"] = checkpoint.phase
         return payload
 
@@ -1902,7 +2839,7 @@ class BackfillService:
             for field in (
                 "checkpoint_phase", "differences_summary", "resource_usage", "quality_events",
                 "provider_run_refs", "raw_object_refs", "canonical_partition_refs", "snapshot_refs",
-                "provider_fallback", "skipped_ranges", "failed_ranges",
+                "provider_fallback", "skipped_ranges", "failed_ranges", "publication_evidence", "quarantine_evidence", "rejection_evidence",
             ):
                 if field in payload:
                     req_data[field] = payload[field]
@@ -1920,13 +2857,13 @@ class BackfillService:
     @staticmethod
     def project(task: TaskRecord) -> BackfillBatchProjection:
         """保持纯 TaskRecord 调用方兼容；带 checkpoint 的入口使用实例方法。"""
-        req = BackfillTaskRequirements.model_validate(task.requirements)
+        req = BackfillTaskRequirements.model_validate(sanitize_platform_public_payload(task.requirements))
         state = {TaskState.ACCEPTED: BackfillStatus.PLANNED, TaskState.QUEUED: BackfillStatus.PLANNED, TaskState.LEASED: BackfillStatus.RUNNING, TaskState.RUNNING: BackfillStatus.RUNNING, TaskState.RETRY_WAIT: BackfillStatus.PAUSED, TaskState.BLOCKED: BackfillStatus.PAUSED, TaskState.DEGRADED: BackfillStatus.PARTIAL, TaskState.SUCCEEDED: BackfillStatus.COMPLETED, TaskState.FAILED: BackfillStatus.FAILED, TaskState.CANCELLED: BackfillStatus.CANCELLED}.get(task.task_state, BackfillStatus.FAILED)
         if req.quality_events and any(item.startswith("QUARANTINE") for item in req.quality_events):
             state = BackfillStatus.QUARANTINED
         elif req.quality_events and any(item.startswith("UNAVAILABLE") for item in req.quality_events):
             state = BackfillStatus.UNAVAILABLE
-        return BackfillBatchProjection(batch_id=req.batch_id, task_id=task.task_id, batch_state=state, batch_type=req.batch_type, stage=req.stage, date_from=req.date_from, date_to=req.date_to, dataset=req.dataset, provider_policy_id=req.provider_policy_id, priority=req.priority, dry_run=req.dry_run, plan_only=req.plan_only, dependency_task_ids=req.dependency_task_ids, failure_code=task.failure_code, blocked_reason_code=task.blocked_reason_code, unblock_condition=task.unblock_condition, checkpoint_phase=req.checkpoint_phase, completed_range=req.completed_range, skipped_range=req.skipped_range, failed_range=req.failed_range, skipped_ranges=req.skipped_ranges, failed_ranges=req.failed_ranges, differences_summary=req.differences_summary, resource_usage=req.resource_usage, quality_events=req.quality_events, provider_run_refs=req.provider_run_refs, raw_object_refs=req.raw_object_refs, canonical_partition_refs=req.canonical_partition_refs, snapshot_refs=req.snapshot_refs, provider_fallback=req.provider_fallback, supersedes_id=req.supersedes_id)
+        return BackfillBatchProjection(batch_id=req.batch_id, task_id=task.task_id, batch_state=state, batch_type=req.batch_type, stage=req.stage, date_from=req.date_from, date_to=req.date_to, dataset=req.dataset, provider_policy_id=req.provider_policy_id, priority=req.priority, dry_run=req.dry_run, plan_only=req.plan_only, dependency_task_ids=req.dependency_task_ids, failure_code=task.failure_code, blocked_reason_code=task.blocked_reason_code, unblock_condition=task.unblock_condition, checkpoint_phase=req.checkpoint_phase, completed_range=req.completed_range, skipped_range=req.skipped_range, failed_range=req.failed_range, skipped_ranges=req.skipped_ranges, failed_ranges=req.failed_ranges, differences_summary=req.differences_summary, resource_usage=req.resource_usage, quality_events=req.quality_events, provider_run_refs=req.provider_run_refs, raw_object_refs=req.raw_object_refs, canonical_partition_refs=req.canonical_partition_refs, snapshot_refs=req.snapshot_refs, provider_fallback=req.provider_fallback, supersedes_id=req.supersedes_id, publication_evidence=req.publication_evidence, quarantine_evidence=req.quarantine_evidence, rejection_evidence=req.rejection_evidence, gap_ranges=((req.date_from, req.date_to),), retry_plan=("AUTHORIZE_VERSIONED_SOURCE_EVIDENCE", "VERIFY_FULL_UNIVERSE_AND_INTERVAL_COVERAGE", "RETRY_MISSING_MONTH_PARTITIONS"))
 
 
 __all__ = ["BackfillError", "BackfillProviderResult", "BackfillWorker", "BackfillPipelineCoordinator", "BackfillPipelineExecutor", "BackfillPipelineSubmission", "BackfillStageChainExecution", "BackfillStageChainExecutor", "BackfillService", "DeterministicBackfillProvider", "DeterministicBackfillPublisher", "BackfillFixturePublication", "BackfillExecutionResult", "backfill_stage_dependencies", "plan_backfill_ranges"]

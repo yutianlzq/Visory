@@ -1,27 +1,13 @@
 import apiClient from './index';
+import { formatPlatformError } from './platformErrors';
 import type { PlatformListEnvelope, PlatformSuccessEnvelope, TaskDetails, TaskListQuery, TaskRecord } from '../types/generated/platform-api';
 
 type ListParams = Partial<Omit<TaskListQuery, 'tab'>> & { tab?: TaskListQuery['tab'] };
 
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
 /** Format C-010 task errors without exposing server diagnostics or secrets. */
 export function formatPlatformTaskError(cause: unknown, fallback: string): string {
-  if (isRecord(cause)) {
-    const response = isRecord(cause.response) ? cause.response : undefined;
-    const payload = response && isRecord(response.data) ? response.data : undefined;
-    const error = payload && isRecord(payload.error) ? payload.error : undefined;
-    const code = error && typeof error.code === 'string' ? error.code : undefined;
-    const message = error && typeof error.message === 'string' ? error.message : undefined;
-    const requestId = error && typeof error.request_id === 'string' ? error.request_id : undefined;
-    if (code && message && requestId) {
-      return `${code}: ${message} (Request ID: ${requestId})`;
-    }
-  }
-  return cause instanceof Error && cause.message ? cause.message : fallback;
+  return formatPlatformError(cause, fallback);
 }
 const unwrap = <T>(value: PlatformSuccessEnvelope): T => value.data as T;
 

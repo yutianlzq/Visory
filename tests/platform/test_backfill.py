@@ -212,11 +212,11 @@ class _StageChainTaskControl:
 
 
 class _StageChainExecutionControl(_StageChainTaskControl):
-    def lease_next(self, *, worker_id, worker_capabilities, lease_seconds=60):
+    def lease_next(self, *, worker_id, worker_capabilities, lease_seconds=60, task_id=None):
         assert worker_capabilities == ("backfill",)
         assert lease_seconds > 0
         for record in self.records.values():
-            if record.task_state is TaskState.QUEUED:
+            if record.task_state is TaskState.QUEUED and (task_id is None or record.task_id == task_id):
                 leased = record.model_copy(update={"task_state": TaskState.LEASED})
                 self.records[record.task_id] = leased
                 return SimpleNamespace(
@@ -228,6 +228,37 @@ class _StageChainExecutionControl(_StageChainTaskControl):
                     lease_token=f"lease-{worker_id}",
                 )
         return None
+
+
+def test_stage_chain_executor_does_not_lease_an_unrelated_queued_backfill():
+    control = _StageChainExecutionControl()
+    service = BackfillService(control)
+    other_chain = stage_chain_request()
+    other_chain = other_chain.model_copy(update={
+        "batches": tuple(batch.model_copy(update={
+            "batch_id": f"backfill_019dbd74-2a00-7000-8000-{index + 901:012x}",
+        }) for index, batch in enumerate(other_chain.batches)),
+    })
+    unrelated = service.create_stage_chain(other_chain, idempotency_key="unrelated-backfill-first").batches[0]
+    executed = []
+
+    def worker_factory(lease):
+        class Worker:
+            def execute(self, current_lease, **kwargs):
+                executed.append(current_lease.task.task_id)
+                control.succeed(current_lease.task.task_id)
+                return SimpleNamespace(batch_state=BackfillStatus.COMPLETED)
+        return Worker()
+
+    result = BackfillStageChainExecutor(
+        control, worker_factory=worker_factory, service=service,
+    ).execute(
+        stage_chain_request(dry_run=False, plan_only=False),
+        idempotency_key="targeted-backfill-stage", max_stages=1,
+    )
+    assert result.executed_task_ids == (result.projection.batches[0].task_id,)
+    assert executed == list(result.executed_task_ids)
+    assert control.get_task(unrelated.task_id).task.task_state is TaskState.QUEUED
 
 
 def test_stage_chain_executor_runs_real_stage_workers_in_order_and_unblocks_one_stage():
@@ -2564,3 +2595,499 @@ def test_year_worker_preserves_distinct_partition_difference_summaries(failed):
     expected = ["MONTH_1_CHECKED", "FEBRUARY_FAILED"] if failed else [f"MONTH_{month}_CHECKED" for month in range(1, 13)]
     assert payloads[-1]["differences_summary"] == "; ".join(expected)
     assert payloads[0]["differences_summary"] == "MONTH_1_CHECKED"
+
+
+def test_year_checkpoint_accepts_a_valid_two_month_completion_prefix():
+    from src.services.platform.backfill import plan_backfill_ranges
+    req = request(batch_type="YEAR", date_from=date(2025, 1, 1), date_to=date(2025, 12, 31), dry_run=False, plan_only=False)
+    BackfillWorker._validate_checkpoint_accumulators({
+        "completed_range": ["2025-01-01", "2025-02-28"],
+        "skipped_ranges": [], "failed_ranges": [],
+    }, req, plan_backfill_ranges(req), {0, 1})
+
+
+def test_coverage_query_includes_all_pages_and_keeps_unproved_history_visible():
+    from src.schemas.platform import TaskDetails
+
+    records = [
+        task(request(batch_id=f"backfill_019dbd74-2a00-7000-8000-{index + 500:012d}"))
+        .model_copy(update={"task_id": f"task_019dbd74-2a00-7000-8000-{index + 500:012d}"})
+        for index in range(2)
+    ]
+
+    class Tasks:
+        def list_tasks(self, query):
+            assert query.task_type == "backfill"
+            return ((records[0],), "page2", True) if query.cursor is None else ((records[1],), None, False)
+
+        def get_task(self, task_id):
+            record = next(value for value in records if value.task_id == task_id)
+            return TaskDetails(task=record, attempts=(), state_events=())
+
+    projection = BackfillService(Tasks()).get_coverage(
+        "bar_1d_raw", date(2018, 1, 1), date(2026, 10, 13),
+    )
+    assert len(projection.batches) == 2
+    assert projection.coverage_state == "UNPROVEN"
+    assert projection.gap_ranges == ((date(2018, 1, 1), date(2026, 10, 13)),)
+    assert "AUTHORIZE_VERSIONED_SOURCE_EVIDENCE" in projection.retry_plan
+
+
+def test_coverage_query_rejects_truncated_or_cyclic_pagination():
+    class Tasks:
+        def list_tasks(self, query):
+            return (), "same-page", True
+    with pytest.raises(BackfillError) as exc:
+        BackfillService(Tasks()).get_coverage("bar_1d_raw", date(2018, 1, 1), date(2026, 10, 13))
+    assert exc.value.error_code == "BACKFILL_COVERAGE_INCOMPLETE"
+
+
+def test_coverage_api_returns_missing_core_history_and_checks_date_scope():
+    from api.middlewares.error_handler import add_error_handlers
+    app = FastAPI()
+    app.include_router(router, prefix="/api")
+    add_error_handlers(app)
+    app.state.backfill_service = BackfillService(SimpleNamespace(list_tasks=lambda query: ((), None, False)))
+    with TestClient(app, raise_server_exceptions=False) as client:
+        params = {"dataset": "bar_1d_raw", "date_from": "2018-01-01", "date_to": "2026-10-13"}
+        response = client.get("/api/platform/v1/backfills/coverage", params=params)
+        assert response.status_code == 200
+        assert response.json()["data"]["gap_ranges"] == [["2018-01-01", "2026-10-13"]]
+        ranges = response.json()["data"]["execution_ranges"]
+        assert len(ranges) == 106
+        assert ranges[0]["date_from"] == "2018-01-01"
+        assert ranges[-1]["date_to"] == "2026-10-13"
+        assert all(item["next_action"] == "CREATE_MONTH_BATCH" for item in ranges)
+        response = client.get("/api/platform/v1/backfills/coverage", params={**params, "date_to": "2017-01-01"})
+        assert response.status_code == 422
+
+
+def _projection_checkpoint_fixture(tmp_path, mutate_payload=lambda payload: None, **metadata):
+    from datetime import datetime, timezone
+    from src.schemas.platform import TaskCheckpointRecord, TaskDetails, StorageRef
+
+    req = request()
+    lease = _lease_for(req)
+    payloads = []
+    BackfillWorker(
+        FakeWorkerControl(), DeterministicBackfillProvider(),
+        checkpoint_writer=lambda **kw: (payloads.append(kw["payload"]) or _storage_ref(kw["payload"])),
+    ).execute(lease)
+    payload = json.loads(payloads[-1])
+    mutate_payload(payload)
+    content = BackfillWorker._serialize_checkpoint_payload(payload)
+    path = tmp_path / "projection-checkpoint.json"
+    path.write_bytes(content)
+    ref = StorageRef.model_validate(_storage_ref(content))
+    checkpoint = TaskCheckpointRecord(
+        checkpoint_id="checkpoint_019dbd74-2a00-7000-8000-000000000004",
+        task_id=lease.task.task_id, attempt_id=lease.attempt.attempt_id,
+        phase="PRICE_MONTH", sequence=1, resume_token_hash="sha256:" + "1" * 64,
+        input_hash=BackfillWorker._checkpoint_input_hash(req), handler_version=BackfillWorker.HANDLER_VERSION,
+        storage_ref=ref, checkpoint_hash=ref.content_hash,
+        created_at=datetime(2026, 8, 31, tzinfo=timezone.utc),
+        expires_at=datetime(2026, 9, 30, tzinfo=timezone.utc),
+    ).model_copy(update=metadata)
+    details = TaskDetails(task=lease.task, attempts=(), state_events=(), checkpoints=(checkpoint,))
+    service = BackfillService(SimpleNamespace(resolver=SimpleNamespace(resolve=lambda *a, **kw: path)))
+    return service, details
+
+
+@pytest.mark.parametrize("field,value", [
+    ("input_hash", "sha256:" + "9" * 64),
+    ("stage", "IDENTITY_CALENDAR"),
+    ("dataset", "security_master"),
+    ("date_from", "2026-08-02"),
+    ("date_to", "2026-08-30"),
+    ("completed_partitions", [True]),
+    ("completed_partitions", [1]),
+    ("completed_partitions", [0, 0]),
+    ("completed_range", ["2026-08-01", "2026-08-31"]),
+    ("failed_ranges", [["2026-08-01", "2026-08-31"]]),
+    ("resource_usage", {"requests": -1}),
+])
+def test_public_projection_rejects_valid_hash_but_invalid_checkpoint_semantics(tmp_path, field, value):
+    service, details = _projection_checkpoint_fixture(
+        tmp_path, mutate_payload=lambda payload: payload.update({field: value}),
+    )
+    with pytest.raises(BackfillError) as error:
+        service._project(details)
+    assert error.value.error_code == "BACKFILL_CHECKPOINT_INVALID"
+    assert error.value.status_code == 409
+    assert str(tmp_path) not in error.value.public_message
+
+
+@pytest.mark.parametrize("metadata", [
+    {"input_hash": "sha256:" + "9" * 64},
+    {"handler_version": "wrong-handler"},
+    {"task_id": "task_019dbd74-2a00-7000-8000-000000000099"},
+])
+def test_public_projection_rejects_checkpoint_metadata_input_drift(tmp_path, metadata):
+    service, details = _projection_checkpoint_fixture(tmp_path, **metadata)
+    with pytest.raises(BackfillError) as error:
+        service._project(details)
+    assert error.value.error_code == "BACKFILL_CHECKPOINT_INVALID"
+
+
+def test_public_projection_does_not_hide_missing_checkpoint_storage(tmp_path):
+    service, details = _projection_checkpoint_fixture(tmp_path)
+    service.task_control_service = SimpleNamespace()
+    with pytest.raises(BackfillError) as error:
+        service._project(details)
+    assert error.value.error_code == "BACKFILL_CHECKPOINT_UNAVAILABLE"
+    assert error.value.retryable
+
+
+def _coverage_for_records(records, date_from, date_to):
+    from src.schemas.platform import TaskDetails
+
+    return BackfillService(SimpleNamespace(
+        list_tasks=lambda query: (tuple(records), None, False),
+        get_task=lambda task_id: TaskDetails(
+            task=next(record for record in records if record.task_id == task_id),
+            attempts=(), state_events=(),
+        ),
+    )).get_coverage("bar_1d_raw", date_from, date_to)
+
+
+def test_monthly_execution_gaps_preserve_partial_month_edges_and_non_publishing_evidence():
+    record = task(request(
+        date_from=date(2026, 8, 10), date_to=date(2026, 8, 20),
+    ), TaskState.DEGRADED)
+    projection = _coverage_for_records([record], date(2026, 7, 30), date(2026, 9, 2))
+    assert [(item.date_from, item.date_to, item.next_action) for item in projection.execution_ranges] == [
+        (date(2026, 7, 30), date(2026, 7, 31), "CREATE_MONTH_BATCH"),
+        (date(2026, 8, 1), date(2026, 8, 9), "CREATE_MONTH_BATCH"),
+        (date(2026, 8, 10), date(2026, 8, 20), "CREATE_MONTH_BATCH"),
+        (date(2026, 8, 21), date(2026, 8, 31), "CREATE_MONTH_BATCH"),
+        (date(2026, 9, 1), date(2026, 9, 2), "CREATE_MONTH_BATCH"),
+    ]
+    observed = projection.execution_ranges[2]
+    assert observed.task_id == record.task_id
+    assert observed.execution_state == "UNPROVEN"
+    assert projection.gap_ranges == ((date(2026, 7, 30), date(2026, 9, 2)),)
+
+
+@pytest.mark.parametrize("state,action", [
+    (TaskState.RETRY_WAIT, "RETRY_EXISTING_TASK"),
+    (TaskState.FAILED, "REVIEW_FAILURE"),
+    (TaskState.CANCELLED, "REVIEW_CANCELLED"),
+    (TaskState.BLOCKED, "RESOLVE_DEPENDENCY"),
+    (TaskState.RUNNING, "WAIT_EXISTING_TASK"),
+    (TaskState.QUEUED, "WAIT_EXISTING_TASK"),
+    (TaskState.SUCCEEDED, "REVIEW_INCOMPLETE_PUBLICATION"),
+    (TaskState.DEGRADED, "REVIEW_INCOMPLETE_PUBLICATION"),
+])
+def test_execution_plan_only_retries_tasks_accepted_by_existing_task_control(state, action):
+    req = BackfillTaskRequirements(**request(dry_run=False, plan_only=False).model_dump(exclude={"requested_by"}))
+    req = req.model_copy(update={"failed_ranges": ((req.date_from, req.date_to),)})
+    record = task(req, state if state is not TaskState.BLOCKED else TaskState.QUEUED,
+                  failure_code="BACKFILL_FAILED" if state is TaskState.FAILED else None)
+    if state is TaskState.BLOCKED:
+        record = TaskRecord.model_validate({
+            **record.model_dump(), "task_state": state,
+            "blocked_reason_code": "BACKFILL_STAGE_DEPENDENCY",
+            "unblock_condition": "dependencies_succeeded",
+        })
+    projection = _coverage_for_records([record], req.date_from, req.date_to)
+    observed = projection.execution_ranges[0]
+    assert observed.task_state is state
+    assert observed.next_action == action
+    assert observed.task_id == record.task_id
+    assert observed.snapshot_refs == ()
+    assert projection.coverage_state == "UNPROVEN"
+
+
+def test_execution_gaps_do_not_turn_legacy_success_or_skips_into_published_history():
+    req = BackfillTaskRequirements(**request(
+        batch_type="YEAR", date_from=date(2026, 1, 1), date_to=date(2026, 3, 31),
+        dry_run=False, plan_only=False,
+    ).model_dump(exclude={"requested_by"}))
+    req = req.model_copy(update={
+        "completed_range": (date(2026, 1, 1), date(2026, 1, 31)),
+        "skipped_ranges": ((date(2026, 2, 1), date(2026, 2, 28)),),
+        "quality_events": ("UNAVAILABLE_DATASET_CONTRACT",),
+    })
+    projection = _coverage_for_records([task(req, TaskState.DEGRADED)], req.date_from, req.date_to)
+    assert [item.execution_state for item in projection.execution_ranges] == ["UNPROVEN", "SKIPPED", "UNPROVEN"]
+    assert projection.execution_ranges[1].next_action == "REVIEW_SKIPPED_RANGE"
+    assert projection.execution_ranges[1].blocking_codes == ("UNAVAILABLE_DATASET_CONTRACT",)
+    assert projection.gap_ranges == ((req.date_from, req.date_to),)
+
+
+def test_coverage_query_skips_unrelated_checkpoints_outside_requested_dates():
+    record = task(request())
+    service = BackfillService(SimpleNamespace(
+        list_tasks=lambda query: ((record,), None, False),
+        get_task=lambda task_id: pytest.fail("out of scope checkpoints must not be read"),
+    ))
+    projection = service.get_coverage("bar_1d_raw", date(2025, 12, 30), date(2026, 1, 2))
+    assert len(projection.execution_ranges) == 2
+    assert projection.batches == ()
+
+
+def test_coverage_query_rejects_duplicate_tasks_between_pages():
+    from src.schemas.platform import TaskDetails
+    record = task(request())
+    service = BackfillService(SimpleNamespace(
+        list_tasks=lambda query: ((record,), "page2", True) if query.cursor is None else ((record,), None, False),
+        get_task=lambda task_id: TaskDetails(task=record, attempts=(), state_events=()),
+    ))
+    with pytest.raises(BackfillError) as error:
+        service.get_coverage("bar_1d_raw", date(2026, 8, 1), date(2026, 8, 31))
+    assert error.value.error_code == "BACKFILL_COVERAGE_INCOMPLETE"
+
+
+def test_execution_gap_query_handles_latest_representable_month_without_overflow():
+    projection = _coverage_for_records([], date(9999, 12, 20), date.max)
+    assert len(projection.execution_ranges) == 1
+    assert projection.execution_ranges[0].date_to == date.max
+
+
+def test_invalid_checkpoint_is_rejected_by_both_coverage_and_pdata_envelopes(tmp_path):
+    from api.middlewares.error_handler import add_error_handlers
+    service, details = _projection_checkpoint_fixture(
+        tmp_path, mutate_payload=lambda payload: payload.update({"input_hash": "sha256:" + "9" * 64}),
+    )
+    service.task_control_service.list_tasks = lambda query: ((details.task,), None, False)
+    service.task_control_service.get_task = lambda task_id: details
+    app = FastAPI()
+    app.include_router(router, prefix="/api")
+    add_error_handlers(app)
+    app.state.backfill_service = service
+    with TestClient(app, raise_server_exceptions=False) as client:
+        for path in (
+            "/api/platform/v1/backfills/coverage?dataset=bar_1d_raw&date_from=2026-08-01&date_to=2026-08-31",
+            f"/api/platform/v1/data-quality/backfills/{details.task.requirements['batch_id']}",
+        ):
+            response = client.get(path)
+            assert response.status_code == 409
+            assert response.json()["error"]["code"] == "BACKFILL_CHECKPOINT_INVALID"
+            assert str(tmp_path) not in response.text
+
+
+def _rejection_checkpoint_fixture():
+    from src.schemas.platform import generate_resource_id
+    from src.schemas.platform.backfill import BackfillRejectionEvidence
+    record = task(request(dry_run=False, plan_only=False))
+    req = BackfillTaskRequirements.model_validate(record.requirements)
+    child_id = generate_resource_id(ResourceType.TASK)
+    evidence = BackfillRejectionEvidence(
+        date_from=req.date_from, date_to=req.date_to, dataset_id=req.dataset, phase="CANONICAL",
+        batch_id=req.batch_id, parent_task_id=record.task_id,
+        child_task_id=child_id, canonical_task_id=child_id,
+        child_attempt_id=generate_resource_id(ResourceType.ATTEMPT),
+        child_input_hash="sha256:" + "1" * 64, failure_code="CANONICAL_DUPLICATE_KEY",
+        provider_run_id=generate_resource_id(ResourceType.PROVIDER_RUN), provider_run_hash="sha256:" + "2" * 64,
+        raw_object_id=generate_resource_id(ResourceType.RAW_OBJECT), raw_storage_ref=_storage_ref(b"raw"),
+        raw_manifest_hash="sha256:" + "3" * 64, quality_report_id=generate_resource_id(ResourceType.QUALITY_REPORT),
+        quality_report_hash="sha256:" + "4" * 64,
+    )
+    task_id = record.task_id
+    payload = {
+        "task_id": task_id, "batch_id": req.batch_id, "handler_version": BackfillWorker.HANDLER_VERSION,
+        "stage": req.stage.value, "date_from": req.date_from.isoformat(), "date_to": req.date_to.isoformat(),
+        "dataset": req.dataset, "input_hash": BackfillWorker._checkpoint_input_hash(req),
+        "completed_partitions": [], "failed_ranges": [[req.date_from.isoformat(), req.date_to.isoformat()]],
+        "provider_run_refs": [evidence.provider_run_id], "raw_object_refs": [], "canonical_partition_refs": [],
+        "snapshot_refs": [], "quality_events": [evidence.failure_code],
+        "rejection_evidence": [evidence.model_dump(mode="json")],
+    }
+    return req, task_id, evidence, payload
+
+
+def test_rejection_checkpoint_roundtrip_never_claims_business_completion():
+    from src.schemas.platform import BackfillBatchProjection
+    req, task_id, evidence, payload = _rejection_checkpoint_fixture()
+    loaded = json.loads(BackfillWorker._serialize_checkpoint_payload(payload))
+    assert BackfillWorker._validate_checkpoint_payload(loaded, req, task_id, ((req.date_from, req.date_to),)) == set()
+    assert loaded["rejection_evidence"][0] == evidence.model_dump(mode="json")
+    projection = BackfillBatchProjection.model_validate({
+        **req.model_dump(mode="json"), "task_id": task_id, "batch_state": "FAILED",
+        "rejection_evidence": [evidence.model_dump(mode="json")],
+    })
+    assert projection.rejection_evidence == (evidence,)
+    assert projection.completed_range is None and projection.snapshot_refs == ()
+
+
+@pytest.mark.parametrize("mutation", (
+    "wrong_dataset", "wrong_range", "wrong_resource", "wrong_batch", "wrong_parent", "missing_failed_range",
+    "missing_provider_ref", "missing_reason", "duplicate_child", "completed_partition", "false_snapshot",
+))
+def test_checkpoint_rejects_inconsistent_child_rejection_evidence(mutation):
+    req, task_id, _, payload = _rejection_checkpoint_fixture()
+    evidence = payload["rejection_evidence"][0]
+    if mutation == "wrong_dataset":
+        evidence["dataset_id"] = "security_master"
+    elif mutation == "wrong_range":
+        evidence["date_to"] = "2026-08-30"
+    elif mutation == "wrong_resource":
+        evidence["child_task_id"] = evidence["provider_run_id"]
+    elif mutation == "wrong_batch":
+        evidence["batch_id"] = "backfill_019dbd74-2a00-7000-8000-000000000099"
+    elif mutation == "wrong_parent":
+        evidence["parent_task_id"] = evidence["child_task_id"]
+    elif mutation == "missing_failed_range":
+        payload["failed_ranges"] = []
+    elif mutation == "missing_provider_ref":
+        payload["provider_run_refs"] = []
+    elif mutation == "missing_reason":
+        payload["quality_events"] = []
+    elif mutation == "duplicate_child":
+        payload["rejection_evidence"].append(dict(evidence))
+    elif mutation == "completed_partition":
+        payload["completed_partitions"] = [0]
+    else:
+        evidence["phase"] = "SNAPSHOT"
+    with pytest.raises(ValueError):
+        BackfillWorker._validate_checkpoint_payload(payload, req, task_id, ((req.date_from, req.date_to),))
+
+
+@pytest.mark.parametrize("field", ("dry_run", "plan_only"))
+def test_nonpublishing_checkpoint_cannot_claim_child_publication_rejection(field):
+    req, task_id, _, payload = _rejection_checkpoint_fixture()
+    req = req.model_copy(update={field: True})
+    payload["input_hash"] = BackfillWorker._checkpoint_input_hash(req)
+    with pytest.raises(ValueError):
+        BackfillWorker._validate_checkpoint_payload(payload, req, task_id, ((req.date_from, req.date_to),))
+
+
+@pytest.mark.parametrize("kind", ("rejection", "quarantine"))
+@pytest.mark.parametrize("mutation", (
+    "missing_provider_ref", "wrong_resource", "same_provider_run", "invalid_hash", "false_fallback", "missing_fallback_event",
+))
+def test_checkpoint_rejects_invalid_failed_primary_bindings(kind, mutation):
+    from src.schemas.platform import generate_resource_id
+    from src.schemas.platform.backfill import BackfillQuarantineEvidence
+    req, task_id, evidence, payload = _rejection_checkpoint_fixture()
+    failed_run_id = generate_resource_id(ResourceType.PROVIDER_RUN)
+    if kind == "quarantine":
+        quarantine = BackfillQuarantineEvidence(
+            provider_run_id=evidence.provider_run_id, provider_run_hash=evidence.provider_run_hash,
+            raw_ingestion_quarantine_id=generate_resource_id(ResourceType.RAW_INGESTION_QUARANTINE),
+            evidence_storage_ref=evidence.raw_storage_ref, manifest_file_hash=evidence.raw_manifest_hash,
+            reason_code="RAW_SCHEMA_ADDITIVE_DRIFT",
+        )
+        payload["rejection_evidence"] = []
+        payload["quarantine_evidence"] = [quarantine.model_dump(mode="json")]
+        payload["quality_events"] = ["QUARANTINE_RAW_SCHEMA_DRIFT"]
+    stored = payload[f"{kind}_evidence"][0]
+    stored["failed_provider_run_hashes"] = {failed_run_id: "sha256:" + "5" * 64}
+    payload["provider_run_refs"].append(failed_run_id)
+    payload["provider_fallback"] = True
+    payload["quality_events"].append("PROVIDER_FALLBACK_EXPLICIT")
+    BackfillWorker._validate_checkpoint_payload(payload, req, task_id, ((req.date_from, req.date_to),))
+    if mutation == "missing_provider_ref":
+        payload["provider_run_refs"].remove(failed_run_id)
+    elif mutation == "wrong_resource":
+        stored["failed_provider_run_hashes"] = {evidence.child_task_id: "sha256:" + "5" * 64}
+    elif mutation == "same_provider_run":
+        stored["failed_provider_run_hashes"] = {evidence.provider_run_id: evidence.provider_run_hash}
+    elif mutation == "invalid_hash":
+        stored["failed_provider_run_hashes"][failed_run_id] = "not-a-content-hash"
+    elif mutation == "false_fallback":
+        payload["provider_fallback"] = False
+    else:
+        payload["quality_events"].remove("PROVIDER_FALLBACK_EXPLICIT")
+    with pytest.raises(ValueError):
+        BackfillWorker._validate_checkpoint_payload(payload, req, task_id, ((req.date_from, req.date_to),))
+
+
+@pytest.mark.parametrize("with_raw_schema", (True, False))
+def test_backfill_rejects_actual_fixture_route_before_business_child(monkeypatch, with_raw_schema):
+    from importlib import import_module
+
+    from src.schemas.platform import ProviderCapabilityStatus
+    from src.services.platform.provider_source_routes import (
+        build_fixture_provider_source_route, default_provider_source_routes,
+    )
+    from src.services.platform.raw_ingestion import RawIngestionTaskWorker
+
+    class Registry:
+        @staticmethod
+        def get_policy(*_args):
+            return SimpleNamespace(
+                provider_policy_id="security_master_v1", dataset_id="security_master",
+                dataset_schema_version="1.0.0", primary_provider_id="a_stock_data",
+                supplemental_provider_ids=(), policy_version="1.0.0",
+            )
+
+        @staticmethod
+        def get_dataset(*_args):
+            return SimpleNamespace(dataset_id="security_master", schema_version="1.0.0", frequency="daily")
+
+        @staticmethod
+        def get_provider(*_args):
+            return SimpleNamespace(
+                provider_id="a_stock_data", adapter_name="a_stock_data", adapter_version="1.0.0", enabled=True,
+            )
+
+        @staticmethod
+        def get_capability(*_args):
+            return SimpleNamespace(provider_capability_status=ProviderCapabilityStatus.UNVERIFIED)
+
+        @staticmethod
+        def list_provider_raw_schemas(*_args):
+            return (object(),) if with_raw_schema else ()
+
+    class RequestDependentFixture:
+        fixture_only = True
+
+        @staticmethod
+        def fixture_source_route(*, adapter_name, adapter_version, request):
+            if request.request:
+                return default_provider_source_routes()[0]
+            return build_fixture_provider_source_route(
+                provider_id=request.provider_id, dataset_id=request.dataset_id,
+                adapter_name=adapter_name, adapter_version=adapter_version,
+                actual_upstream="fixture.a_stock_data",
+            )
+
+        @staticmethod
+        def fetch(*_args, **_kwargs):
+            pytest.fail("invalid fixture cannot fetch")
+
+    monkeypatch.setattr(import_module("src.repositories.platform.provider"), "ProviderRegistryRepository", Registry)
+    control = FakeWorkerControl()
+    transport = RequestDependentFixture()
+    raw_worker = RawIngestionTaskWorker(
+        control, control, None, transport, repository=Registry(),
+        rate_limiter=SimpleNamespace(),
+    )
+    pipeline = SimpleNamespace(
+        raw_worker=raw_worker,
+        execute_partition=lambda **_kwargs: pytest.fail("invalid fixture cannot create a business child"),
+    )
+    req = request(
+        stage="IDENTITY_CALENDAR", dataset="security_master",
+        provider_policy_id="security_master_v1", dry_run=False, plan_only=False,
+    )
+    checkpoints = []
+
+    def plan_factory(_part, _result, _index):
+        return {
+            "raw_requirements": {
+                "provider_id": "a_stock_data", "dataset_id": "security_master",
+                "dataset_schema_version": "1.0.0", "provider_policy_id": "security_master_v1",
+                "request": {"as_of": "2026-08-31"},
+            },
+            "canonical_requirements": {}, "snapshot_requirements": {}, "partition_rows": {},
+        }
+
+    def write_checkpoint(**kwargs):
+        checkpoints.append(json.loads(kwargs["payload"]))
+        return _storage_ref(kwargs["payload"])
+
+    provider = DeterministicBackfillProvider()
+    outcome = BackfillWorker(
+        control, provider, pipeline_executor=pipeline,
+        pipeline_plan_factory=plan_factory, checkpoint_writer=write_checkpoint,
+    ).execute(_lease_for(req))
+
+    assert outcome.batch_state is BackfillStatus.UNAVAILABLE
+    assert checkpoints[-1]["quality_events"] == [
+        "UNAVAILABLE_PROVIDER_SOURCE_ROUTE" if with_raw_schema else "UNAVAILABLE_PROVIDER_RAW_SCHEMA"
+    ]
+    assert checkpoints[-1]["raw_object_refs"] == checkpoints[-1]["provider_run_refs"] == []
+    assert not any(kind == "failure" for kind, _ in control.calls)
+    assert provider.calls == (["IDENTITY_CALENDAR"] if with_raw_schema else [])

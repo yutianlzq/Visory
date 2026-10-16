@@ -17,6 +17,7 @@ from .enums import (
 )
 from .resources import parse_resource_id
 from .storage import StorageRef
+from .provider_source import ProviderSourceRouteEvidence
 
 
 _HASH_PATTERN = r"^sha256:[0-9a-f]{64}$"
@@ -24,7 +25,6 @@ _IDENTIFIER = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
 _SEMVER = r"^[0-9]+\.[0-9]+\.[0-9]+$"
 _REASON_CODE = re.compile(r"^[A-Z][A-Z0-9_]{2,63}$")
 _SENSITIVE_KEY = re.compile(r"(?:api[_-]?key|authorization|cookie|password|secret|token)", re.IGNORECASE)
-_SENSITIVE_VALUE = re.compile(r"(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]", re.IGNORECASE)
 _SENSITIVE_VALUE = re.compile(r"(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]", re.IGNORECASE)
 
 
@@ -136,6 +136,7 @@ class ProviderRun(PlatformContractModel):
     provider_policy_id: str
     provider_policy_version: Annotated[str, Field(pattern=_SEMVER)]
     adapter_version: Annotated[str, Field(pattern=_SEMVER)]
+    source_route_evidence: ProviderSourceRouteEvidence | None = None
     capability_market: str
     capability_frequency: str
     task_id: str
@@ -199,6 +200,16 @@ class ProviderRun(PlatformContractModel):
 
     @model_validator(mode="after")
     def validate_terminal_semantics(self) -> "ProviderRun":
+        if self.source_route_evidence is not None:
+            route = self.source_route_evidence
+            if (
+                route.provider_id != self.provider_id
+                or route.dataset_id != self.dataset_id
+                or route.adapter_version != self.adapter_version
+            ):
+                raise ValueError("source_route_evidence must match ProviderRun identity and adapter version")
+            if self.actual_upstream is not None and route.actual_upstream != self.actual_upstream:
+                raise ValueError("source_route_evidence must match ProviderRun actual_upstream")
         if self.run_outcome is None:
             if self.finished_at is not None or self.failure_code is not None or self.failure_detail_redacted is not None:
                 raise ValueError("active ProviderRun cannot contain terminal outcome fields")

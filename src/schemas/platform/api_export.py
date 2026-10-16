@@ -6,7 +6,7 @@ from typing import Any
 
 from pydantic.json_schema import models_json_schema
 
-from .backfill import BackfillBatchProjection, BackfillBatchRequest, BackfillStageChainProjection, BackfillStageChainRequest, BackfillTaskRequirements
+from .backfill import BackfillBatchProjection, BackfillBatchRequest, BackfillCoverageProjection, BackfillStageChainProjection, BackfillStageChainRequest, BackfillTaskRequirements
 from .canonical import CanonicalNormalizationTaskRequirements, CanonicalNormalizationTaskResult, CanonicalPartition, CanonicalQualityReport, ProviderCanonicalMappingDefinition
 from .artifact import (
     ArtifactManifest,
@@ -60,6 +60,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 FRONTEND_TYPE_EXPORT = REPO_ROOT / "apps" / "dsa-web" / "src" / "types" / "generated" / "platform-api.ts"
 _API_MODELS = (
     BackfillBatchProjection,
+    BackfillCoverageProjection,
     BackfillBatchRequest,
     BackfillStageChainProjection,
     BackfillStageChainRequest,
@@ -178,8 +179,20 @@ def render_platform_openapi() -> dict[str, Any]:
                     "operationId": "getBackfill",
                     "parameters": [{"name": "batch_id", "in": "path", "required": True, "schema": {"type": "string"}}],
                     "responses": {"200": {"description": "Historical backfill projection", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}},
-                    "summary": "Read a historical backfill batch",
+                    "summary": "Read a historical backfill batch with fixed publication and child rejection evidence",
                 },
+            },
+            "/api/platform/v1/backfills/coverage": {
+                "get": {
+                    "operationId": "getBackfillCoverage",
+                    "parameters": [
+                        {"name": "dataset", "in": "query", "required": True, "schema": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,127}$"}},
+                        {"name": "date_from", "in": "query", "required": True, "schema": {"type": "string", "format": "date"}},
+                        {"name": "date_to", "in": "query", "required": True, "schema": {"type": "string", "format": "date"}},
+                    ],
+                    "responses": {"200": {"description": "Unproven historical coverage, monthly execution and task recovery actions", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PlatformSuccessEnvelope"}}}}},
+                    "summary": "Read historical gaps, monthly execution and existing task recovery actions",
+                }
             },
             "/api/platform/v1/asset-resolutions": {
                 "post": {

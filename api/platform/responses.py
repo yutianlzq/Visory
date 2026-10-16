@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import Request
 
 from api.platform.request_id import get_transport_request_id
+from src.utils.sanitize import sanitize_platform_public_payload
 from src.schemas.platform.api import (
     PlatformListEnvelope,
     PlatformPage,
@@ -16,7 +17,7 @@ from src.schemas.platform.api import (
 
 
 def _json_object(value: Mapping[str, Any]) -> dict[str, Any]:
-    return dict(value)
+    return sanitize_platform_public_payload(dict(value))
 
 
 def build_success_envelope(
@@ -34,7 +35,7 @@ def build_success_envelope(
             request_id=request_id,
             generated_at=generated_at or datetime.now(timezone.utc),
             data_snapshot_id=data_snapshot_id,
-            warnings=tuple(warnings),
+            warnings=tuple(sanitize_platform_public_payload(warnings)),
         ),
     )
 
@@ -58,7 +59,7 @@ def build_list_envelope(
             request_id=request_id,
             generated_at=generated_at or datetime.now(timezone.utc),
             data_snapshot_id=data_snapshot_id,
-            warnings=tuple(warnings),
+            warnings=tuple(sanitize_platform_public_payload(warnings)),
         ),
         page=PlatformPage(
             cursor=cursor,

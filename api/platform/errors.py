@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -9,6 +10,7 @@ from fastapi.responses import JSONResponse
 
 from api.platform.request_id import REQUEST_ID_HEADER, get_transport_request_id
 from src.schemas.platform.api import PlatformAPIError, PlatformErrorEnvelope
+from src.utils.sanitize import sanitize_platform_public_payload
 
 
 logger = logging.getLogger(__name__)
@@ -88,9 +90,12 @@ def platform_error_response(
     request_id = get_transport_request_id(request)
     envelope = PlatformErrorEnvelope(
         error=PlatformAPIError(
-            code=code or spec.code,
-            message=message or spec.message,
-            details=details or {},
+            code=code if code and re.fullmatch(r"[A-Z][A-Z0-9_]{2,79}", code) else spec.code,
+            message=(
+                message if message and len(message) <= 240
+                and sanitize_platform_public_payload(message) == message else spec.message
+            ),
+            details=sanitize_platform_public_payload(details or {}),
             retryable=spec.retryable if retryable is None else retryable,
             request_id=request_id,
         )
