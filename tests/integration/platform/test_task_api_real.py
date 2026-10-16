@@ -4,10 +4,13 @@ from pathlib import Path
 from datetime import datetime, timedelta, timezone
 import json
 
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
 
 from api.app import create_app
+from api.middlewares.error_handler import add_error_handlers
+from api.platform.router import router
 from src.artifacts.hashing import compute_bytes_hash
 from src.artifacts.namespace import StorageNamespaceResolver
 from src.repositories.platform import PostgresDatabase, upgrade_database
@@ -58,10 +61,16 @@ def test_real_postgres_task_api_create_query_cancel_and_retry(isolated_postgres_
     assert retry.json()["error"]["code"] == "TASK_RETRY_NOT_ALLOWED"
 
 
-def test_postgres_task_http_projection_keeps_worker_verifiers_private(isolated_postgres_database, tmp_path):
+def test_postgres_task_http_projection_keeps_worker_verifiers_private(isolated_postgres_database, tmp_path, monkeypatch):
+    def forbidden_startup(*args):
+        raise AssertionError("WP-0207 API regression must not start remote index refresh")
+
+    monkeypatch.setattr("api.app._schedule_stock_index_background_refresh", forbidden_startup)
     upgrade_database(isolated_postgres_database.engine)
     service = TaskControlService(isolated_postgres_database, runtime_root=tmp_path)
-    app = create_app(static_dir=tmp_path / "missing-static")
+    app = FastAPI()
+    app.include_router(router, prefix="/api")
+    add_error_handlers(app)
     app.state.task_control_service = service
     with TestClient(app) as client:
         created = client.post("/api/platform/v1/tasks", headers={"Idempotency-Key": "wp0207-public-checkpoint"}, json={

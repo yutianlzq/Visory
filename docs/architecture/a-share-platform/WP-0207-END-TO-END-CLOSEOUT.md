@@ -21,6 +21,10 @@
 
 RED 证据为 Python 34 failed / Web 18 failed（API Key 泄漏、非空公开 DTO 校验失败、公开目录含 worker 凭证契约），GREEN 见表。过程中的一次 pytest 路径拼写错误 exit 4（0 tests），修正后定向集通过；首次浏览器 CLI 混用了本地两套 Playwright 导致收集失败 exit 1，改用与 `@playwright/test` 相同的 CLI 和仓库外 Chrome preload 后 2 passed。未安装依赖或浏览器、不修改 workflow，不把这些失败算通过。
 
+远端首个修复 head `b60abd8` 的 run `38868943513`：governance/Web 通过，完整 backend exit 1，2 failed / 7337 passed / 4 deselected / 0 skipped。失败节点为 `tests/test_stock_list_parser.py::TestDefaultIndexRegistry::test_default_registry_has_31_entries` 和 `test_default_registry_canonical_ids`，均为 33 != 31。不能简单归为既有基线：相同 Python/Pydantic 的纯 main 和纯 PR 干净归档，这两个节点各 2 passed，相关解析器/loader/捆绑 JSON 未被本 PR 修改。新增 PostgreSQL API 回归进入完整 App lifespan，会启动 Legacy 远程指数缓存刷新，污染后续依赖捆绑 31 项的断言；已用禁止刷新启动的 guard 在该回归中重现 RED（1 failed，准确命中 startup 调用）。本轮仅将这条新增回归隔离为实际 FastAPI router/error handlers + 真实 PostgreSQL TaskControlService，保留全部 checkpoint/DTO/resume 校验和禁止无关启动的 guard，不 mock 持久化层，不改 Legacy 解析器、断言、指数文件或 workflow。后续当前 head 完整 CI 结果仍以 PR 描述为准；首轮失败不改写为通过。
+
+隔离修复后重新执行真实 PostgreSQL Task HTTP + 公开边界/生成契约/revision 专项，78 passed / 0 skipped / exit 0；新增 guard 证明该路径不再启动远程指数刷新。受影响测试完整 flake8、py_compile 和 diff 检查均 exit 0，临时容器和密码文件已清理。仅测试启动边界变化，三个业务修复、公共 DTO 和迁移均未再次修改。
+
 ### 已应用 0014 时的默认安全回滚
 
 先由获授权的运维确认目标环境是否已应用 `0014_wp0207_source_binding`，保存可恢复备份、当前 revision、列和来源证据校验结果。**不能把整组提交直接 revert 后仅保留数据库列**：若删除 `migrations/versions/0014_wp0207_provider_source_binding.py`，数据库 `alembic_version` 仍指向 0014，旧代码无法解析 revision，后续迁移和状态检查会失败。
