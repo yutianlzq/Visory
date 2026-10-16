@@ -18,6 +18,19 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 SCHEMA_EXPORT_ROOT = REPO_ROOT / "schemas" / "platform"
 
 
+def test_task_public_catalog_does_not_export_worker_credentials() -> None:
+    schemas = render_platform_openapi()["components"]["schemas"]
+    assert {"TaskLease", "TaskAttemptRecord", "TaskCheckpointRecord", "TaskDetails"}.isdisjoint(schemas)
+    details = schemas["PublicTaskDetails"]
+    for field, secret in (("attempts", "lease_token_hash"), ("checkpoints", "resume_token_hash")):
+        name = details["properties"][field]["items"]["$ref"].rsplit("/", 1)[1]
+        assert secret not in schemas[name]["properties"]
+        assert secret not in schemas[name]["required"]
+    generated = render_frontend_types()
+    assert "lease_token" not in generated
+    assert "resume_token_hash" not in generated
+
+
 def test_c010_openapi_contains_examples_and_stable_components() -> None:
     spec = render_platform_openapi()
 

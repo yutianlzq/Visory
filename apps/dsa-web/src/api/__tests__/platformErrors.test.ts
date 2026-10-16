@@ -15,6 +15,12 @@ const privateTexts = [
   'Traceback (most recent call last): fixture-secret',
   'https://user:fixture-secret@example.invalid/',
   'eyJfixture.payload.signature',
+  'api_key=fixture-secret',
+  'api-key: fixture-secret',
+  'apiKey = fixture-secret',
+  '{"api_key":"fixture-secret"}',
+  "{'api-key': 'fixture-secret'}",
+  '{"apiKey" : "fixture-secret"}',
 ];
 
 describe.each([
