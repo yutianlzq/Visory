@@ -30,7 +30,30 @@
       "terminal_at": null,
       "failure_code": null
     },
-    "attempts": [],
+    "attempts": [
+      {
+        "attempt_id": "attempt_019a7f6d-5c00-7000-8000-000000000002",
+        "task_id": "task_019a7f6d-5c00-7000-8000-000000000001",
+        "attempt_number": 1,
+        "attempt_phase": "CLAIMED",
+        "phase_progress": 0.0,
+        "worker_id": "worker-golden",
+        "worker_capabilities": [
+          "artifact_orphan_dry_run"
+        ],
+        "leased_at": "2026-08-30T08:01:00Z",
+        "lease_expires_at": "2026-08-30T08:06:00Z",
+        "heartbeat_at": "2026-08-30T08:01:00Z",
+        "started_at": null,
+        "finished_at": null,
+        "checkpoint_ref": null,
+        "resource_usage": {},
+        "attempt_outcome": null,
+        "failure_code": null,
+        "retryable": null,
+        "diagnostic_artifact_refs": []
+      }
+    ],
     "state_events": [
       {
         "task_id": "task_019a7f6d-5c00-7000-8000-000000000001",
@@ -41,6 +64,28 @@
         "actor_ref": "task_control",
         "event_at": "2026-08-30T08:00:01Z",
         "attempt_id": null
+      }
+    ],
+    "checkpoints": [
+      {
+        "checkpoint_id": "checkpoint_019a7f6d-5c00-7000-8000-000000000003",
+        "task_id": "task_019a7f6d-5c00-7000-8000-000000000001",
+        "attempt_id": "attempt_019a7f6d-5c00-7000-8000-000000000002",
+        "phase": "SCANNING",
+        "sequence": 1,
+        "input_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "handler_version": "artifact_orphan_dry_run@1.0.0",
+        "storage_ref": {
+          "storage_backend": "local_fs",
+          "storage_namespace": "app",
+          "relative_path": "checkpoints/task_id=task_019a7f6d-5c00-7000-8000-000000000001/attempt_id=attempt_019a7f6d-5c00-7000-8000-000000000002/checkpoint.json",
+          "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "media_type": "application/json",
+          "size_bytes": 128
+        },
+        "checkpoint_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "created_at": "2026-08-30T08:02:00Z",
+        "expires_at": "2026-08-31T08:02:00Z"
       }
     ]
   }

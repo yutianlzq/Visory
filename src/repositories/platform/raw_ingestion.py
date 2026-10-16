@@ -41,6 +41,7 @@ provider_run = Table(
     Column("provider_policy_id", String(64), ForeignKey("provider_policy.provider_policy_id"), nullable=False),
     Column("provider_policy_version", String(32), nullable=False),
     Column("adapter_version", String(32), nullable=False),
+    Column("source_route_evidence", JSONB),
     Column("capability_market", String(32), nullable=False),
     Column("capability_frequency", String(32), nullable=False),
     Column("task_id", String(64), ForeignKey("platform_task.task_id", deferrable=True, initially="DEFERRED"), nullable=False),

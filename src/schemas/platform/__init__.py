@@ -112,6 +112,13 @@ from .indicator import (
 from .registry import PLATFORM_CONTRACTS, ContractRegistration, ContractRegistry
 from .resources import ResourceRef, generate_resource_id, generate_uuid7, parse_resource_id
 from .provider import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy, ProviderSettingsProvider, ProviderSettingsProjection
+from .provider_source import (
+    ProviderSourceEvidenceState,
+    ProviderSourceExecutionState,
+    ProviderSourceKind,
+    ProviderSourceRouteEvidence,
+    build_provider_source_route_evidence,
+)
 from .provider_raw_schema import ProviderRawSchemaDefinition, build_provider_raw_schema_definition, compute_provider_raw_schema_hash
 from .raw_ingestion import (
     ProviderRun,
@@ -251,6 +258,10 @@ __all__ = [
     "ProviderMergeMode",
     "ProviderRun",
     "ProviderRunOutcome",
+    "ProviderSourceEvidenceState",
+    "ProviderSourceExecutionState",
+    "ProviderSourceKind",
+    "ProviderSourceRouteEvidence",
     "RawCompression",
     "RawIngestionPublishResult",
     "RawIngestionQuarantine",
@@ -301,6 +312,7 @@ __all__ = [
     "build_entity_key",
     "canonical_json_bytes",
     "compute_content_hash",
+    "build_provider_source_route_evidence",
     "generate_resource_id",
     "generate_uuid7",
     "normalize_alias_value",

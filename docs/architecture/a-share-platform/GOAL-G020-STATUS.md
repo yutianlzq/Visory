@@ -1,4 +1,127 @@
 # Visory-G020 / WP-0207 分批 Backfill 状态
+
+## 2026-10-16 续验：WP-only 本地候选补丁 PR-ready，非合入/生产认证
+
+- 初次审查中的父 fixture 门禁反例已在同一 WP-0207 范围修复：父入口校验实际 Raw plan 的 route/Raw Schema 后才创建业务子任务；Raw 对绕过构造校验的 route 再验证状态/hash。离线反例通过；真实隔离 PostgreSQL 首轮 117 passed/0 skipped，最终 route 修改后再验 5 passed/0 skipped，均为合成来源，不提升真实历史认证。
+- 最终状态定向 Python 436 passed/122 skipped、Web 52 passed；最终完整 gate 81 failed/7051 passed/173 skipped（exit 1），81 个失败节点均在同 HEAD 纯归档基线，`current-only=0`，但 gate 未通过。仓库外 WP-only patch 排除 `AGENTS.md` 和 CHANGELOG 治理条目，51 文件在纯 HEAD 镜像 apply/逐字节复核通过；52 候选文件及主 checkout/f468 状态字节复核一致。当前工作树不能整体提交；此前 `BLOCKED` 父门禁和 Docker 不可用的段落保留为历史。
+- 八条真实 route 仍 BLOCKED、Capability UNVERIFIED、Coverage UNPROVEN，继续 `WP-0207=IN_PROGRESS / NOT CERTIFIED / RELEASED=false`；未访问真实 Provider/生产资源，未执行 commit/tag/push/PR/merge/deploy。
+
+## 2026-10-16 初次审查结论（历史）：BLOCKED，尚非 PR-ready
+
+- 完整审阅 52 路径 dirty delta；修复 Raw preflight 失败终态与 fixture route 类型/身份绑定，未接入真实来源或扩大相邻 WP。
+- 父 Backfill fixture preflight 仍跳过返回 route 校验；`AGENTS.md` 跨项目治理增量需单独拆分，保留不回滚。停止追加实现补丁，详见[当前验收记录](WP-0207-END-TO-END-CLOSEOUT.md)。
+- 本轮定向 Python 297 passed/39 skipped，Contract/Golden 与 Backfill/Foundation 135 passed/82 skipped，Web 52 passed；生成契约、27 文件 py_compile、critical flake8、定向 Web lint/types/build 通过。完整 Python flake8 189 条既有诊断（exit 1）；完整 gate 79 failed/7049 passed/172 skipped（exit 1），失败节点均见同 HEAD 纯归档基线，不能称 gate 通过。
+- Docker daemon 不可用，本轮没有实际 PostgreSQL 通过证据；未运行全量 Web lint、浏览器或远程 CI。八条真实 route 仍 BLOCKED，Capability UNVERIFIED，保持 `WP-0207=IN_PROGRESS / NOT CERTIFIED / RELEASED=false`，未执行 Git 发布、部署或生产操作。历史轮次不代表本轮验证。
+
+## 2026-10-15 16:48 `a-stock-data` 来源绑定
+
+- 固定 `simonlin1212/a-stock-data` Release `3.10.2`、commit/tree、`SKILL.md` blob 与 Apache-2.0 license blob，只作为受控 Adapter/toolkit 证据；新增不可变 source-route contract、route Hash、ProviderRun 来源绑定和 migration，不把该仓库等同 BaoStock/交易所/通达信/东财/新浪/腾讯/申万的真实数据证明。
+- 现有 8 个平台 Dataset 候选 route 全部 `BLOCKED`，默认 Provider Capability 仍 `UNVERIFIED`；Backfill 在创建业务子任务和调用 transport 前检查 Dataset/Policy/Provider/Capability/Raw Schema/route，缺证据时机器可见 `Unavailable`。fixture 必须显式 test-only marker，旧 ProviderRun nullable 仅为历史兼容。
+- 最终临时 PostgreSQL Raw→Backfill 为 `96 passed / 0 skipped`，WP-0207 scoped backend `303 passed`、generated contracts `7 passed`、Web 定向 `52 passed`，受影响 lint/types/build、27 文件 py_compile、契约与治理检查通过。全部均为本地合成来源/固定契约证据，不证明七阶段真实历史。
+- 完整 `ci_gate.sh all` 收集 7,291、选择 7,287，用例运行到 31% 后 exit 1；最窄复核未修改的 Windows Codex 进程测试为 `43 failed / 2 passed`，完整 gate 仍失败。临时 PostgreSQL 容器及随机凭据已限定清理，其他容器不动。
+- 16:48 fetch 仍因无法连接 GitHub exit 128；HEAD 与缓存 `origin/main` 为 `efe8e9b...`，不宣称当前实时远程已核验。真实 Coverage/PIT/revision/分页、完整七阶段/2018 至今、双真实源、远程 CI/合入及生产认证仍阻塞；保持 `WP-0207=IN_PROGRESS / NOT CERTIFIED / RELEASED=false`，未执行 commit/tag/push/PR/merge/部署。
+
+## 2026-10-15 12:43 BJ、分页与恢复投影续验
+
+- 专用只读 Key 的追加额度为 10 次，实际使用 8 次 GET、≤1 QPS，未下载 Market Dump 或访问生产。`920799.BJ` 最近日线 10 行、闭合窗口 424 行及最新估值 1 行可读；这是授权窄样本，不证明完整 BJ universe、退市覆盖、历史估值或全历史。
+- 历史端点对 `offset=0/1/423/424/425/1000000` 均返回相同 424 行和相同 item Hash，且无 `total/has_more/next_offset/page_size`；分页终止从未验证收敛为 `FAILED_CONTRACT`。此前交易所过滤失效、退市候选缺失以及 PIT/修订字段缺口仍在，来源 Gate 不放行。
+- 不依赖来源材料的 checkpoint 公开投影、按月执行缺口和已有 Task 恢复动作重新验证：Backfill/公开投影 272 passed，Contract/Golden/generated 138 passed，Web 52 passed；受影响 lint、类型/build、17 文件 py_compile、生成契约、AI 资产、634 links/0 broken/0 imported secrets 和 diff 均通过。coverage 仍固定 `UNPROVEN`，不把月级执行记录当逐证券逐交易日 Coverage。
+- 本轮 Docker/PostgreSQL 环境不可用，集成筛选 1 passed / 61 skipped，skip 不计通过。固定 venv Python 3.12.9 的完整 gate 仍为 82 failed / 7036 passed / 157 skipped / 4 deselected、572 subtests passed，exit 1；全量 Web lint 38 errors，exit 1。详细命令、证据、四态矩阵和五文档限定回滚见[最新权威验收记录](WP-0207-END-TO-END-CLOSEOUT.md)顶部本节。
+- 12:42 fetch 与实时 `ls-remote` 均成功，HEAD/origin/main/实时 main 为 `efe8e9b...`。本轮只补录五份 WP-0207 文档，不改业务代码/契约/测试，不触碰主 checkout、f468 或参考项目；未执行 commit/tag/push/PR/merge/部署。保持 `WP-0207=IN_PROGRESS / NOT CERTIFIED / RELEASED=false`，历史 G020=COMPLETE 不替代完整 Goal。
+
+## 2026-10-14 22:54 真实来源最小解阻包
+
+- 按 `AGENTS.md` 2.2 只读核验本地参考项目 17 个指定文件，固定当前字节 SHA-256；未读取凭据、运行脚本、调用 Provider 或访问生产。参考目录无本轮可用 Git 元数据，manifest 历史提交不能自动绑定当前外部文件。
+- 新增[真实来源最小解阻包](WP-0207-SOURCE-UNBLOCK-PACKAGE.md)：逐 Provider 定义 endpoint/Adapter/字段/单位/Null/时区、分页、PIT、修订/取消、合法零行、历史 Coverage、S01-S14 授权样本、package layout 和 G01-G14 验收 Gate，并按 Provider maintainer、数据 owner、历史档案 owner 分工。
+- 当前候选材料只能支持 Adapter/反例设计：历史 K 分页不闭合、日历仅近一年、估值仅最新、公司行动/财务缺 revision/PIT、BaoStock 不支持北交所、行业披露时间和固定档案缺失。真实 package 尚未提供，七阶段真实执行和完整历史仍无法验证。
+- 本轮仅文档，不改业务代码/测试/契约；固定 Python 的 AI 资产检查通过，baseline 检查 633 个相对链接且 0 个破损，diff 与 17 个参考文件 Hash 复验通过。未重跑后端/Web/PostgreSQL 或上一轮完整 gate，本轮未创建/清理 PostgreSQL 容器；保持 `WP-0207=IN_PROGRESS / NOT CERTIFIED / RELEASED=false`。完整 gate/lint、双真实成功源、当前增量远程 CI/合入和生产资源认证仍阻塞；未执行 commit/tag/push/PR/merge/部署。
+
+## 2026-10-14 17:34 纯 HEAD 门禁归因与剩余条件
+
+- 使用同一 HEAD 的纯 `git archive`、固定 Python/Bash 和新独立 PostgreSQL 执行完整 `bash scripts/ci_gate.sh all`：纯 HEAD 为 84 failed / 7025 passed / 10 skipped / 4 deselected，当前增量为 83 failed / 7182 passed / 10 skipped / 4 deselected，均另有 572 subtests passed、exit 1。节点集合 `common=83 / current_only=0 / head_only=1`，当前全部失败均在纯 HEAD 复现；失败测试文件与 HEAD 一致。因此未发现 WP-0207 增量新增失败，但完整 gate 仍未通过。
+- 搜索 deadline 浮点边界、Local CLI Windows 清理竞争、Storage 时序不稳定均在纯 HEAD 复现或诊断一致；Provider cache 是纯 HEAD 独有失败。它们作为 Legacy FOLLOW-UP，不在 WP-0207 堆叠补丁。平台范围当前/HEAD 分别只有相同五个 Windows 权限或 symlink skip、无 failed，skip 不计通过。
+- 临时 HEAD PostgreSQL、密码、纯源码解压目录和三个本轮 `tmp-*` 已受控清理；保留 SHA-256 固定的源码 ZIP、原始失败和命令账本，不触碰主 checkout、f468、生产资源或其他容器。开工已复验上一轮 603 文件封存并保存整体 38 文件、主三文档和 f468 52 文件只读快照。
+- 本轮不改实现或测试代码，仅补录四份状态文档；Web 66、Chromium 108/0 skipped、受影响 lint/types/build 与 Backfill 601/0 skipped、22 回执/223 记录/226 文件继续作为上一封存的本地合成证据。全量 Web lint 仍 38 errors，真实来源/全历史/两真实源质量、当前增量远程与生产验收仍缺。
+- 继续需要版本化 Provider/字段/单位/时区/修订/分页/PIT/`available_at` 契约、授权脱敏样本或只读范围、规定历史覆盖与退市 universe、样本 Hash、两个真实成功源及冲突/质量证据；远程和生产阶段另需逐项授权。完整条件未满足，保持 `WP-0207=IN_PROGRESS / NOT CERTIFIED / RELEASED=false`，历史 G020=COMPLETE 不替代本 Goal；未执行 commit/tag/push/PR/merge/部署。文件/命令/Hash、四态矩阵和限定回滚见[最新权威验收记录](WP-0207-END-TO-END-CLOSEOUT.md)顶部本节。
+
+## 2026-10-14 16:57 阶段租约隔离与 PostgreSQL 验收
+
+- 修复七阶段执行器从全局队列误租其他 Backfill 的问题；既有 Task 控制面/Repository 增加内部目标约束，统一排队领取与过期 LEASED/RUNNING 恢复，保留默认调度、能力/状态门禁和 SKIP LOCKED，不新增公开契约或平行实现。
+- 新增一个单元及九个 PostgreSQL 回归；完整相关范围含 API/Contract/Golden/原控制面为 601 passed / 0 skipped，17 文件 py_compile、生成契约通过。22 个最终回执的 223 条固定对象/226 文件复验并归档；来源为合成 transport/plan-only，阶段隔离只运行首阶段，不宣称七阶段真实历史完成。
+- 固定 Python 与独立 PostgreSQL 的完整 gate 本轮重跑仍为 83 failed / 7182 passed / 10 skipped、572 subtests passed，exit 1；平台集成 155 项全部通过。保留 python3 环境漂移和无 PG 的 82 failed/157 skipped；最终 80 个失败与前轮重合，三个新增失败根因尚未证明。全量 Web lint 仍 38 errors。
+- Web 66、Chromium 108/0 skipped、受影响 lint/types/build 继承前轮，本轮客户端未改/未重跑；绑定另行只读复验。两套所属 PG/密码及四个归档 runtime 已清理，其他资源和并行成果保留；16:08 fetch 失败，16:09 与 16:57 main API 核验成功，HEAD/main 同为 `efe8e9b...`。
+- 九个本轮既有路径、整体 38 文件、原始/交付 Hash、完整账本、四态验收、旧四封存/保护和九文件恢复回滚见[最新权威验收记录](WP-0207-END-TO-END-CLOSEOUT.md)顶部本节。真实来源/全历史/双源质量、完整 gate/lint、远程增量与生产验收未闭合，保持 `WP-0207=IN_PROGRESS / NOT CERTIFIED / RELEASED=false`；完整 Goal 未完成，历史 G020=COMPLETE 不替代本轮判定。
+- 未执行 commit/tag/push/PR/merge/部署，不改变相邻 WP 状态或完成计数。
+
+## 2026-10-14 15:55 Operations 请求归属续做
+
+- 修复旧 Task/旧筛选迟到响应污染当前状态、同 Task/同筛选 SSE 请求排序，以及 GET 成功或连接重建误报 SSE 健康；结果和连接状态绑定路由/查询，旧响应按请求序号拒绝，复用既有 API 和脱敏，不改变 Task 事务。
+- 页面三项 lint 已关闭，受影响 lint、tsc/build 通过。最终 Web 六套件 66 passed（页面 12 项），当前构建 Chromium 双视口 108 passed / 0 skipped；初次 106 场景和后续连接重建 red 原样保留。全量 lint 仍 38 errors，最近完整 backend gate 的 81 failed 未关闭。
+- 本轮六个路径均在开工时已存在，整体仍 36 文件，其他 30 字节不变；六份本轮原始字节与交付 Hash/命令账本在新证据目录，回滚全部恢复原始字节，不删除测试。旧三份封存只读复验，主三文档/f468 已知四文档仅追加保护快照，不清理并行目录。
+- 15:06 远程 main API 与 fetch 均通过，HEAD/main 仍 `efe8e9b...`；具体原始失败、浏览器绑定、验收和清理以[最新验收记录](WP-0207-END-TO-END-CLOSEOUT.md)顶部本节及最终账本为准。
+- 完整 Goal 继续 active，真实来源/规定历史/双源质量、全 gate/lint、当前增量远程与生产证据仍缺；保持 `WP-0207=IN_PROGRESS / NOT CERTIFIED / RELEASED=false`，不将历史 G020=COMPLETE 等同完整 Goal，未执行 commit/tag/push/PR/merge/部署。
+
+## 2026-10-14 浏览器验收与公开错误续做
+
+- 按持续授权，已知 f468 四文档更新只追加观察时刻的只读保护快照，不再因这些并行变化中断；其余 48 文件及主目录三文档严格保护。完整 Goal 已恢复 active，不缩小目标。
+- 浏览器发现并修复 Operations 列表刷新清掉详情诊断、详情失败持续显示骨架两个问题；错误分槽、离开详情清旧错误，沿用现有脱敏。原始页面回归 3 failed、骨架反例 1 failed 保留；最终 Web 58 passed、Chromium 98 passed，含双视口四页面与原生 SSE，八截图保存在仓库外。
+- 后端公开投影/Contract/Golden 165 passed，15 个 py_compile、生成契约、tsc/build 通过。本轮没有重跑 PostgreSQL 或完整 backend gate；继承 73 PG/files（0 skipped）的合成来源性质不变。受影响 lint 3 errors、全量 41 errors 仍失败，原始 Operations 页面同样 3 errors；不关闭规则或扩大 WP。
+- 本轮六文件（页面/新增测试/四文档），整体 36 文件，其他原 Goal 30 文件字节不变。14:22/14:23 main 核验与 fetch 通过，HEAD/main 为 `efe8e9b...`。最终账本、Hash/保护/清理和限定回滚见[权威验收记录](WP-0207-END-TO-END-CLOSEOUT.md)顶部浏览器节与新证据目录。
+- 真实来源、七阶段规定历史、两真实成功源质量、全 gate/lint、本增量远程与生产证据仍缺。保持 `IN_PROGRESS / NOT CERTIFIED / RELEASED=false`；不把历史 G020=COMPLETE 或浏览器 fixture 等同完整 Goal，未执行 commit/tag/push/PR/merge/部署。
+
+## 2026-10-14 保护确认后的封存复验
+
+- 首次新证据封存 `seal-final` 因 f468 四份文档的 12:33—12:41 新字节与旧快照不同返回 exit 1；原日志、结果和脚本副本保留，不将保护失败判断为业务回归。
+- 用户直接确认保留四文档并授权恢复后，12:57 在本轮新证据目录追加 52 文件原始字节/Hash、HEAD/status/diff 的只读保护快照；不写主 checkout、f468 或旧封存。旧封存 2874 文件复验匹配，WP-0207 临时 PostgreSQL/密码已不存在。
+- 12:58 实时 main 核验和 fetch 均 exit 0，HEAD/origin/main/实时 main 仍为 `efe8e9b362cba13eca183c55be57bbbbc832b60b`。新的 `seal-confirmed` 结果、四文档清单/回滚和 manifest 以[最新验收记录](WP-0207-END-TO-END-CLOSEOUT.md)顶部本节及仓库外账本为准。
+- 完整 Goal 已恢复但未完成；本次仅补录四文档，真实来源、完整历史、双真实源质量、全量 gate/lint、本增量远程与生产证据仍缺。保持 `IN_PROGRESS / NOT CERTIFIED / RELEASED=false`，未执行 commit/tag/push/PR/merge/部署。
+
+## 2026-10-14 12:30 续做：CI 环境与失败归因
+
+- 现有 WSL 为 Python 3.10，缺少测试依赖及 Python 3.11；缓存镜像没有现成 Python 测试环境。未安装、下载或启动容器；CI 等价 Linux 检查需就绪环境或明确的临时验证资源授权。
+- fail-open 单独执行、全树收集后定向执行各 1 passed，情报 API/Service 35 passed，main 归档未注入状态的控制用例 1 passed；原全量失败未在这些范围复现。完全离线的 Requests 共享代理字典污染反例在实施树与 main 归档均 1 failed，证明既有可复现机制，不证明原完整 gate 的实际根因，不修改 Legacy 代码或断言。
+- 本轮仅追加四文档证据，独立仓库外保存 baseline、命令、异常类型/位置及当前 Hash；主目录三文档和 f468 的 52 个确认文件保留，上一轮封存目录不变。12:20 实时 main、12:21 fetch 成功，HEAD/origin/main/远程 main 仍为 `efe8e9b...`。
+- 完整 Goal 继续推进但未完成；真实来源/七阶段/完整历史、双源质量、全量 gate/lint、本增量远程与生产证据仍缺。详见[最新权威验收记录](WP-0207-END-TO-END-CLOSEOUT.md)顶部 12:30 节，继续 `IN_PROGRESS / NOT CERTIFIED / RELEASED=false`，未执行 commit/tag/push/PR/merge/部署。
+
+## 2026-10-14 11:03 WP-0207 最终账本与验收封存
+
+- 按用户确认，为 f468 当前 52 个保护文件追加仓库外只读快照；四个新文档变化属于并行 WP-0303，本轮未覆盖、回滚或清理其成果。主 checkout 三个既有文档保留。本次只补录四文档，编辑前核验整体 34 个 Goal 文件的交付 Hash；补源/隔离回合仍为 14 文件，无新增仓库路径。
+- 定向 507、真实 PostgreSQL/files 73（0 skipped）、Golden 121、Web 54 通过；13 场景的 223 对象/223 文件归档复验通过。完整 gate 为 81 failed / 7174 passed / 10 skipped / 4 deselected、572 subtests passed（exit 1），全量 Web lint 41 errors（exit 1）；78 个失败与 main 归档复验重合，情报 fail-open 全量失败仍未解释，不能宣称全 gate 通过。
+- WP-0207 临时 PostgreSQL/密码和 13 个归属明确的 runtime 目录已清理，归档保留；清理前后其他容器不变，期间新增并行 WP-0303 容器的事实及其后续只读 inventory 如实记录。11:03:16 fetch 和 11:03:29 实时 main 核验均通过，HEAD/origin/main/实时 main 为 `efe8e9b362cba13eca183c55be57bbbbc832b60b`。
+- 文件绝对路径/原因、命令/cwd/退出码、交付 Hash、四态矩阵、阻塞及仅增量回滚见[最新权威验收记录](WP-0207-END-TO-END-CLOSEOUT.md)顶部封存节及仓库外账本。来源授权、完整七阶段/历史逐证券覆盖、两真实成功源质量、全量 gate 和本增量远程/生产证据未闭合；继续 `WP-0207=IN_PROGRESS / NOT CERTIFIED / RELEASED=false`，历史 `G020=COMPLETE` 不用于关闭本 Goal。未执行 commit/tag/push/PR/merge/部署。
+
+## 2026-10-14 续做：补源拒绝固定血缘与隔离恢复
+
+- 修复主源失败、补源遭 Canonical/Snapshot 拒绝或 Raw quarantine 时遗漏失败主源 Hash 和 fallback 投影的问题；拒绝证据重新绑定现有 Task/Attempt、Policy 与输入，Raw quarantine 支持父 checkpoint 前崩溃后的独立进程恢复，不进入业务发布链路。
+- 新增 25 个回归，定向 507 passed、真实 PostgreSQL/files 73 passed / 0 skipped、Web 54 passed；13 场景的 223 对象/223 文件归档复验通过，对应临时 runtime 已清理。完整 gate、PostgreSQL 清理与最终文件/命令清单以[权威验收记录](WP-0207-END-TO-END-CLOSEOUT.md)顶部本节为准，不覆盖上一回合证据。
+- 保留主目录三个 dirty 文档、f468 已确认的 52 个文件；独立工作树 HEAD 与 09:54:15 实时远程 main 均为 `efe8e9b...`。真实来源、全历史和认证仍缺证据，状态继续 `WP-0207=IN_PROGRESS / NOT CERTIFIED / RELEASED=false`，历史 `G020=COMPLETE` 不用于关闭本 Goal。未执行 commit/tag/push/PR/merge/部署。
+
+## 2026-10-14 续做：发布拒绝、checkpoint 固定证据与恢复
+
+- 修正真实对象链中父 Backfill 将 Canonical/Snapshot 拒绝误报为可重试“未发布”的语义；直接保留已持久化的子任务失败 code，追加绑定 Batch/父 Task/分区/输入与 Raw/Quality/Canonical Hash 的 `rejection_evidence`。恢复复验数据库和文件，不重新取数，不把拒绝范围计入完成。
+- 495 个定向测试、60 个真实 PostgreSQL/files 用例（0 skipped）和更新后的 121 个 Golden 通过；新增 23 个拒绝证据、直接/新进程恢复和跨月前缀回归。Web 54 passed，受影响 lint/tsc/build、15 个 Python 编译及契约/AI 资产检查通过；全量 Web lint 仍 41 errors。完整 gate、清理、当前文件 Hash 和账本以[权威验收记录](WP-0207-END-TO-END-CLOSEOUT.md)顶部 10-14 节为准。
+- 主 checkout 三个文档、f468 最近确认的 52 个保护文件没有写入。早期 fetch/ls-remote 失败保留；09:34:12 实时 main 核验、09:34:30 fetch 已成功，main/HEAD/origin-main 均为 `efe8e9b...`。
+- 完整 gate 为 82 failed / 7148 passed / 10 skipped / 4 deselected、572 subtests passed（exit 1）；79 个与既有基线失败复验重合，新出现的两个节点另在 main 归档复现，情报 fail-open 的全量失败仍未解释。导出并复验新增 9 场景的 129 个数据库对象/135 个实际文件；PostgreSQL/密码与 9 个归属明确的临时 runtime 目录已经清理，证据归档保留。整体 Goal 34 文件，本回合 21 文件，历史快照未覆盖。
+- `WP-0207=IN_PROGRESS / NOT CERTIFIED / RELEASED=false`。真实来源版本/授权、完整七阶段/历史覆盖、两源质量、完整 gate、远程和生产认证仍未闭合；历史 G020 完成及本地合成 transport 的成功不替代完整验收。未执行 commit/tag/push/PR/merge/部署。
+
+## 2026-10-13 续做：公开 checkpoint 校验与按月恢复计划
+
+- 用户再次确认 f468 新增成果属于并行 WP-0303；本回合另存只读确认快照，不覆盖、不回滚，仍只编辑独立 WP-0207 worktree。主 checkout 三个文档字节保留；整体 Goal 的 33 文件增量继续与本回合编辑前字节区分。
+- Backfill/P-DATA 公开 checkpoint 读取与 worker 恢复共享输入/分区/累积引用校验；缺 checkpoint resolver 明确失败，dry-run 不得宣称业务完成。coverage API 追加按月 `execution_ranges`、精确未安排日期、已有 Task 状态和恢复动作，只有 `RETRY_WAIT` 可以指向既有 retries 入口。固定回执保持 `PUBLISHED_UNCERTIFIED`，证券逐日历史仍 `UNPROVEN`。
+- 续做定向 `457 passed`，真实 PostgreSQL/files `43 passed / 0 skipped`，Web `54 passed`，受影响 lint/tsc/build/py_compile/契约检查通过；全量 Web lint 仍失败（41 errors）。完整结果、阻塞、命令和回滚以[权威验收记录](WP-0207-END-TO-END-CLOSEOUT.md)顶部续做节为准，初次结果继续作为历史保留。
+- 续做完整 gate 为 `80 failed / 7127 passed / 10 skipped / 4 deselected`（exit 1，另有 572 subtests passed）；79 个失败与基线复验重合，未把情报 fail-open 的全量失败归为已解释。临时 PostgreSQL/密码已于 23:18:10 清理，另 4 个容器前后不变；本回合变更 17 个原增量文件，整体仍 33 文件，仓库外原始字节/命令/Hash/回滚账本更新。
+- 最终实时 main 核验传输失败/超时，交付时无法确认；最近成功为 2026-10-13 23:09:44 的 `efe8e9b...`，本地同值 refs 是缓存基线。只结束本回合挂起的只读 Git 网络 helper，不触碰其他进程或工作树；失败与退出码保留，远程收尾核验列为 BLOCKER。
+- `WP-0207=IN_PROGRESS / NOT CERTIFIED / RELEASED=false`；缺来源授权、完整七阶段与全证券历史证据，未执行远程发布、生产调度或部署。历史 `G020=COMPLETE` 不表示当前 Goal 已完成。
+
+## 2026-10-13 WP-0207 端到端闭环本地增量
+
+- 从实时远程 `main@efe8e9b362cba13eca183c55be57bbbbc832b60b` 的独立 `codex/wp-0207-end-to-end-closeout` worktree 实施；主 checkout 三个既有文档修改与 f468 WP-0303 成果保留，开工清单、diff、原始字节和执行证据保存在仓库外。
+- 补齐实际 PostgreSQL/files 的发布回执及 Hash 复验、YEAR 月分区证据、失败范围 checkpoint、受控补源及失败主源 Hash、quarantine 固定证据、缺契约 Unavailable、覆盖查询和公开/浏览器脱敏。Backfill 实际对象链 `43 passed / 0 skipped`，单元/API/Contract/Golden/Snapshot 定向 `428 passed`；Web 定向 `54 passed`。全量本地 CI / Web lint 仍失败，不能用定向成功替代。
+- [本轮权威验收记录](WP-0207-END-TO-END-CLOSEOUT.md) 分别列出本地实现、来源、完整回填、远程 CI/合入和生产认证。测试 transport 是合成 fixture，真实源接口版本/字段契约/授权材料缺失；估值、行业和非核心契约缺口机器可见。覆盖暂为 `UNPROVEN`，未扣减尚未证明的历史区间。
+- `WP-0207=IN_PROGRESS`，本 `WP-0207-END-TO-END-CLOSEOUT` Goal 未完成，生产 `NOT CERTIFIED`，`RELEASED=false`。下方 `G020=COMPLETE` 和 `13/45` 是历史证据，不覆盖当前项目汇总，也不代表完整 WP 完成。未执行 commit/tag/push/PR/merge/部署或真实全历史在线回填。
+- 本轮最终收尾：用户确认 f468 的变动属于并行 WP-0303，原开工与确认时快照均保留，本轮不写入或回滚 f468；主 checkout 三个既有文档字节保持不变。初次收尾 32 个增量文件，后续用户授权增加 AGENTS.md 的本地参考源码路由，最终为 33 个；清单、SHA256、实际命令/退出码账本、回滚边界和清理证据保存于仓库外。本次 PostgreSQL tmpfs 容器及密码已清理，另 4 个容器未改变；收尾实时远程 main 为 `efe8e9b362cba13eca183c55be57bbbbc832b60b`。最终全 gate 为 `80 failed / 7098 passed / 10 skipped`（exit 1），其中 79 个失败与基线复验重合，不据此宣称全 gate 通过或完整 WP 完成。
+- 本地 `E:\Personal Manager\参考项目` 已提供候选来源代码与字段文档，可据此继续版本/字段映射及反例设计；仍缺已核验的上游接口版本、授权真实样本或只读访问范围，不能把本地契约或示例输出当作真实七阶段回填证据。具体路由见仓库根 AGENTS.md 2.2 节。
+
 ## 2026-09-29 合入后最终闭环复核
 
 - PR #38 已按授权以普通 merge 合入：`merged=true`、状态 `closed`，base SHA `46804661dbb897433f114c25898c8da7021254a1`，实际 PR head SHA `528baa072d32f0242cfdcfa8bb7b1314de19db78`，merge commit `a1d31f9c3d16e62ea4fd78217c992bfe96dc33a8`，`merged_at=2026-09-29T04:01:18Z`；未使用 squash 或 rebase。

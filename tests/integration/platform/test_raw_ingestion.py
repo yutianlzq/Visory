@@ -1,16 +1,31 @@
 from __future__ import annotations
 
 import json
+from contextlib import nullcontext
 from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from sqlalchemy import text
 
 from src.repositories.platform import RawIngestionRepository, upgrade_database
-from src.schemas.platform import RawCompression, TaskCreateRequest, TaskState
+from src.schemas.platform import (
+    ProviderCapabilityStatus,
+    ProviderSourceExecutionState,
+    RawCompression,
+    RawIngestionTaskRequirements,
+    TaskCreateRequest,
+    TaskState,
+    compute_content_hash,
+)
 from src.services.platform.provider_registry import ProviderRegistryService, default_provider_raw_schema_records
+from src.services.platform.provider_source_routes import (
+    ProviderSourceRouteRegistry,
+    build_fixture_provider_source_route,
+    default_provider_source_routes,
+)
 from src.services.platform.raw_ingestion import (
     FakeProviderTransport,
     ProviderFetchResponse,
@@ -86,6 +101,226 @@ def raw_runtime(isolated_postgres_database, tmp_path: Path):
     return database, task_control, publisher
 
 
+class _ConfigurationRepository:
+    def __init__(self, capability_status=ProviderCapabilityStatus.UNVERIFIED) -> None:
+        self.capability_status = capability_status
+
+    @staticmethod
+    def get_provider(session, provider_id):
+        return SimpleNamespace(
+            provider_id=provider_id,
+            adapter_name="a_stock_data",
+            adapter_version="1.0.0",
+        )
+
+    @staticmethod
+    def get_dataset(session, dataset_id, schema_version):
+        return SimpleNamespace(dataset_id=dataset_id, schema_version=schema_version, frequency="daily")
+
+    @staticmethod
+    def get_policy(session, policy_id):
+        return SimpleNamespace(
+            provider_policy_id=policy_id,
+            primary_provider_id="a_stock_data",
+            supplemental_provider_ids=(),
+            dataset_id="security_master",
+            dataset_schema_version="1.0.0",
+            policy_version="1.0.0",
+        )
+
+    def get_capability(self, session, provider_id, dataset_id, schema_version, market, frequency):
+        return SimpleNamespace(provider_capability_status=self.capability_status)
+
+    @staticmethod
+    def list_provider_raw_schemas(session, provider_id, adapter_version, dataset_id, schema_version):
+        return (object(),)
+
+
+def _configuration_worker(
+    transport,
+    *,
+    source_route_registry=None,
+    capability_status=ProviderCapabilityStatus.UNVERIFIED,
+) -> RawIngestionTaskWorker:
+    database = SimpleNamespace(transaction=lambda: nullcontext(object()))
+    return RawIngestionTaskWorker(
+        SimpleNamespace(),
+        database,
+        SimpleNamespace(),
+        transport,
+        repository=_ConfigurationRepository(capability_status),
+        source_route_registry=source_route_registry,
+        rate_limiter=SimpleNamespace(),
+        clock=lambda: NOW,
+    )
+
+
+def test_raw_preflight_failure_records_terminal_task_without_provider_run() -> None:
+    task = SimpleNamespace(
+        task_id="task_preflight",
+        task_type="raw_ingestion",
+        requirements=_requirements("security_master"),
+        task_state=TaskState.RUNNING,
+        cancel_requested_at=None,
+    )
+    attempt = SimpleNamespace(attempt_id="attempt_preflight")
+
+    class RecordingTaskControl:
+        failure = None
+
+        @staticmethod
+        def start_attempt(attempt_id, lease_token):
+            return None
+
+        @staticmethod
+        def get_task(task_id):
+            return SimpleNamespace(task=task)
+
+        def record_failure(self, attempt_id, lease_token, *, failure_code, retryable):
+            self.failure = (failure_code, retryable)
+            task.task_state = TaskState.RETRY_WAIT if retryable else TaskState.FAILED
+
+    task_control = RecordingTaskControl()
+    worker = RawIngestionTaskWorker(
+        task_control,
+        SimpleNamespace(transaction=lambda: nullcontext(object())),
+        SimpleNamespace(),
+        SimpleNamespace(),
+        rate_limiter=SimpleNamespace(),
+        clock=lambda: NOW,
+    )
+
+    def reject_configuration(requirements):
+        raise RawIngestionError("RAW_CAPABILITY_UNVERIFIED", "Provider capability is not execution-ready.")
+
+    worker._configuration = reject_configuration  # type: ignore[method-assign]
+    lease = SimpleNamespace(task=task, attempt=attempt, lease_token="lease-token")
+
+    with pytest.raises(RawIngestionError) as captured:
+        worker.execute(lease)
+
+    assert captured.value.error_code == "RAW_CAPABILITY_UNVERIFIED"
+    assert task.task_state is TaskState.FAILED
+    assert task_control.failure == ("RAW_CAPABILITY_UNVERIFIED", False)
+
+
+def test_fixture_configuration_rejects_non_fixture_route_without_postgres() -> None:
+    class InvalidFixtureTransport:
+        fixture_only = True
+
+        @staticmethod
+        def fixture_source_route(*, adapter_name, adapter_version, request):
+            return default_provider_source_routes()[0]
+
+    worker = _configuration_worker(InvalidFixtureTransport())
+
+    with pytest.raises(RawIngestionError) as captured:
+        worker._configuration(RawIngestionTaskRequirements.model_validate(_requirements("security_master")))
+
+    assert captured.value.error_code == "RAW_SOURCE_ROUTE_FIXTURE_INVALID"
+
+
+def test_fixture_configuration_rejects_unchecked_route_hash_without_postgres() -> None:
+    class ForgedFixtureTransport:
+        fixture_only = True
+
+        @staticmethod
+        def fixture_source_route(*, adapter_name, adapter_version, request):
+            route = build_fixture_provider_source_route(
+                provider_id=request.provider_id,
+                dataset_id=request.dataset_id,
+                adapter_name=adapter_name,
+                adapter_version=adapter_version,
+                actual_upstream=f"fixture.{request.provider_id}",
+            )
+            return route.model_copy(update={"source_route_hash": "sha256:" + "0" * 64})
+
+    worker = _configuration_worker(ForgedFixtureTransport())
+    requirements = RawIngestionTaskRequirements.model_validate(_requirements("security_master"))
+
+    with pytest.raises(RawIngestionError) as captured:
+        worker._configuration(requirements)
+
+    assert captured.value.error_code == "RAW_SOURCE_ROUTE_FIXTURE_INVALID"
+
+
+def test_live_configuration_rejects_unchecked_route_hash_without_postgres() -> None:
+    route = default_provider_source_routes()[0].model_copy(update={
+        "execution_state": ProviderSourceExecutionState.AVAILABLE,
+    })
+    worker = _configuration_worker(
+        SimpleNamespace(),
+        source_route_registry=ProviderSourceRouteRegistry((route,)),
+        capability_status=ProviderCapabilityStatus.AVAILABLE,
+    )
+    requirements = RawIngestionTaskRequirements.model_validate(_requirements("security_master"))
+
+    with pytest.raises(RawIngestionError) as captured:
+        worker._configuration(requirements)
+
+    assert captured.value.error_code == "RAW_SOURCE_ROUTE_INVALID"
+
+
+@pytest.mark.parametrize(
+    ("identity_field", "wrong_value"),
+    [
+        ("provider_id", "financial_api"),
+        ("dataset_id", "trading_calendar"),
+        ("adapter_name", "financial_api"),
+        ("adapter_version", "9.9.9"),
+    ],
+)
+def test_fixture_configuration_rejects_mismatched_identity_without_postgres(
+    identity_field: str, wrong_value: str
+) -> None:
+    class MismatchedFixtureTransport:
+        fixture_only = True
+
+        @staticmethod
+        def fixture_source_route(*, adapter_name, adapter_version, request):
+            route = build_fixture_provider_source_route(
+                provider_id=request.provider_id,
+                dataset_id=request.dataset_id,
+                adapter_name=adapter_name,
+                adapter_version=adapter_version,
+                actual_upstream=f"fixture.{request.provider_id}",
+            )
+            return route.model_copy(update={identity_field: wrong_value})
+
+    worker = _configuration_worker(MismatchedFixtureTransport())
+    requirements = RawIngestionTaskRequirements.model_validate(_requirements("security_master"))
+
+    with pytest.raises(RawIngestionError) as captured:
+        worker._configuration(requirements)
+
+    assert captured.value.error_code == "RAW_SOURCE_ROUTE_FIXTURE_INVALID"
+
+
+def test_live_configuration_rejects_fixture_enabled_registry_without_postgres() -> None:
+    class LiveTransport:
+        pass
+
+    route = build_fixture_provider_source_route(
+        provider_id="a_stock_data",
+        dataset_id="security_master",
+        adapter_name="a_stock_data",
+        adapter_version="1.0.0",
+        actual_upstream="fixture.a_stock_data",
+    )
+    registry = ProviderSourceRouteRegistry((route,), allow_fixture_only=True)
+    worker = _configuration_worker(
+        LiveTransport(),
+        source_route_registry=registry,
+        capability_status=ProviderCapabilityStatus.AVAILABLE,
+    )
+    requirements = RawIngestionTaskRequirements.model_validate(_requirements("security_master"))
+
+    with pytest.raises(RawIngestionError) as captured:
+        worker._configuration(requirements)
+
+    assert captured.value.error_code == "RAW_SOURCE_ROUTE_FIXTURE_ONLY"
+
+
 @pytest.mark.parametrize("dataset_id", ["security_master", "trading_calendar", "bar_1d_raw"])
 def test_raw_ingestion_vertical_success_for_all_initial_datasets(raw_runtime, dataset_id: str) -> None:
     database, task_control, publisher = raw_runtime
@@ -104,12 +339,358 @@ def test_raw_ingestion_vertical_success_for_all_initial_datasets(raw_runtime, da
 
     assert result.raw_object is not None
     assert result.quarantine is None
+    assert result.provider_run.source_route_evidence is not None
+    assert result.provider_run.source_route_evidence.execution_state is ProviderSourceExecutionState.FIXTURE_ONLY
+    assert result.provider_run.request_fingerprint == compute_content_hash({
+        "provider_id": "a_stock_data",
+        "dataset_id": dataset_id,
+        "request": _requirements(dataset_id)["request"],
+        "source_route_hash": result.provider_run.source_route_evidence.source_route_hash,
+    })
     assert task_control.get_task(task.task_id).task.task_state is TaskState.SUCCEEDED
     raw_path = publisher.resolver.resolve(result.raw_object.storage_ref, require_exists=True)
     assert raw_path.read_bytes() == _response(dataset_id).content
     with database.transaction() as session:
         assert RawIngestionRepository().get_raw_object(session, result.raw_object.raw_object_id) == result.raw_object
         assert RawIngestionRepository().get_provider_run(session, result.provider_run.provider_run_id) == result.provider_run
+
+
+def test_unverified_capability_fails_before_transport_or_provider_run(raw_runtime) -> None:
+    database, task_control, publisher = raw_runtime
+    task = task_control.create_task(_request("security_master"), idempotency_key="raw-unverified-source")
+    lease = task_control.lease_next(worker_id="raw-worker", worker_capabilities=("raw_ingestion",))
+    assert lease is not None
+
+    class UnexpectedTransport:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def fetch(self, adapter_name, request, *, timeout_seconds):
+            self.calls += 1
+            raise AssertionError("unverified capability must not reach transport")
+
+    transport = UnexpectedTransport()
+    worker = RawIngestionTaskWorker(task_control, database, publisher, transport, clock=lambda: NOW)
+
+    with pytest.raises(RawIngestionError) as captured:
+        worker.execute(lease)
+
+    assert captured.value.error_code == "RAW_CAPABILITY_UNVERIFIED"
+    assert transport.calls == 0
+    assert task_control.get_task(task.task_id).task.task_state is TaskState.FAILED
+    with database.engine.connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM provider_run")).scalar_one() == 0
+
+
+def test_fixture_route_factory_without_fixture_marker_cannot_bypass_capability(raw_runtime) -> None:
+    database, task_control, publisher = raw_runtime
+    task = task_control.create_task(_request("security_master"), idempotency_key="raw-unmarked-fixture-source")
+    lease = task_control.lease_next(worker_id="raw-worker", worker_capabilities=("raw_ingestion",))
+    assert lease is not None
+
+    class UnmarkedFixtureTransport:
+        calls = 0
+
+        def fixture_source_route(self, *, adapter_name, adapter_version, request):
+            return build_fixture_provider_source_route(
+                provider_id=request.provider_id,
+                dataset_id=request.dataset_id,
+                adapter_name=adapter_name,
+                adapter_version=adapter_version,
+                actual_upstream=f"fixture.{request.provider_id}",
+            )
+
+        def fetch(self, adapter_name, request, *, timeout_seconds):
+            self.calls += 1
+            raise AssertionError("unmarked fixture transport must not reach fetch")
+
+    transport = UnmarkedFixtureTransport()
+    worker = RawIngestionTaskWorker(task_control, database, publisher, transport, clock=lambda: NOW)
+
+    with pytest.raises(RawIngestionError) as captured:
+        worker.execute(lease)
+
+    assert captured.value.error_code == "RAW_CAPABILITY_UNVERIFIED"
+    assert transport.calls == 0
+    assert task_control.get_task(task.task_id).task.task_state is TaskState.FAILED
+    with database.engine.connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM provider_run")).scalar_one() == 0
+
+
+def test_fixture_transport_rejects_non_fixture_source_route_before_fetch(raw_runtime) -> None:
+    database, task_control, publisher = raw_runtime
+    task = task_control.create_task(_request("security_master"), idempotency_key="raw-invalid-fixture-route")
+    lease = task_control.lease_next(worker_id="raw-worker", worker_capabilities=("raw_ingestion",))
+    assert lease is not None
+
+    class InvalidFixtureTransport:
+        fixture_only = True
+        calls = 0
+
+        def fixture_source_route(self, *, adapter_name, adapter_version, request):
+            return default_provider_source_routes()[0]
+
+        def fetch(self, adapter_name, request, *, timeout_seconds):
+            self.calls += 1
+            raise AssertionError("invalid fixture route must not reach fetch")
+
+    transport = InvalidFixtureTransport()
+    worker = RawIngestionTaskWorker(task_control, database, publisher, transport, clock=lambda: NOW)
+
+    with pytest.raises(RawIngestionError) as captured:
+        worker.execute(lease)
+
+    assert captured.value.error_code == "RAW_SOURCE_ROUTE_FIXTURE_INVALID"
+    assert transport.calls == 0
+    assert task_control.get_task(task.task_id).task.task_state is TaskState.FAILED
+    with database.engine.connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM provider_run")).scalar_one() == 0
+
+
+@pytest.mark.parametrize(
+    ("identity_field", "wrong_value"),
+    [
+        ("provider_id", "financial_api"),
+        ("dataset_id", "trading_calendar"),
+        ("adapter_name", "financial_api"),
+        ("adapter_version", "9.9.9"),
+    ],
+)
+def test_fixture_transport_rejects_mismatched_source_identity_before_fetch(
+    raw_runtime, identity_field: str, wrong_value: str
+) -> None:
+    database, task_control, publisher = raw_runtime
+    task = task_control.create_task(
+        _request("security_master"),
+        idempotency_key=f"raw-invalid-fixture-{identity_field}",
+    )
+    lease = task_control.lease_next(worker_id="raw-worker", worker_capabilities=("raw_ingestion",))
+    assert lease is not None
+
+    class MismatchedFixtureTransport:
+        fixture_only = True
+        calls = 0
+
+        def fixture_source_route(self, *, adapter_name, adapter_version, request):
+            route = build_fixture_provider_source_route(
+                provider_id=request.provider_id,
+                dataset_id=request.dataset_id,
+                adapter_name=adapter_name,
+                adapter_version=adapter_version,
+                actual_upstream=f"fixture.{request.provider_id}",
+            )
+            return route.model_copy(update={identity_field: wrong_value})
+
+        def fetch(self, adapter_name, request, *, timeout_seconds):
+            self.calls += 1
+            raise AssertionError("mismatched fixture route must not reach fetch")
+
+    transport = MismatchedFixtureTransport()
+    worker = RawIngestionTaskWorker(task_control, database, publisher, transport, clock=lambda: NOW)
+
+    with pytest.raises(RawIngestionError) as captured:
+        worker.execute(lease)
+
+    assert captured.value.error_code == "RAW_SOURCE_ROUTE_FIXTURE_INVALID"
+    assert transport.calls == 0
+    assert task_control.get_task(task.task_id).task.task_state is TaskState.FAILED
+    with database.engine.connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM provider_run")).scalar_one() == 0
+
+
+def test_blocked_pinned_source_route_fails_before_transport(raw_runtime) -> None:
+    database, task_control, publisher = raw_runtime
+    with database.transaction() as session:
+        session.execute(
+            text(
+                "UPDATE provider_capability SET provider_capability_status = 'AVAILABLE' "
+                "WHERE provider_id = 'a_stock_data' AND dataset_id = 'security_master'"
+            )
+        )
+    task = task_control.create_task(_request("security_master"), idempotency_key="raw-blocked-route")
+    lease = task_control.lease_next(worker_id="raw-worker", worker_capabilities=("raw_ingestion",))
+    assert lease is not None
+
+    class UnexpectedTransport:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def fetch(self, adapter_name, request, *, timeout_seconds):
+            self.calls += 1
+            raise AssertionError("blocked source route must not reach transport")
+
+    transport = UnexpectedTransport()
+    worker = RawIngestionTaskWorker(task_control, database, publisher, transport, clock=lambda: NOW)
+
+    with pytest.raises(RawIngestionError) as captured:
+        worker.execute(lease)
+
+    assert captured.value.error_code == "RAW_SOURCE_ROUTE_BLOCKED"
+    assert captured.value.details["reason_code"] == "SOURCE_UNIVERSE_COVERAGE_UNPROVEN"
+    assert transport.calls == 0
+    assert task_control.get_task(task.task_id).task.task_state is TaskState.FAILED
+
+
+def test_unavailable_capability_fails_before_transport_or_provider_run(raw_runtime) -> None:
+    database, task_control, publisher = raw_runtime
+    with database.transaction() as session:
+        session.execute(
+            text(
+                "UPDATE provider_capability SET provider_capability_status = 'UNAVAILABLE' "
+                "WHERE provider_id = 'a_stock_data' AND dataset_id = 'security_master'"
+            )
+        )
+    task = task_control.create_task(_request("security_master"), idempotency_key="raw-unavailable-source")
+    lease = task_control.lease_next(worker_id="raw-worker", worker_capabilities=("raw_ingestion",))
+    assert lease is not None
+
+    class UnexpectedTransport:
+        calls = 0
+
+        def fetch(self, adapter_name, request, *, timeout_seconds):
+            self.calls += 1
+            raise AssertionError("unavailable capability must not reach transport")
+
+    transport = UnexpectedTransport()
+    worker = RawIngestionTaskWorker(task_control, database, publisher, transport, clock=lambda: NOW)
+
+    with pytest.raises(RawIngestionError) as captured:
+        worker.execute(lease)
+
+    assert captured.value.error_code == "RAW_CAPABILITY_UNAVAILABLE"
+    assert transport.calls == 0
+    assert task_control.get_task(task.task_id).task.task_state is TaskState.FAILED
+    with database.engine.connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM provider_run")).scalar_one() == 0
+
+
+def test_missing_source_route_fails_before_transport_or_provider_run(raw_runtime) -> None:
+    database, task_control, publisher = raw_runtime
+    with database.transaction() as session:
+        session.execute(
+            text(
+                "UPDATE provider_capability SET provider_capability_status = 'AVAILABLE' "
+                "WHERE provider_id = 'a_stock_data' AND dataset_id = 'security_master'"
+            )
+        )
+    task = task_control.create_task(_request("security_master"), idempotency_key="raw-missing-source-route")
+    lease = task_control.lease_next(worker_id="raw-worker", worker_capabilities=("raw_ingestion",))
+    assert lease is not None
+
+    class UnexpectedTransport:
+        calls = 0
+
+        def fetch(self, adapter_name, request, *, timeout_seconds):
+            self.calls += 1
+            raise AssertionError("missing source route must not reach transport")
+
+    transport = UnexpectedTransport()
+    worker = RawIngestionTaskWorker(
+        task_control,
+        database,
+        publisher,
+        transport,
+        source_route_registry=ProviderSourceRouteRegistry(()),
+        clock=lambda: NOW,
+    )
+
+    with pytest.raises(RawIngestionError) as captured:
+        worker.execute(lease)
+
+    assert captured.value.error_code == "RAW_SOURCE_ROUTE_UNAVAILABLE"
+    assert captured.value.details["reason_code"] == "SOURCE_ROUTE_NOT_REGISTERED"
+    assert transport.calls == 0
+    assert task_control.get_task(task.task_id).task.task_state is TaskState.FAILED
+    with database.engine.connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM provider_run")).scalar_one() == 0
+
+
+def test_non_fixture_transport_rejects_fixture_only_registry_route(raw_runtime) -> None:
+    database, task_control, publisher = raw_runtime
+    with database.transaction() as session:
+        session.execute(
+            text(
+                "UPDATE provider_capability SET provider_capability_status = 'AVAILABLE' "
+                "WHERE provider_id = 'a_stock_data' AND dataset_id = 'security_master'"
+            )
+        )
+    task = task_control.create_task(_request("security_master"), idempotency_key="raw-fixture-route-on-live-transport")
+    lease = task_control.lease_next(worker_id="raw-worker", worker_capabilities=("raw_ingestion",))
+    assert lease is not None
+
+    class UnexpectedTransport:
+        calls = 0
+
+        def fetch(self, adapter_name, request, *, timeout_seconds):
+            self.calls += 1
+            raise AssertionError("fixture-only route must not reach a non-fixture transport")
+
+    transport = UnexpectedTransport()
+    route = build_fixture_provider_source_route(
+        provider_id="a_stock_data",
+        dataset_id="security_master",
+        adapter_name="a_stock_data",
+        adapter_version="1.0.0",
+        actual_upstream="fixture.a_stock_data",
+    )
+    worker = RawIngestionTaskWorker(
+        task_control,
+        database,
+        publisher,
+        transport,
+        source_route_registry=ProviderSourceRouteRegistry((route,), allow_fixture_only=True),
+        clock=lambda: NOW,
+    )
+
+    with pytest.raises(RawIngestionError) as captured:
+        worker.execute(lease)
+
+    assert captured.value.error_code == "RAW_SOURCE_ROUTE_FIXTURE_ONLY"
+    assert transport.calls == 0
+    assert task_control.get_task(task.task_id).task.task_state is TaskState.FAILED
+    with database.engine.connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM provider_run")).scalar_one() == 0
+
+
+def test_response_upstream_must_match_fixed_source_route(raw_runtime) -> None:
+    database, task_control, publisher = raw_runtime
+    task = task_control.create_task(_request("security_master"), idempotency_key="raw-upstream-mismatch")
+    lease = task_control.lease_next(worker_id="raw-worker", worker_capabilities=("raw_ingestion",))
+    assert lease is not None
+
+    class MismatchedFixtureTransport:
+        fixture_only = True
+
+        def fixture_source_route(self, *, adapter_name, adapter_version, request):
+            return build_fixture_provider_source_route(
+                provider_id=request.provider_id,
+                dataset_id=request.dataset_id,
+                adapter_name=adapter_name,
+                adapter_version=adapter_version,
+                actual_upstream="fixture.approved",
+            )
+
+        def fetch(self, adapter_name, request, *, timeout_seconds):
+            return _response(request.dataset_id)
+
+    worker = RawIngestionTaskWorker(
+        task_control,
+        database,
+        publisher,
+        MismatchedFixtureTransport(),
+        clock=lambda: NOW,
+    )
+
+    with pytest.raises(RawIngestionError) as captured:
+        worker.execute(lease)
+
+    assert captured.value.error_code == "RAW_SOURCE_ROUTE_MISMATCH"
+    with database.transaction() as session:
+        run = RawIngestionRepository().get_provider_run_by_task(session, task.task_id)
+        assert run is not None
+        assert run.run_outcome.value == "FAILED"
+        assert run.failure_code == "RAW_SOURCE_ROUTE_MISMATCH"
+        assert run.raw_object_refs == ()
 
 
 def test_declared_financial_api_supplemental_provider_is_allowed(raw_runtime) -> None:
@@ -265,6 +846,17 @@ def test_cancel_after_fetch_blocks_raw_publication_at_safe_point(raw_runtime) ->
     assert lease is not None
 
     class CancelOnFetch:
+        fixture_only = True
+
+        def fixture_source_route(self, *, adapter_name, adapter_version, request):
+            return build_fixture_provider_source_route(
+                provider_id=request.provider_id,
+                dataset_id=request.dataset_id,
+                adapter_name=adapter_name,
+                adapter_version=adapter_version,
+                actual_upstream=f"fixture.{request.provider_id}",
+            )
+
         def fetch(self, adapter_name, request, *, timeout_seconds):
             task_control.request_cancel(task.task_id, actor_ref="test")
             return _response(request.dataset_id)

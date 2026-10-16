@@ -18,7 +18,7 @@ from src.repositories.platform import (
 )
 
 
-HEAD_REVISION = "0013_wp0302_feature_store"
+HEAD_REVISION = "0014_wp0207_source_binding"
 
 
 def _table_names(database: PostgresDatabase) -> tuple[str, ...]:
@@ -126,6 +126,25 @@ def test_empty_database_upgrade_is_idempotent_and_reversible(isolated_postgres_d
     assert restored.current_revision == HEAD_REVISION
     assert restored.is_at_head is True
     assert _table_names(database) == first_tables
+
+
+def test_provider_source_binding_migration_is_reversible(
+    isolated_postgres_database: PostgresDatabase,
+) -> None:
+    database = isolated_postgres_database
+    upgrade_database(database.engine, "0013_wp0302_feature_store")
+    assert "source_route_evidence" not in _column_names(database, "provider_run")
+
+    upgrade_database(database.engine)
+    assert get_migration_status(database.engine).current_revision == HEAD_REVISION
+    assert "source_route_evidence" in _column_names(database, "provider_run")
+
+    downgrade_database(database.engine, "0013_wp0302_feature_store")
+    assert "source_route_evidence" not in _column_names(database, "provider_run")
+
+    upgrade_database(database.engine)
+    assert get_migration_status(database.engine).current_revision == HEAD_REVISION
+    assert "source_route_evidence" in _column_names(database, "provider_run")
 
 
 def test_benchmark_dataset_extension_is_independent_and_reversible(

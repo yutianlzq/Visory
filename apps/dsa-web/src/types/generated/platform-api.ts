@@ -108,6 +108,7 @@ export interface BackfillBatchProjection {
   readonly canonical_partition_refs?: ReadonlyArray<string>;
   readonly checkpoint_phase: string;
   readonly completed_range?: ReadonlyArray<unknown> | null;
+  readonly coverage_state?: "UNPROVEN";
   readonly dataset: string;
   readonly date_from?: string | null;
   readonly date_to?: string | null;
@@ -117,14 +118,19 @@ export interface BackfillBatchProjection {
   readonly failed_range?: ReadonlyArray<unknown> | null;
   readonly failed_ranges?: ReadonlyArray<ReadonlyArray<unknown>>;
   readonly failure_code?: string | null;
+  readonly gap_ranges?: ReadonlyArray<ReadonlyArray<unknown>>;
   readonly plan_only: boolean;
   readonly priority: number;
   readonly provider_fallback?: boolean;
   readonly provider_policy_id: string;
   readonly provider_run_refs?: ReadonlyArray<string>;
+  readonly publication_evidence?: ReadonlyArray<BackfillPublicationEvidence>;
   readonly quality_events?: ReadonlyArray<string>;
+  readonly quarantine_evidence?: ReadonlyArray<BackfillQuarantineEvidence>;
   readonly raw_object_refs?: ReadonlyArray<string>;
+  readonly rejection_evidence?: ReadonlyArray<BackfillRejectionEvidence>;
   readonly resource_usage?: Readonly<Record<string, number>>;
+  readonly retry_plan?: ReadonlyArray<string>;
   readonly skipped_range?: ReadonlyArray<unknown> | null;
   readonly skipped_ranges?: ReadonlyArray<ReadonlyArray<unknown>>;
   readonly snapshot_refs?: ReadonlyArray<string>;
@@ -153,6 +159,96 @@ export interface BackfillBatchRequest {
 }
 
 export type BackfillBatchType = "MONTH" | "YEAR";
+
+export interface BackfillCoverageProjection {
+  readonly batches?: ReadonlyArray<BackfillBatchProjection>;
+  readonly coverage_state?: "UNPROVEN";
+  readonly dataset: string;
+  readonly date_from?: string | null;
+  readonly date_to?: string | null;
+  readonly execution_ranges?: ReadonlyArray<BackfillExecutionRangeProjection>;
+  readonly gap_ranges: ReadonlyArray<ReadonlyArray<unknown>>;
+  readonly retry_plan: ReadonlyArray<string>;
+  readonly trade_date?: string | null;
+}
+
+/** Recorded execution and recovery actions, separate from historical coverage. */
+export interface BackfillExecutionRangeProjection {
+  readonly batch_id?: string | null;
+  readonly blocking_codes?: ReadonlyArray<string>;
+  readonly date_from?: string | null;
+  readonly date_to?: string | null;
+  readonly execution_state: "UNATTEMPTED" | "PENDING" | "FAILED" | "SKIPPED" | "UNPROVEN" | "PUBLISHED_UNCERTIFIED";
+  readonly next_action: "CREATE_MONTH_BATCH" | "WAIT_EXISTING_TASK" | "RETRY_EXISTING_TASK" | "RESOLVE_DEPENDENCY" | "REVIEW_SKIPPED_RANGE" | "REVIEW_FAILURE" | "REVIEW_CANCELLED" | "VERIFY_COVERAGE" | "REVIEW_INCOMPLETE_PUBLICATION";
+  readonly provider_policy_id?: string | null;
+  readonly snapshot_refs?: ReadonlyArray<string>;
+  readonly task_id?: string | null;
+  readonly task_state?: TaskState | null;
+  readonly trade_date?: string | null;
+}
+
+/** Fixed publication evidence; a published fixture never proves historical coverage. */
+export interface BackfillPublicationEvidence {
+  readonly canonical_manifest_hash: string;
+  readonly canonical_partition_id: string;
+  readonly canonical_storage_ref: StorageRef;
+  readonly coverage_state?: "PUBLISHED_UNCERTIFIED";
+  readonly dataset_id: string;
+  readonly dataset_schema_version: string;
+  readonly date_from: string;
+  readonly date_to: string;
+  readonly failed_provider_run_hashes?: Readonly<Record<string, string>>;
+  readonly mapping_hash: string;
+  readonly mapping_version: string;
+  readonly provider_policy_version: string;
+  readonly provider_run_hash: string;
+  readonly provider_run_id: string;
+  readonly quality_report_hash: string;
+  readonly quality_report_id: string;
+  readonly raw_manifest_hash: string;
+  readonly raw_object_id: string;
+  readonly raw_storage_ref: StorageRef;
+  readonly row_count: number;
+  readonly snapshot_file_hash: string;
+  readonly snapshot_id: string;
+  readonly snapshot_manifest_hash: string;
+}
+
+export interface BackfillQuarantineEvidence {
+  readonly evidence_storage_ref: StorageRef;
+  readonly failed_provider_run_hashes?: Readonly<Record<string, string>>;
+  readonly manifest_file_hash: string;
+  readonly provider_run_hash: string;
+  readonly provider_run_id: string;
+  readonly raw_ingestion_quarantine_id: string;
+  readonly reason_code: string;
+}
+
+/** Fixed inputs and diagnosis for a child that refused business publication. */
+export interface BackfillRejectionEvidence {
+  readonly batch_id: string;
+  readonly canonical_manifest_hash?: string | null;
+  readonly canonical_partition_id?: string | null;
+  readonly canonical_storage_ref?: StorageRef | null;
+  readonly canonical_task_id: string;
+  readonly child_attempt_id: string;
+  readonly child_input_hash: string;
+  readonly child_task_id: string;
+  readonly dataset_id: string;
+  readonly date_from: string;
+  readonly date_to: string;
+  readonly failed_provider_run_hashes?: Readonly<Record<string, string>>;
+  readonly failure_code: string;
+  readonly parent_task_id: string;
+  readonly phase: "CANONICAL" | "SNAPSHOT";
+  readonly provider_run_hash: string;
+  readonly provider_run_id: string;
+  readonly quality_report_hash: string;
+  readonly quality_report_id: string;
+  readonly raw_manifest_hash: string;
+  readonly raw_object_id: string;
+  readonly raw_storage_ref: StorageRef;
+}
 
 export type BackfillStage = "IDENTITY_CALENDAR" | "PRICE_MONTH" | "LIFECYCLE_NAMES" | "CORPORATE_ACTION" | "FINANCIAL_VALUATION" | "INDUSTRY_MEMBERS" | "NON_CORE_OBSERVATION";
 
@@ -186,8 +282,11 @@ export interface BackfillTaskRequirements {
   readonly provider_fallback?: boolean;
   readonly provider_policy_id: string;
   readonly provider_run_refs?: ReadonlyArray<string>;
+  readonly publication_evidence?: ReadonlyArray<BackfillPublicationEvidence>;
   readonly quality_events?: ReadonlyArray<string>;
+  readonly quarantine_evidence?: ReadonlyArray<BackfillQuarantineEvidence>;
   readonly raw_object_refs?: ReadonlyArray<string>;
+  readonly rejection_evidence?: ReadonlyArray<BackfillRejectionEvidence>;
   readonly resource_usage?: Readonly<Record<string, number>>;
   readonly skipped_range?: ReadonlyArray<unknown> | null;
   readonly skipped_ranges?: ReadonlyArray<ReadonlyArray<unknown>>;
@@ -584,6 +683,7 @@ export interface ProviderRun {
   readonly request_fingerprint: string;
   readonly row_count?: number | null;
   readonly run_outcome?: ProviderRunOutcome | null;
+  readonly source_route_evidence?: ProviderSourceRouteEvidence | null;
   readonly started_at: string;
   readonly task_id: string;
 }
@@ -606,6 +706,53 @@ export interface ProviderSettingsProvider {
   readonly enabled?: boolean;
   readonly provider_id: string;
   readonly provider_kind: ProviderKind;
+}
+
+export type ProviderSourceEvidenceState = "PROVEN" | "UNPROVEN" | "FAILED" | "NOT_APPLICABLE";
+
+export type ProviderSourceExecutionState = "AVAILABLE" | "BLOCKED" | "UNAVAILABLE" | "FIXTURE_ONLY";
+
+export type ProviderSourceKind = "HTTP" | "TCP" | "SDK" | "FILE" | "FIXTURE";
+
+/** Immutable binding from a controlled adapter to its real upstream source. */
+export interface ProviderSourceRouteEvidence {
+  readonly actual_upstream: string;
+  readonly adapter_blob: string;
+  readonly adapter_commit: string;
+  readonly adapter_entrypoint: string;
+  readonly adapter_name: string;
+  readonly adapter_release: string;
+  readonly adapter_repository: string;
+  readonly adapter_version: string;
+  readonly coverage_evidence_state: ProviderSourceEvidenceState;
+  readonly dataset_id: string;
+  readonly documented_history_start?: string | null;
+  readonly execution_state: ProviderSourceExecutionState;
+  readonly license_blob: string;
+  readonly license_id: string;
+  readonly market: string;
+  readonly pagination_evidence_state: ProviderSourceEvidenceState;
+  readonly pit_evidence_state: ProviderSourceEvidenceState;
+  readonly provider_id: string;
+  readonly revision_evidence_state: ProviderSourceEvidenceState;
+  readonly source_kind: ProviderSourceKind;
+  readonly source_route_hash: string;
+  readonly source_route_id: string;
+  readonly unavailable_reason_code?: string | null;
+}
+
+/** C-010 details, separate from internal lease and checkpoint recovery records. */
+export interface PublicTaskDetails {
+  readonly attempts: ReadonlyArray<TaskAttemptProjection>;
+  readonly checkpoints?: ReadonlyArray<TaskCheckpointProjection>;
+  readonly diagnostic_artifact_refs?: ReadonlyArray<string>;
+  readonly state_events: ReadonlyArray<TaskStateEventRecord>;
+  readonly task: TaskRecord;
+}
+
+export interface PublicTaskDetailsResponse {
+  readonly data: PublicTaskDetails;
+  readonly meta: PlatformResponseMeta;
 }
 
 export type PublicationStatus = "DRAFT" | "PROVISIONAL" | "CERTIFIED" | "RETIRED";
@@ -701,7 +848,7 @@ export interface StorageRef {
   readonly storage_namespace: StorageNamespace;
 }
 
-export interface TaskAttemptRecord {
+export interface TaskAttemptProjection {
   readonly attempt_id: string;
   readonly attempt_number: number;
   readonly attempt_outcome?: AttemptOutcome | null;
@@ -712,7 +859,6 @@ export interface TaskAttemptRecord {
   readonly finished_at?: string | null;
   readonly heartbeat_at: string;
   readonly lease_expires_at: string;
-  readonly lease_token_hash: string;
   readonly leased_at: string;
   readonly phase_progress: number;
   readonly resource_usage: Readonly<Record<string, number>>;
@@ -727,7 +873,7 @@ export interface TaskCancelRequest {
   readonly reason_code?: string;
 }
 
-export interface TaskCheckpointRecord {
+export interface TaskCheckpointProjection {
   readonly attempt_id: string;
   readonly checkpoint_hash: string;
   readonly checkpoint_id: string;
@@ -736,7 +882,6 @@ export interface TaskCheckpointRecord {
   readonly handler_version: string;
   readonly input_hash: string;
   readonly phase: string;
-  readonly resume_token_hash: string;
   readonly sequence: number;
   readonly storage_ref: StorageRef;
   readonly task_id: string;
@@ -757,14 +902,6 @@ export interface TaskCreateRequest {
   readonly task_type: "artifact_orphan_dry_run" | "raw_ingestion" | "canonical_normalization" | "data_snapshot_build" | "daily_schedule_phase" | "backfill";
 }
 
-export interface TaskDetails {
-  readonly attempts: ReadonlyArray<TaskAttemptRecord>;
-  readonly checkpoints?: ReadonlyArray<TaskCheckpointRecord>;
-  readonly diagnostic_artifact_refs?: ReadonlyArray<string>;
-  readonly state_events: ReadonlyArray<TaskStateEventRecord>;
-  readonly task: TaskRecord;
-}
-
 /** C-010 event projection for resumable task notifications. */
 export interface TaskEventRecord {
   readonly attempt_id?: string | null;
@@ -776,12 +913,6 @@ export interface TaskEventRecord {
   readonly resource_ref: ResourceRef;
   readonly sequence: number;
   readonly task_id: string;
-}
-
-export interface TaskLease {
-  readonly attempt: TaskAttemptRecord;
-  readonly lease_token: string;
-  readonly task: TaskRecord;
 }
 
 /** Stable, bounded task list query used by Operations. */

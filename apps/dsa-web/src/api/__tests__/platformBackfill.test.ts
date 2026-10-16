@@ -37,7 +37,7 @@ describe('formatBackfillError', () => {
       response: { data: { error: { code: 'BACKFILL_WORKER_ERROR', message } } },
     };
 
-    expect(formatBackfillError(cause)).toBe('历史回填服务不可用');
+    expect(formatBackfillError(cause)).toBe('BACKFILL_WORKER_ERROR: 历史回填服务不可用');
   });
 
   it('rejects malformed or oversized public error fields', () => {
@@ -45,7 +45,7 @@ describe('formatBackfillError', () => {
       '历史回填服务不可用',
     );
     expect(formatBackfillError({ response: { data: { error: { code: 'BACKFILL_ERROR', message: 'x'.repeat(241) } } } })).toBe(
-      '历史回填服务不可用',
+      'BACKFILL_ERROR: 历史回填服务不可用',
     );
   });
 });

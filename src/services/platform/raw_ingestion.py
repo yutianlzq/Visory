@@ -11,7 +11,7 @@ from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
 from src.artifacts.hashing import compute_bytes_hash
 from src.artifacts.namespace import StorageNamespaceResolver, fsync_directory
@@ -19,8 +19,12 @@ from src.repositories.platform.database import PostgresDatabase
 from src.repositories.platform.raw_ingestion import RawIngestionRepository
 from src.schemas.platform import (
     ProviderRawSchemaDefinition,
+    ProviderCapabilityStatus,
     ProviderRun,
     ProviderRunOutcome,
+    ProviderSourceExecutionState,
+    ProviderSourceKind,
+    ProviderSourceRouteEvidence,
     RawCompression,
     RawIngestionPublishResult,
     RawIngestionQuarantine,
@@ -37,6 +41,11 @@ from src.schemas.platform import (
     compute_content_hash,
     ensure_safe_actual_upstream,
     generate_resource_id,
+)
+from src.services.platform.provider_source_routes import (
+    ProviderSourceRouteError,
+    ProviderSourceRouteRegistry,
+    build_fixture_provider_source_route,
 )
 from src.services.platform.task_control import TaskControlError, TaskControlService
 
@@ -130,6 +139,8 @@ class ControlledProviderAdapterRegistry:
 class FakeProviderTransport:
     """Deterministic offline transport for fixtures and failure injection."""
 
+    fixture_only = True
+
     def __init__(self, responses: Mapping[tuple[str, str], ProviderFetchResponse | Exception]) -> None:
         self._responses = dict(responses)
         self.calls: list[tuple[str, str, int]] = []
@@ -142,6 +153,27 @@ class FakeProviderTransport:
         if isinstance(response, Exception):
             raise response
         return response
+
+    def fixture_source_route(
+        self,
+        *,
+        adapter_name: str,
+        adapter_version: str,
+        request: ProviderFetchRequest,
+    ):
+        response = self._responses.get((adapter_name, request.dataset_id))
+        actual_upstream = (
+            response.actual_upstream
+            if isinstance(response, ProviderFetchResponse)
+            else f"fixture.{request.provider_id}"
+        )
+        return build_fixture_provider_source_route(
+            provider_id=request.provider_id,
+            dataset_id=request.dataset_id,
+            adapter_name=adapter_name,
+            adapter_version=adapter_version,
+            actual_upstream=actual_upstream,
+        )
 
 
 class ProviderRateLimiter:
@@ -568,6 +600,7 @@ class RawIngestionTaskWorker:
         *,
         repository: RawIngestionRepository | None = None,
         adapter_registry: ControlledProviderAdapterRegistry | None = None,
+        source_route_registry: ProviderSourceRouteRegistry | None = None,
         rate_limiter: ProviderRateLimiter | PostgresRateLimiter | None = None,
         clock: Callable[[], datetime] = _utc_now,
     ) -> None:
@@ -577,6 +610,7 @@ class RawIngestionTaskWorker:
         self.transport = transport
         self.repository = repository or RawIngestionRepository()
         self.adapter_registry = adapter_registry or ControlledProviderAdapterRegistry()
+        self.source_route_registry = source_route_registry or ProviderSourceRouteRegistry()
         self.rate_limiter = rate_limiter or PostgresRateLimiter(database.transaction, clock=clock, repository=self.repository)
         self.clock = clock
 
@@ -608,26 +642,141 @@ class RawIngestionTaskWorker:
             )
             if capability is None:
                 raise RawIngestionError("RAW_CAPABILITY_UNAVAILABLE", "Provider capability is unavailable.", retryable=True)
+            fixture_route_factory = getattr(self.transport, "fixture_source_route", None)
+            fixture_mode = (
+                getattr(self.transport, "fixture_only", False) is True
+                and callable(fixture_route_factory)
+            )
+            if not fixture_mode and capability.provider_capability_status not in {
+                ProviderCapabilityStatus.AVAILABLE,
+                ProviderCapabilityStatus.DEGRADED,
+            }:
+                code = (
+                    "RAW_CAPABILITY_UNVERIFIED"
+                    if capability.provider_capability_status is ProviderCapabilityStatus.UNVERIFIED
+                    else "RAW_CAPABILITY_UNAVAILABLE"
+                )
+                raise RawIngestionError(
+                    code,
+                    "Provider capability is not execution-ready.",
+                    details={
+                        "provider_id": requirements.provider_id,
+                        "dataset_id": requirements.dataset_id,
+                        "capability_state": capability.provider_capability_status.value,
+                    },
+                )
             if not raw_schemas:
                 raise RawIngestionError("RAW_SCHEMA_REGISTRY_UNAVAILABLE", "Provider raw schema is unavailable.")
-        return provider, dataset, policy, capability, raw_schemas
+        fetch_request = ProviderFetchRequest(
+            provider_id=requirements.provider_id,
+            dataset_id=requirements.dataset_id,
+            dataset_schema_version=requirements.dataset_schema_version,
+            request=requirements.request,
+        )
+        if fixture_mode:
+            try:
+                source_route = fixture_route_factory(
+                    adapter_name=provider.adapter_name,
+                    adapter_version=provider.adapter_version,
+                    request=fetch_request,
+                )
+            except Exception as exc:
+                raise RawIngestionError(
+                    "RAW_SOURCE_ROUTE_FIXTURE_INVALID",
+                    "Fixture provider source route is invalid.",
+                    cause=exc,
+                ) from exc
+            expected_identity = (
+                requirements.provider_id,
+                requirements.dataset_id,
+                provider.adapter_name,
+                provider.adapter_version,
+            )
+            actual_identity = (
+                (
+                    source_route.provider_id,
+                    source_route.dataset_id,
+                    source_route.adapter_name,
+                    source_route.adapter_version,
+                )
+                if isinstance(source_route, ProviderSourceRouteEvidence)
+                else None
+            )
+            if (
+                actual_identity != expected_identity
+                or source_route.source_kind is not ProviderSourceKind.FIXTURE
+                or source_route.execution_state is not ProviderSourceExecutionState.FIXTURE_ONLY
+            ):
+                raise RawIngestionError(
+                    "RAW_SOURCE_ROUTE_FIXTURE_INVALID",
+                    "Fixture provider source route is invalid.",
+                    details={
+                        "provider_id": requirements.provider_id,
+                        "dataset_id": requirements.dataset_id,
+                    },
+                )
+        else:
+            try:
+                source_route = self.source_route_registry.require_executable(
+                    provider_id=provider.provider_id,
+                    dataset_id=requirements.dataset_id,
+                    adapter_name=provider.adapter_name,
+                    adapter_version=provider.adapter_version,
+                )
+            except ProviderSourceRouteError as exc:
+                raise RawIngestionError(
+                    exc.error_code,
+                    exc.public_message,
+                    details={
+                        "provider_id": requirements.provider_id,
+                        "dataset_id": requirements.dataset_id,
+                        **({"reason_code": exc.reason_code} if exc.reason_code else {}),
+                    },
+                ) from exc
+            if (
+                source_route.source_kind is ProviderSourceKind.FIXTURE
+                or source_route.execution_state is ProviderSourceExecutionState.FIXTURE_ONLY
+            ):
+                raise RawIngestionError(
+                    "RAW_SOURCE_ROUTE_FIXTURE_ONLY",
+                    "Fixture provider source route is not executable in this runtime.",
+                    details={
+                        "provider_id": requirements.provider_id,
+                        "dataset_id": requirements.dataset_id,
+                    },
+                )
+        try:
+            source_route = ProviderSourceRouteEvidence.model_validate(source_route.model_dump(mode="python"))
+        except (TypeError, ValueError) as exc:
+            raise RawIngestionError(
+                "RAW_SOURCE_ROUTE_FIXTURE_INVALID" if fixture_mode else "RAW_SOURCE_ROUTE_INVALID",
+                "Provider source route evidence is invalid.",
+                cause=exc,
+            ) from exc
+        return provider, dataset, policy, capability, raw_schemas, source_route
 
-    def _start_run(self, lease: TaskLease, requirements: RawIngestionTaskRequirements, provider: Any, dataset: Any, policy: Any, capability: Any, adapter: ControlledProviderAdapter) -> ProviderRun:
+    def _start_run(self, lease: TaskLease, requirements: RawIngestionTaskRequirements, provider: Any, dataset: Any, policy: Any, capability: Any, adapter: ControlledProviderAdapter, source_route: Any) -> ProviderRun:
         now = self.clock()
         run = ProviderRun(
             provider_run_id=generate_resource_id(ResourceType.PROVIDER_RUN),
             provider_id=requirements.provider_id,
-            actual_upstream=adapter.default_actual_upstream,
+            actual_upstream=source_route.actual_upstream,
             dataset_id=requirements.dataset_id,
             dataset_schema_version=requirements.dataset_schema_version,
             provider_policy_id=policy.provider_policy_id,
             provider_policy_version=policy.policy_version,
             adapter_version=provider.adapter_version,
+            source_route_evidence=source_route,
             capability_market=capability.market,
             capability_frequency=capability.frequency,
             task_id=lease.task.task_id,
             attempt_id=lease.attempt.attempt_id,
-            request_fingerprint=compute_content_hash({"provider_id": requirements.provider_id, "dataset_id": requirements.dataset_id, "request": requirements.request}),
+            request_fingerprint=compute_content_hash({
+                "provider_id": requirements.provider_id,
+                "dataset_id": requirements.dataset_id,
+                "request": requirements.request,
+                "source_route_hash": source_route.source_route_hash,
+            }),
             started_at=now,
             raw_object_refs=(),
         )
@@ -666,11 +815,12 @@ class RawIngestionTaskWorker:
         if lease.task.task_type != "raw_ingestion":
             raise TaskControlError("TASK_TYPE_UNSUPPORTED", "Worker does not support this task type.", status_code=422)
         self.task_control.start_attempt(lease.attempt.attempt_id, lease.lease_token)
-        requirements = RawIngestionTaskRequirements.model_validate(lease.task.requirements)
-        provider, dataset, policy, capability, raw_schemas = self._configuration(requirements)
-        adapter = self.adapter_registry.resolve(provider.adapter_name)
-        run = self._start_run(lease, requirements, provider, dataset, policy, capability, adapter)
+        run: ProviderRun | None = None
         try:
+            requirements = RawIngestionTaskRequirements.model_validate(lease.task.requirements)
+            provider, dataset, policy, capability, raw_schemas, source_route = self._configuration(requirements)
+            adapter = self.adapter_registry.resolve(provider.adapter_name)
+            run = self._start_run(lease, requirements, provider, dataset, policy, capability, adapter, source_route)
             current = self.task_control.get_task(lease.task.task_id).task
             if current.cancel_requested_at is not None:
                 self._cancel(lease, run, "RAW_CANCELLED_BEFORE_FETCH")
@@ -690,6 +840,16 @@ class RawIngestionTaskWorker:
             except TimeoutError as exc:
                 raise RawIngestionError("RAW_TIMEOUT", "Provider request timed out.", retryable=True, cause=exc) from exc
             actual_upstream = ensure_safe_actual_upstream(response.actual_upstream)
+            if actual_upstream != source_route.actual_upstream:
+                raise RawIngestionError(
+                    "RAW_SOURCE_ROUTE_MISMATCH",
+                    "Provider response does not match the approved source route.",
+                    details={
+                        "provider_id": requirements.provider_id,
+                        "dataset_id": requirements.dataset_id,
+                        "source_route_id": source_route.source_route_id,
+                    },
+                )
             current = self.task_control.get_task(lease.task.task_id).task
             if current.cancel_requested_at is not None:
                 self._cancel(lease, run.model_copy(update={"actual_upstream": actual_upstream}), "RAW_CANCELLED_AFTER_FETCH")
@@ -734,6 +894,7 @@ class RawIngestionTaskWorker:
                     "run_outcome": ProviderRunOutcome.SUCCEEDED,
                     "raw_object_refs": (raw.raw_object_id,),
                 })
+
                 def register_raw(session: object, record: RawObject) -> None:
                     if publication_guard is not None:
                         publication_guard(session)
@@ -778,6 +939,7 @@ class RawIngestionTaskWorker:
                 "run_outcome": outcome,
                 "failure_code": reason if outcome is ProviderRunOutcome.FAILED else None,
             })
+
             def register_quarantine(session: object, record: RawIngestionQuarantine) -> None:
                 if publication_guard is not None:
                     publication_guard(session)
@@ -809,15 +971,18 @@ class RawIngestionTaskWorker:
             if exc.error_code == "TASK_CANCEL_PENDING":
                 raise
             if exc.error_code == "TASK_LEASE_LOST":
-                self._mark_run_failure(run, outcome=ProviderRunOutcome.FAILED, failure_code="RAW_TASK_LEASE_LOST", exc=exc)
+                if run is not None:
+                    self._mark_run_failure(run, outcome=ProviderRunOutcome.FAILED, failure_code="RAW_TASK_LEASE_LOST", exc=exc)
                 raise
-            self._mark_run_failure(run, outcome=ProviderRunOutcome.FAILED, failure_code="RAW_TASK_CONTROL_FAILED", exc=exc)
+            if run is not None:
+                self._mark_run_failure(run, outcome=ProviderRunOutcome.FAILED, failure_code="RAW_TASK_CONTROL_FAILED", exc=exc)
             raise
         except RawIngestionError as exc:
-            self._mark_run_failure(run, outcome=ProviderRunOutcome.FAILED, failure_code=exc.error_code, exc=exc)
+            if run is not None:
+                self._mark_run_failure(run, outcome=ProviderRunOutcome.FAILED, failure_code=exc.error_code, exc=exc)
             try:
                 current = self.task_control.get_task(lease.task.task_id).task
-                if current.task_state is TaskState.RUNNING and current.cancel_requested_at is not None:
+                if run is not None and current.task_state is TaskState.RUNNING and current.cancel_requested_at is not None:
                     self._cancel(lease, run, "RAW_CANCELLED_DURING_FETCH")
                 else:
                     self.task_control.record_failure(lease.attempt.attempt_id, lease.lease_token, failure_code=exc.error_code, retryable=exc.retryable)
@@ -826,7 +991,8 @@ class RawIngestionTaskWorker:
                     raise
             raise
         except Exception as exc:
-            self._mark_run_failure(run, outcome=ProviderRunOutcome.FAILED, failure_code="RAW_INGESTION_FAILED", exc=exc)
+            if run is not None:
+                self._mark_run_failure(run, outcome=ProviderRunOutcome.FAILED, failure_code="RAW_INGESTION_FAILED", exc=exc)
             try:
                 self.task_control.record_failure(lease.attempt.attempt_id, lease.lease_token, failure_code="RAW_INGESTION_FAILED", retryable=True)
             except TaskControlError as task_error:

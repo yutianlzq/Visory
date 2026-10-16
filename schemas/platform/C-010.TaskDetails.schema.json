@@ -132,7 +132,7 @@
       "title": "StorageRef",
       "type": "object"
     },
-    "TaskAttemptRecord": {
+    "TaskAttemptProjection": {
       "additionalProperties": false,
       "properties": {
         "attempt_id": {
@@ -213,11 +213,6 @@
           "title": "Lease Expires At",
           "type": "string"
         },
-        "lease_token_hash": {
-          "pattern": "^sha256:[0-9a-f]{64}$",
-          "title": "Lease Token Hash",
-          "type": "string"
-        },
         "leased_at": {
           "format": "date-time",
           "title": "Leased At",
@@ -287,17 +282,16 @@
         "phase_progress",
         "worker_id",
         "worker_capabilities",
-        "lease_token_hash",
         "leased_at",
         "lease_expires_at",
         "heartbeat_at",
         "resource_usage",
         "diagnostic_artifact_refs"
       ],
-      "title": "TaskAttemptRecord",
+      "title": "TaskAttemptProjection",
       "type": "object"
     },
-    "TaskCheckpointRecord": {
+    "TaskCheckpointProjection": {
       "additionalProperties": false,
       "properties": {
         "attempt_id": {
@@ -338,11 +332,6 @@
           "title": "Phase",
           "type": "string"
         },
-        "resume_token_hash": {
-          "pattern": "^sha256:[0-9a-f]{64}$",
-          "title": "Resume Token Hash",
-          "type": "string"
-        },
         "sequence": {
           "minimum": 1,
           "title": "Sequence",
@@ -362,7 +351,6 @@
         "attempt_id",
         "phase",
         "sequence",
-        "resume_token_hash",
         "input_hash",
         "handler_version",
         "storage_ref",
@@ -370,7 +358,7 @@
         "created_at",
         "expires_at"
       ],
-      "title": "TaskCheckpointRecord",
+      "title": "TaskCheckpointProjection",
       "type": "object"
     },
     "TaskRecord": {
@@ -681,10 +669,11 @@
     }
   },
   "additionalProperties": false,
+  "description": "C-010 details, separate from internal lease and checkpoint recovery records.",
   "properties": {
     "attempts": {
       "items": {
-        "$ref": "#/$defs/TaskAttemptRecord"
+        "$ref": "#/$defs/TaskAttemptProjection"
       },
       "title": "Attempts",
       "type": "array"
@@ -692,7 +681,7 @@
     "checkpoints": {
       "default": [],
       "items": {
-        "$ref": "#/$defs/TaskCheckpointRecord"
+        "$ref": "#/$defs/TaskCheckpointProjection"
       },
       "title": "Checkpoints",
       "type": "array"
@@ -721,6 +710,6 @@
     "attempts",
     "state_events"
   ],
-  "title": "TaskDetails",
+  "title": "PublicTaskDetails",
   "type": "object"
 }
