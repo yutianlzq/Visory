@@ -500,9 +500,9 @@ class TaskControlService:
         assert task is not None and attempt is not None
         return task, attempt
 
-    def _recover_expired_running(self, session: object, now: datetime, task_types: tuple[str, ...]) -> None:
-        for task_id in self.repository.list_expired_running_task_ids(session, now, task_types):
-            task = self.repository.get_task(session, task_id, for_update=True)
+    def _recover_expired_running(self, session: object, now: datetime, task_types: tuple[str, ...], *, task_id: str | None = None) -> None:
+        for expired_task_id in self.repository.list_expired_running_task_ids(session, now, task_types, task_id=task_id):
+            task = self.repository.get_task(session, expired_task_id, for_update=True)
             if task is None or task.active_attempt_id is None or task.task_state is not TaskState.RUNNING:
                 continue
             attempt = self.repository.get_attempt(session, task.active_attempt_id, for_update=True)
@@ -554,6 +554,7 @@ class TaskControlService:
         worker_id: str,
         worker_capabilities: tuple[str, ...],
         lease_seconds: int = 60,
+        task_id: str | None = None,
     ) -> TaskLease | None:
         if not worker_id.strip() or lease_seconds <= 0:
             raise ValueError("worker_id and positive lease_seconds are required")
@@ -568,8 +569,9 @@ class TaskControlService:
             return None
         now = self._now()
         with self.database.transaction() as session:
-            self._recover_expired_running(session, now, supported_task_types)
-            expired = self.repository.claim_expired_leased_task(session, now, supported_task_types)
+            # 指定阶段时，排队领取和过期恢复都限制到同一 Task，避免租走其他批次。
+            self._recover_expired_running(session, now, supported_task_types, task_id=task_id)
+            expired = self.repository.claim_expired_leased_task(session, now, supported_task_types, task_id=task_id)
             if expired is not None:
                 task, old_attempt = expired
                 can_retry = old_attempt.attempt_number < task.max_attempts
@@ -614,7 +616,7 @@ class TaskControlService:
                     attempt_id=old_attempt.attempt_id,
                     updates={"failure_code": "TASK_MAX_ATTEMPTS_EXCEEDED"},
                 )
-            task = self.repository.claim_queued_task(session, supported_task_types)
+            task = self.repository.claim_queued_task(session, supported_task_types, task_id=task_id)
             if task is None:
                 return None
             attempt, token = self._new_attempt(

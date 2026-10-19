@@ -1,0 +1,104 @@
+{
+  "contract_id": "C-010/BackfillCoverageProjection",
+  "payload": {
+    "dataset": "bar_1d_raw",
+    "date_from": "2018-01-01",
+    "date_to": "2018-02-28",
+    "coverage_state": "UNPROVEN",
+    "gap_ranges": [
+      [
+        "2018-01-01",
+        "2018-02-28"
+      ]
+    ],
+    "retry_plan": [
+      "AUTHORIZE_VERSIONED_SOURCE_EVIDENCE",
+      "VERIFY_FULL_UNIVERSE_AND_INTERVAL_COVERAGE"
+    ],
+    "batches": [
+      {
+        "batch_id": "backfill_019dbd74-2a00-7000-8000-000000000001",
+        "task_id": "task_019dbd74-2a00-7000-8000-000000000002",
+        "batch_state": "FAILED",
+        "batch_type": "MONTH",
+        "stage": "PRICE_MONTH",
+        "date_from": "2018-01-01",
+        "date_to": "2018-01-31",
+        "dataset": "bar_1d_raw",
+        "provider_policy_id": "default",
+        "priority": 100,
+        "dry_run": false,
+        "plan_only": false,
+        "checkpoint_phase": "PRICE_MONTH",
+        "resource_usage": {},
+        "quality_events": [
+          "CANONICAL_DUPLICATE_KEY"
+        ],
+        "failure_code": "CANONICAL_DUPLICATE_KEY",
+        "failed_ranges": [
+          [
+            "2018-01-01",
+            "2018-01-31"
+          ]
+        ],
+        "provider_run_refs": [
+          "prun_019dbd74-2a00-7000-8000-000000000005"
+        ],
+        "rejection_evidence": [
+          {
+            "date_from": "2018-01-01",
+            "date_to": "2018-01-31",
+            "dataset_id": "bar_1d_raw",
+            "batch_id": "backfill_019dbd74-2a00-7000-8000-000000000001",
+            "parent_task_id": "task_019dbd74-2a00-7000-8000-000000000002",
+            "phase": "CANONICAL",
+            "child_task_id": "task_019dbd74-2a00-7000-8000-000000000003",
+            "canonical_task_id": "task_019dbd74-2a00-7000-8000-000000000003",
+            "child_attempt_id": "attempt_019dbd74-2a00-7000-8000-000000000004",
+            "child_input_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            "failure_code": "CANONICAL_DUPLICATE_KEY",
+            "provider_run_id": "prun_019dbd74-2a00-7000-8000-000000000005",
+            "provider_run_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+            "raw_object_id": "raw_019dbd74-2a00-7000-8000-000000000006",
+            "raw_storage_ref": {
+              "storage_backend": "local_fs",
+              "storage_namespace": "app",
+              "relative_path": "raw/fixture/data.json",
+              "content_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+              "media_type": "application/json",
+              "size_bytes": 3
+            },
+            "raw_manifest_hash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+            "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000007",
+            "quality_report_hash": "sha256:5555555555555555555555555555555555555555555555555555555555555555"
+          }
+        ]
+      }
+    ],
+    "execution_ranges": [
+      {
+        "date_from": "2018-01-01",
+        "date_to": "2018-01-31",
+        "execution_state": "FAILED",
+        "next_action": "REVIEW_FAILURE",
+        "blocking_codes": [
+          "CANONICAL_DUPLICATE_KEY"
+        ],
+        "batch_id": "backfill_019dbd74-2a00-7000-8000-000000000001",
+        "task_id": "task_019dbd74-2a00-7000-8000-000000000002",
+        "task_state": "FAILED",
+        "provider_policy_id": "default"
+      },
+      {
+        "date_from": "2018-02-01",
+        "date_to": "2018-02-28",
+        "execution_state": "UNATTEMPTED",
+        "next_action": "CREATE_MONTH_BATCH",
+        "blocking_codes": [
+          "AUTHORIZE_VERSIONED_SOURCE_EVIDENCE",
+          "SELECT_PROVIDER_POLICY_AND_DEPENDENCIES"
+        ]
+      }
+    ]
+  }
+}

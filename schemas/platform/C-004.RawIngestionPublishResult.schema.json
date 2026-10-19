@@ -158,6 +158,17 @@
           ],
           "default": null
         },
+        "source_route_evidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProviderSourceRouteEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "started_at": {
           "format": "date-time",
           "title": "Started At",
@@ -195,6 +206,177 @@
       ],
       "title": "ProviderRunOutcome",
       "type": "string"
+    },
+    "ProviderSourceEvidenceState": {
+      "enum": [
+        "PROVEN",
+        "UNPROVEN",
+        "FAILED",
+        "NOT_APPLICABLE"
+      ],
+      "title": "ProviderSourceEvidenceState",
+      "type": "string"
+    },
+    "ProviderSourceExecutionState": {
+      "enum": [
+        "AVAILABLE",
+        "BLOCKED",
+        "UNAVAILABLE",
+        "FIXTURE_ONLY"
+      ],
+      "title": "ProviderSourceExecutionState",
+      "type": "string"
+    },
+    "ProviderSourceKind": {
+      "enum": [
+        "HTTP",
+        "TCP",
+        "SDK",
+        "FILE",
+        "FIXTURE"
+      ],
+      "title": "ProviderSourceKind",
+      "type": "string"
+    },
+    "ProviderSourceRouteEvidence": {
+      "additionalProperties": false,
+      "description": "Immutable binding from a controlled adapter to its real upstream source.",
+      "properties": {
+        "actual_upstream": {
+          "title": "Actual Upstream",
+          "type": "string"
+        },
+        "adapter_blob": {
+          "pattern": "^[0-9a-f]{40}$",
+          "title": "Adapter Blob",
+          "type": "string"
+        },
+        "adapter_commit": {
+          "pattern": "^[0-9a-f]{40}$",
+          "title": "Adapter Commit",
+          "type": "string"
+        },
+        "adapter_entrypoint": {
+          "title": "Adapter Entrypoint",
+          "type": "string"
+        },
+        "adapter_name": {
+          "title": "Adapter Name",
+          "type": "string"
+        },
+        "adapter_release": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "title": "Adapter Release",
+          "type": "string"
+        },
+        "adapter_repository": {
+          "title": "Adapter Repository",
+          "type": "string"
+        },
+        "adapter_version": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "title": "Adapter Version",
+          "type": "string"
+        },
+        "coverage_evidence_state": {
+          "$ref": "#/$defs/ProviderSourceEvidenceState"
+        },
+        "dataset_id": {
+          "title": "Dataset Id",
+          "type": "string"
+        },
+        "documented_history_start": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Documented History Start"
+        },
+        "execution_state": {
+          "$ref": "#/$defs/ProviderSourceExecutionState"
+        },
+        "license_blob": {
+          "pattern": "^[0-9a-f]{40}$",
+          "title": "License Blob",
+          "type": "string"
+        },
+        "license_id": {
+          "title": "License Id",
+          "type": "string"
+        },
+        "market": {
+          "title": "Market",
+          "type": "string"
+        },
+        "pagination_evidence_state": {
+          "$ref": "#/$defs/ProviderSourceEvidenceState"
+        },
+        "pit_evidence_state": {
+          "$ref": "#/$defs/ProviderSourceEvidenceState"
+        },
+        "provider_id": {
+          "title": "Provider Id",
+          "type": "string"
+        },
+        "revision_evidence_state": {
+          "$ref": "#/$defs/ProviderSourceEvidenceState"
+        },
+        "source_kind": {
+          "$ref": "#/$defs/ProviderSourceKind"
+        },
+        "source_route_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Source Route Hash",
+          "type": "string"
+        },
+        "source_route_id": {
+          "title": "Source Route Id",
+          "type": "string"
+        },
+        "unavailable_reason_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unavailable Reason Code"
+        }
+      },
+      "required": [
+        "source_route_id",
+        "provider_id",
+        "dataset_id",
+        "adapter_name",
+        "adapter_version",
+        "adapter_repository",
+        "adapter_release",
+        "adapter_commit",
+        "adapter_blob",
+        "adapter_entrypoint",
+        "actual_upstream",
+        "source_kind",
+        "market",
+        "coverage_evidence_state",
+        "pit_evidence_state",
+        "pagination_evidence_state",
+        "revision_evidence_state",
+        "execution_state",
+        "license_id",
+        "license_blob",
+        "source_route_hash"
+      ],
+      "title": "ProviderSourceRouteEvidence",
+      "type": "object"
     },
     "QuarantineStatus": {
       "enum": [

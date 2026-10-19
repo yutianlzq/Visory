@@ -2,13 +2,133 @@ from __future__ import annotations
 
 from datetime import date
 from enum import Enum
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from pydantic import Field, field_validator, model_validator
 
 from .base import PlatformContractModel
-from .enums import PriorityClass, ResourceType
+from .enums import PriorityClass, ResourceType, TaskState
 from .resources import parse_resource_id
+from .storage import StorageRef
+
+
+class BackfillPublicationEvidence(PlatformContractModel):
+    """Fixed publication evidence; a published fixture never proves historical coverage."""
+
+    date_from: date
+    date_to: date
+    dataset_id: str
+    dataset_schema_version: Annotated[str, Field(pattern=r"^\d+\.\d+\.\d+$")]
+    provider_policy_version: Annotated[str, Field(pattern=r"^\d+\.\d+\.\d+$")]
+    provider_run_id: str
+    raw_object_id: str
+    canonical_partition_id: str
+    quality_report_id: str
+    snapshot_id: str
+    provider_run_hash: Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
+    quality_report_hash: Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
+    raw_storage_ref: StorageRef
+    canonical_storage_ref: StorageRef
+    raw_manifest_hash: Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
+    canonical_manifest_hash: Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
+    snapshot_manifest_hash: Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
+    snapshot_file_hash: Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
+    mapping_version: str
+    mapping_hash: Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
+    row_count: int = Field(gt=0)
+    coverage_state: Literal["PUBLISHED_UNCERTIFIED"] = "PUBLISHED_UNCERTIFIED"
+    failed_provider_run_hashes: dict[str, Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_bindings(self):
+        for field, expected in (
+            ("provider_run_id", ResourceType.PROVIDER_RUN),
+            ("raw_object_id", ResourceType.RAW_OBJECT),
+            ("canonical_partition_id", ResourceType.CANONICAL_PARTITION),
+            ("quality_report_id", ResourceType.QUALITY_REPORT),
+            ("snapshot_id", ResourceType.DATA_SNAPSHOT),
+        ):
+            if parse_resource_id(getattr(self, field))[0] is not expected:
+                raise ValueError(f"{field} has the wrong resource type")
+        if self.date_to < self.date_from:
+            raise ValueError("publication date range is invalid")
+        for ref in self.failed_provider_run_hashes:
+            if parse_resource_id(ref)[0] is not ResourceType.PROVIDER_RUN:
+                raise ValueError("failed provider evidence must reference ProviderRun")
+        return self
+
+
+class BackfillQuarantineEvidence(PlatformContractModel):
+    provider_run_id: str
+    raw_ingestion_quarantine_id: str
+    provider_run_hash: Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
+    evidence_storage_ref: StorageRef
+    manifest_file_hash: Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
+    reason_code: Annotated[str, Field(pattern=r"^[A-Z][A-Z0-9_]{2,79}$")]
+    failed_provider_run_hashes: dict[str, Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_refs(self):
+        if parse_resource_id(self.provider_run_id)[0] is not ResourceType.PROVIDER_RUN:
+            raise ValueError("quarantine must reference ProviderRun")
+        if parse_resource_id(self.raw_ingestion_quarantine_id)[0] is not ResourceType.RAW_INGESTION_QUARANTINE:
+            raise ValueError("quarantine must reference a Raw ingestion quarantine")
+        for ref in self.failed_provider_run_hashes:
+            if ref == self.provider_run_id or parse_resource_id(ref)[0] is not ResourceType.PROVIDER_RUN:
+                raise ValueError("failed primary evidence must reference a different ProviderRun")
+        return self
+
+
+class BackfillRejectionEvidence(PlatformContractModel):
+    """Fixed inputs and diagnosis for a child that refused business publication."""
+
+    date_from: date
+    date_to: date
+    dataset_id: str
+    batch_id: str
+    parent_task_id: str
+    phase: Literal["CANONICAL", "SNAPSHOT"]
+    child_task_id: str
+    child_attempt_id: str
+    child_input_hash: Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
+    canonical_task_id: str
+    failure_code: Annotated[str, Field(pattern=r"^[A-Z][A-Z0-9_]{2,79}$")]
+    provider_run_id: str
+    provider_run_hash: Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
+    raw_object_id: str
+    raw_storage_ref: StorageRef
+    raw_manifest_hash: Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
+    quality_report_id: str
+    quality_report_hash: Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]
+    canonical_partition_id: str | None = None
+    canonical_storage_ref: StorageRef | None = None
+    canonical_manifest_hash: Annotated[str | None, Field(pattern=r"^sha256:[0-9a-f]{64}$")] = None
+    failed_provider_run_hashes: dict[str, Annotated[str, Field(pattern=r"^sha256:[0-9a-f]{64}$")]] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_bindings(self):
+        for field, kind in (
+            ("child_task_id", ResourceType.TASK), ("canonical_task_id", ResourceType.TASK),
+            ("batch_id", ResourceType.BACKFILL_BATCH), ("parent_task_id", ResourceType.TASK),
+            ("child_attempt_id", ResourceType.ATTEMPT), ("provider_run_id", ResourceType.PROVIDER_RUN),
+            ("raw_object_id", ResourceType.RAW_OBJECT), ("quality_report_id", ResourceType.QUALITY_REPORT),
+        ):
+            if parse_resource_id(getattr(self, field))[0] is not kind:
+                raise ValueError(f"{field} has the wrong resource type")
+        if self.date_to < self.date_from:
+            raise ValueError("rejection date range is invalid")
+        for ref in self.failed_provider_run_hashes:
+            if ref == self.provider_run_id or parse_resource_id(ref)[0] is not ResourceType.PROVIDER_RUN:
+                raise ValueError("failed primary evidence must reference a different ProviderRun")
+        canonical_values = (self.canonical_partition_id, self.canonical_storage_ref, self.canonical_manifest_hash)
+        if self.phase == "CANONICAL":
+            if self.child_task_id != self.canonical_task_id or any(value is not None for value in canonical_values):
+                raise ValueError("Canonical rejection cannot claim a published partition")
+        elif any(value is None for value in canonical_values):
+            raise ValueError("Snapshot rejection requires fixed Canonical inputs")
+        elif parse_resource_id(self.canonical_partition_id)[0] is not ResourceType.CANONICAL_PARTITION:
+            raise ValueError("canonical_partition_id has the wrong resource type")
+        return self
 
 
 class BackfillBatchType(str, Enum):
@@ -168,6 +288,9 @@ class BackfillTaskRequirements(_BackfillDateScopeModel):
     canonical_partition_refs: tuple[str, ...] = ()
     snapshot_refs: tuple[str, ...] = ()
     provider_fallback: bool = False
+    publication_evidence: tuple[BackfillPublicationEvidence, ...] = ()
+    quarantine_evidence: tuple[BackfillQuarantineEvidence, ...] = ()
+    rejection_evidence: tuple[BackfillRejectionEvidence, ...] = ()
 
     @field_validator("supersedes_id")
     @classmethod
@@ -260,6 +383,12 @@ class BackfillBatchProjection(_BackfillDateScopeModel):
     snapshot_refs: tuple[str, ...] = ()
     provider_fallback: bool = False
     supersedes_id: str | None = None
+    publication_evidence: tuple[BackfillPublicationEvidence, ...] = ()
+    quarantine_evidence: tuple[BackfillQuarantineEvidence, ...] = ()
+    rejection_evidence: tuple[BackfillRejectionEvidence, ...] = ()
+    coverage_state: Literal["UNPROVEN"] = "UNPROVEN"
+    gap_ranges: tuple[tuple[date, date], ...] = ()
+    retry_plan: tuple[str, ...] = ()
 
     @field_validator("provider_run_refs")
     @classmethod
@@ -330,6 +459,64 @@ class BackfillStageChainProjection(PlatformContractModel):
         return self
 
 
+class BackfillExecutionRangeProjection(_BackfillDateScopeModel):
+    """Recorded execution and recovery actions, separate from historical coverage."""
+
+    batch_id: str | None = None
+    task_id: str | None = None
+    task_state: TaskState | None = None
+    provider_policy_id: str | None = None
+    execution_state: Literal[
+        "UNATTEMPTED", "PENDING", "FAILED", "SKIPPED", "UNPROVEN", "PUBLISHED_UNCERTIFIED",
+    ]
+    next_action: Literal[
+        "CREATE_MONTH_BATCH", "WAIT_EXISTING_TASK", "RETRY_EXISTING_TASK",
+        "RESOLVE_DEPENDENCY", "REVIEW_SKIPPED_RANGE", "REVIEW_FAILURE",
+        "REVIEW_CANCELLED", "VERIFY_COVERAGE", "REVIEW_INCOMPLETE_PUBLICATION",
+    ]
+    snapshot_refs: tuple[str, ...] = ()
+    blocking_codes: tuple[Annotated[str, Field(pattern=r"^[A-Z][A-Z0-9_]{2,79}$")], ...] = ()
+
+    @model_validator(mode="after")
+    def validate_execution_range(self):
+        if self.date_to < self.date_from or (self.date_from.year, self.date_from.month) != (self.date_to.year, self.date_to.month):
+            raise ValueError("execution range must fit within one calendar month")
+        if self.task_id is None:
+            if any(value is not None for value in (self.batch_id, self.task_state, self.provider_policy_id)) or self.snapshot_refs:
+                raise ValueError("unbound execution range cannot contain task evidence")
+        else:
+            if self.batch_id is None or self.task_state is None or not self.provider_policy_id:
+                raise ValueError("execution range requires a complete task binding")
+            _validate_resource_refs((self.task_id,), ResourceType.TASK, "task_id")
+            _validate_resource_refs((self.batch_id,), ResourceType.BACKFILL_BATCH, "batch_id")
+        _validate_resource_refs(self.snapshot_refs, ResourceType.DATA_SNAPSHOT, "snapshot_refs")
+        if self.next_action == "RETRY_EXISTING_TASK" and self.task_state is not TaskState.RETRY_WAIT:
+            raise ValueError("retry action requires an existing RETRY_WAIT task")
+        if (self.execution_state == "PUBLISHED_UNCERTIFIED") != bool(self.snapshot_refs):
+            raise ValueError("published execution range requires fixed Snapshot references")
+        return self
+
+
+class BackfillCoverageProjection(_BackfillDateScopeModel):
+    dataset: Annotated[str, Field(pattern=r"^[a-z][a-z0-9_]{0,127}$")]
+    coverage_state: Literal["UNPROVEN"] = "UNPROVEN"
+    gap_ranges: tuple[tuple[date, date], ...]
+    retry_plan: tuple[str, ...]
+    batches: tuple[BackfillBatchProjection, ...] = ()
+    execution_ranges: tuple[BackfillExecutionRangeProjection, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_coverage_range(self):
+        if self.date_to < self.date_from:
+            raise ValueError("coverage date range is invalid")
+        for start, end in self.gap_ranges:
+            if start < self.date_from or end > self.date_to or end < start:
+                raise ValueError("gap ranges must stay within the coverage query")
+        if any(item.date_from < self.date_from or item.date_to > self.date_to for item in self.execution_ranges):
+            raise ValueError("execution ranges must stay within the coverage query")
+        return self
+
+
 __all__ = [
     "BackfillBatchType",
     "BackfillStage",
@@ -339,4 +526,8 @@ __all__ = [
     "BackfillTaskRequirements",
     "BackfillBatchProjection",
     "BackfillStageChainProjection",
+    "BackfillPublicationEvidence",
+    "BackfillQuarantineEvidence",
+    "BackfillCoverageProjection",
+    "BackfillExecutionRangeProjection",
 ]

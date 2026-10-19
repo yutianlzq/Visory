@@ -6,6 +6,7 @@ from typing import Annotated, Any, Literal
 from pydantic import AwareDatetime, Field, field_validator, model_validator
 
 from .base import PlatformContractModel
+from .api import PlatformResponseMeta
 from .enums import AttemptOutcome, PriorityClass, ResourceType, TaskState
 from .resources import ResourceRef, parse_resource_id
 from .raw_ingestion import RawIngestionTaskRequirements
@@ -154,7 +155,7 @@ class TaskRecord(PlatformContractModel):
         return self
 
 
-class TaskAttemptRecord(PlatformContractModel):
+class TaskAttemptProjection(PlatformContractModel):
     attempt_id: str
     task_id: str
     attempt_number: int = Field(ge=1)
@@ -162,7 +163,6 @@ class TaskAttemptRecord(PlatformContractModel):
     phase_progress: float = Field(ge=0.0, le=1.0)
     worker_id: Annotated[str, Field(min_length=1, max_length=255)]
     worker_capabilities: tuple[str, ...]
-    lease_token_hash: Annotated[str, Field(pattern=_HASH_PATTERN)]
     leased_at: AwareDatetime
     lease_expires_at: AwareDatetime
     heartbeat_at: AwareDatetime
@@ -249,6 +249,12 @@ class TaskAttemptRecord(PlatformContractModel):
         return self
 
 
+class TaskAttemptRecord(TaskAttemptProjection):
+    """Internal persisted attempt; the lease verifier never belongs to a public DTO."""
+
+    lease_token_hash: Annotated[str, Field(pattern=_HASH_PATTERN)]
+
+
 class TaskStateEventRecord(PlatformContractModel):
     task_id: str
     event_sequence: int = Field(ge=1)
@@ -280,13 +286,12 @@ class TaskStateEventRecord(PlatformContractModel):
         return _nonblank(value, "actor_ref") or value
 
 
-class TaskCheckpointRecord(PlatformContractModel):
+class TaskCheckpointProjection(PlatformContractModel):
     checkpoint_id: str
     task_id: str
     attempt_id: str
     phase: str
     sequence: int = Field(ge=1)
-    resume_token_hash: Annotated[str, Field(pattern=_HASH_PATTERN)]
     input_hash: Annotated[str, Field(pattern=_HASH_PATTERN)]
     handler_version: Annotated[str, Field(min_length=1, max_length=255)]
     storage_ref: StorageRef
@@ -330,6 +335,12 @@ class TaskCheckpointRecord(PlatformContractModel):
         if self.expires_at <= self.created_at:
             raise ValueError("expires_at must follow created_at")
         return self
+
+
+class TaskCheckpointRecord(TaskCheckpointProjection):
+    """Internal recovery record; only workers use the required resume verifier."""
+
+    resume_token_hash: Annotated[str, Field(pattern=_HASH_PATTERN)]
 
 
 class TaskCreateRequest(PlatformContractModel):
@@ -409,6 +420,21 @@ class TaskDetails(PlatformContractModel):
     state_events: tuple[TaskStateEventRecord, ...]
     checkpoints: tuple[TaskCheckpointRecord, ...] = ()
     diagnostic_artifact_refs: tuple[str, ...] = ()
+
+
+class PublicTaskDetails(PlatformContractModel):
+    """C-010 details, separate from internal lease and checkpoint recovery records."""
+
+    task: TaskRecord
+    attempts: tuple[TaskAttemptProjection, ...]
+    state_events: tuple[TaskStateEventRecord, ...]
+    checkpoints: tuple[TaskCheckpointProjection, ...] = ()
+    diagnostic_artifact_refs: tuple[str, ...] = ()
+
+
+class PublicTaskDetailsResponse(PlatformContractModel):
+    data: PublicTaskDetails
+    meta: PlatformResponseMeta
 
 
 class TaskListQuery(PlatformContractModel):

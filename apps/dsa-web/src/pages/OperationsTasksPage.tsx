@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { formatPlatformTaskError, platformTasksApi } from '../api/platformTasks';
 import type {
   PriorityClass,
-  TaskDetails,
+  PublicTaskDetails,
   TaskListQuery,
   TaskRecord,
   TaskState,
@@ -14,6 +14,7 @@ type Tab = typeof TABS[number];
 const terminalStates = new Set<TaskState>(['SUCCEEDED', 'DEGRADED', 'FAILED', 'CANCELLED']);
 const taskStates: TaskState[] = ['ACCEPTED', 'QUEUED', 'BLOCKED', 'LEASED', 'RUNNING', 'RETRY_WAIT', 'SUCCEEDED', 'DEGRADED', 'FAILED', 'CANCELLED'];
 const priorityClasses: PriorityClass[] = ['P0_DATA_CERTIFICATION', 'P1_FORMAL_SIGNAL', 'P2_MARKET_REVIEW', 'P3_USER_INTERACTIVE', 'P4_RESEARCH', 'P5_PREVIEW_AND_MAINTENANCE'];
+const NO_TASKS: readonly TaskRecord[] = [];
 
 type FilterState = {
   taskType: string;
@@ -24,6 +25,7 @@ type FilterState = {
   createdTo: string;
   resourceId: string;
 };
+type DetailScope = { taskId: string | undefined };
 
 
 function shortId(value: string) { return value.length > 18 ? `${value.slice(0, 10)}…${value.slice(-6)}` : value; }
@@ -61,23 +63,20 @@ export default function OperationsTasksPage() {
   const { taskId } = useParams<{ taskId?: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab');
-  const [tab, setTab] = useState<Tab>(TABS.includes(initialTab as Tab) ? initialTab as Tab : 'active');
-  const [filters, setFilters] = useState<FilterState>(() => readFilters(searchParams));
-  const [tasks, setTasks] = useState<TaskRecord[]>([]);
-  const [details, setDetails] = useState<TaskDetails | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [stale, setStale] = useState(false);
-  const [busy, setBusy] = useState<'cancel' | 'retry' | null>(null);
+  const requestedTab = searchParams.get('tab');
+  const tab: Tab = TABS.includes(requestedTab as Tab) ? requestedTab as Tab : 'active';
+  const filters = useMemo(() => readFilters(searchParams), [searchParams]);
+  const scope = useMemo<DetailScope>(() => ({ taskId }), [taskId]);
+  const [listResult, setListResult] = useState<{ query: TaskListQuery; items: TaskRecord[]; error: string | null } | null>(null);
+  const [detailResult, setDetailResult] = useState<{ scope: DetailScope; data: PublicTaskDetails | null; error: string | null } | null>(null);
+  const [commandResult, setCommandResult] = useState<{ scope: DetailScope; error: string | null } | null>(null);
+  const [busyResult, setBusyResult] = useState<{ scope: DetailScope; kind: 'cancel' | 'retry' } | null>(null);
+  const [connection, setConnection] = useState<{ query: TaskListQuery; scope: DetailScope; healthy: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    const nextTab = searchParams.get('tab');
-    setTab(TABS.includes(nextTab as Tab) ? nextTab as Tab : 'active');
-    setFilters(readFilters(searchParams));
-  }, [searchParams]);
+  const activeQuery = useRef<TaskListQuery | undefined>(undefined);
+  const activeScope = useRef<DetailScope | undefined>(undefined);
+  const listSequence = useRef(0);
+  const detailSequence = useRef(0);
 
   const listQuery = useMemo<TaskListQuery>(() => ({
     tab,
@@ -91,29 +90,56 @@ export default function OperationsTasksPage() {
     limit: 50,
   }), [filters, tab]);
 
+  const loading = listResult?.query !== listQuery;
+  const tasks = loading ? NO_TASKS : listResult.items;
+  const listError = loading ? null : listResult.error;
+  const detailLoading = Boolean(taskId && detailResult?.scope !== scope);
+  const details = detailResult?.scope === scope ? detailResult.data : null;
+  const detailError = detailResult?.scope === scope ? detailResult.error : null;
+  const commandError = commandResult?.scope === scope ? commandResult.error : null;
+  const busy = busyResult?.scope === scope ? busyResult.kind : null;
+  const stale = connection?.query !== listQuery || connection.scope !== scope || !connection.healthy;
+
   const loadTasks = useCallback(async () => {
-    setLoading(true); setError(null);
-    try { const result = await platformTasksApi.list(listQuery); setTasks(result.items); setStale(false); }
-    catch (cause) { setError(formatPlatformTaskError(cause, '任务服务不可用')); }
-    finally { setLoading(false); }
+    if (activeQuery.current !== listQuery) return;
+    const sequence = ++listSequence.current;
+    return platformTasksApi.list(listQuery).then(result => {
+      if (activeQuery.current === listQuery && sequence === listSequence.current) setListResult({ query: listQuery, items: result.items, error: null });
+    }, cause => {
+      if (activeQuery.current === listQuery && sequence === listSequence.current) setListResult({ query: listQuery, items: [], error: formatPlatformTaskError(cause, '任务服务不可用') });
+    });
   }, [listQuery]);
 
   const loadDetails = useCallback(async (id: string) => {
-    setDetailLoading(true);
-    try { setDetails(await platformTasksApi.get(id)); setStale(false); }
-    catch (cause) { setError(formatPlatformTaskError(cause, '任务详情不可用')); }
-    finally { setDetailLoading(false); }
-  }, []);
+    if (activeScope.current !== scope || id !== scope.taskId) return;
+    const sequence = ++detailSequence.current;
+    return platformTasksApi.get(id).then(data => {
+      if (activeScope.current === scope && sequence === detailSequence.current) setDetailResult({ scope, data, error: null });
+    }, cause => {
+      if (activeScope.current === scope && sequence === detailSequence.current) setDetailResult({ scope, data: null, error: formatPlatformTaskError(cause, '任务详情不可用') });
+    });
+  }, [scope]);
 
-  useEffect(() => { void loadTasks(); }, [loadTasks]);
-  useEffect(() => { if (taskId) void loadDetails(taskId); else setDetails(null); }, [taskId, loadDetails]);
+  // 路由/筛选和请求序号共同绑定结果，旧响应不能替换当前 Task 的状态或诊断。
   useEffect(() => {
+    activeQuery.current = listQuery;
+    void loadTasks();
+    return () => { activeQuery.current = undefined; listSequence.current += 1; };
+  }, [listQuery, loadTasks]);
+  useEffect(() => {
+    activeScope.current = scope;
+    if (scope.taskId) void loadDetails(scope.taskId);
+    return () => { activeScope.current = undefined; detailSequence.current += 1; };
+  }, [scope, loadDetails]);
+  useEffect(() => {
+    let active = true;
     const source = new EventSource('/api/platform/v1/tasks/events', { withCredentials: true });
-    const refresh = () => { setStale(false); void loadTasks(); if (taskId) void loadDetails(taskId); };
+    const refresh = () => { if (!active) return; setConnection({ query: listQuery, scope, healthy: true }); void loadTasks(); if (taskId) void loadDetails(taskId); };
     source.addEventListener('task_state_changed', refresh);
-    source.onerror = () => setStale(true);
-    return () => source.close();
-  }, [loadTasks, loadDetails, taskId]);
+    source.onopen = () => { if (active) setConnection({ query: listQuery, scope, healthy: true }); };
+    source.onerror = () => { if (active) setConnection({ query: listQuery, scope, healthy: false }); };
+    return () => { active = false; source.close(); };
+  }, [loadTasks, loadDetails, taskId, listQuery, scope]);
   useEffect(() => {
     if (!stale) return undefined;
     const timer = window.setInterval(() => { void loadTasks(); if (taskId) void loadDetails(taskId); }, 15000);
@@ -137,10 +163,15 @@ export default function OperationsTasksPage() {
   const runCommand = async (kind: 'cancel' | 'retry') => {
     if (!taskId || busy) return;
     if (!window.confirm(kind === 'cancel' ? '确认请求取消此任务吗？' : '确认请求重试此任务吗？')) return;
-    setBusy(kind); setError(null);
-    try { if (kind === 'cancel') await platformTasksApi.cancel(taskId); else await platformTasksApi.retry(taskId); await loadDetails(taskId); await loadTasks(); }
-    catch (cause) { setError(formatPlatformTaskError(cause, '操作失败')); }
-    finally { setBusy(null); }
+    setBusyResult({ scope, kind }); setCommandResult({ scope, error: null });
+    try {
+      if (kind === 'cancel') await platformTasksApi.cancel(taskId); else await platformTasksApi.retry(taskId);
+      if (activeScope.current !== scope) return;
+      await loadDetails(taskId);
+      if (activeScope.current === scope) await loadTasks();
+    } catch (cause) {
+      if (activeScope.current === scope) setCommandResult({ scope, error: formatPlatformTaskError(cause, '操作失败') });
+    } finally { if (activeScope.current === scope) setBusyResult(current => current?.scope === scope ? null : current); }
   };
   const copyTaskId = async () => {
     if (!taskId || !navigator.clipboard) return;
@@ -160,7 +191,7 @@ export default function OperationsTasksPage() {
 
   return <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-4 p-4 md:p-6" data-testid="operations-tasks-page">
     <header className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs uppercase tracking-[0.18em] text-muted-text">P-TASKS</p><h1 className="text-2xl font-semibold text-foreground">任务运维</h1><p className="mt-1 text-sm text-secondary-text">观察任务状态、Attempt 时间线与审计事件。最终状态以查询结果为准。</p></div><div className="text-xs text-muted-text" role="status">{stale ? '实时连接断开，15 秒轮询中' : '实时事件已连接'}</div></header>
-    {error ? <div role="alert" className="rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">{error}</div> : null}
+    {[listError, detailError, commandError].map((error, index) => error ? <div key={index} role="alert" className="rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">{error}</div> : null)}
     <section className="rounded-2xl border border-subtle bg-card p-3" aria-label="任务筛选"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <label className="text-xs text-muted-text">任务类型<input aria-label="任务类型" value={filters.taskType} onChange={(event) => updateQuery('task_type', event.target.value)} className="mt-1 w-full rounded-lg border border-subtle bg-white/5 px-2 py-2 text-sm text-foreground" placeholder="artifact_orphan_dry_run" /></label>
       <label className="text-xs text-muted-text">状态<select aria-label="任务状态" value={filters.taskState} onChange={(event) => updateQuery('task_state', event.target.value)} className="mt-1 w-full rounded-lg border border-subtle bg-white/5 px-2 py-2 text-sm text-foreground"><option value="">全部状态</option>{taskStates.map((state) => <option key={state} value={state}>{state}</option>)}</select></label>
@@ -173,7 +204,7 @@ export default function OperationsTasksPage() {
     <div className="flex flex-wrap gap-2" role="tablist" aria-label="任务筛选标签">{TABS.map((item) => <button key={item} type="button" role="tab" aria-selected={tab === item} onClick={() => selectTab(item)} className={`rounded-xl px-3 py-2 text-sm ${tab === item ? 'bg-primary text-primary-foreground' : 'bg-white/5 text-secondary-text'}`}>{item === 'active' ? '活跃' : item === 'blocked' ? '阻塞' : item === 'failed' ? '失败' : '历史'} <span className="ml-1 text-xs opacity-70">{summary[item]}</span></button>)}</div>
     <main className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
       <section className="min-w-0 rounded-2xl border border-subtle bg-card p-3" aria-label="任务列表">{loading ? <div className="space-y-2"><div className="h-12 animate-pulse rounded-xl bg-white/5" /><div className="h-12 animate-pulse rounded-xl bg-white/5" /></div> : tasks.length === 0 ? <div className="py-12 text-center text-sm text-muted-text">当前筛选下暂无任务</div> : <div className="space-y-2">{tasks.map((task) => <button key={task.task_id} type="button" onClick={() => selectTask(task.task_id)} className={`w-full rounded-xl border px-3 py-3 text-left transition ${taskId === task.task_id ? 'border-primary bg-primary/10' : 'border-subtle hover:bg-white/5'}`}><div className="flex items-center justify-between gap-3"><span className="font-medium text-foreground">{task.task_type}</span><span className="rounded-full bg-white/10 px-2 py-1 text-xs text-secondary-text">{task.task_state}</span></div><div className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted-text"><span>{shortId(task.task_id)}</span><span>{task.requested_by}</span><TimeValue value={task.created_at} /></div></button>)}</div>}</section>
-      <section className="min-w-0 rounded-2xl border border-subtle bg-card p-4" aria-label="任务详情">{!taskId ? <div className="flex min-h-[320px] items-center justify-center text-sm text-muted-text">选择一个任务查看详情</div> : detailLoading || !details ? <div className="space-y-3"><div className="h-6 w-2/3 animate-pulse rounded bg-white/5" /><div className="h-24 animate-pulse rounded-xl bg-white/5" /></div> : <div className="space-y-5">
+      <section className="min-w-0 rounded-2xl border border-subtle bg-card p-4" aria-label="任务详情">{!taskId ? <div className="flex min-h-[320px] items-center justify-center text-sm text-muted-text">选择一个任务查看详情</div> : detailLoading ? <div className="space-y-3"><div className="h-6 w-2/3 animate-pulse rounded bg-white/5" /><div className="h-24 animate-pulse rounded-xl bg-white/5" /></div> : !details ? <p className="text-sm text-muted-text">任务详情不可用，请依据公开错误和 Request ID 核验后重试。</p> : <div className="space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-lg font-semibold text-foreground">{details.task.task_type}</h2><div className="flex items-center gap-2"><p className="font-mono text-xs text-muted-text">{details.task.task_id}</p><button type="button" onClick={() => void copyTaskId()} className="rounded border border-subtle px-2 py-1 text-xs text-secondary-text">{copied ? '已复制' : '复制 ID'}</button></div></div><div className="flex gap-2">{canCancel ? <button type="button" disabled={busy !== null} onClick={() => void runCommand('cancel')} className="rounded-lg border border-red-400/30 px-3 py-2 text-sm text-red-200 disabled:opacity-50">{busy === 'cancel' ? '取消中…' : '请求取消'}</button> : null}{canRetry ? <button type="button" disabled={busy !== null} onClick={() => void runCommand('retry')} className="rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50">{busy === 'retry' ? '重试中…' : '请求重试'}</button> : null}</div></div>
         <div className="grid gap-3 text-sm sm:grid-cols-2"><div><span className="text-muted-text">状态</span><div className="font-medium text-foreground">{details.task.task_state}</div></div><div><span className="text-muted-text">创建时间</span><div className="text-foreground"><TimeValue value={details.task.created_at} /></div></div><div><span className="text-muted-text">结果 Artifact</span><div className="font-mono text-xs text-foreground">{details.task.result_artifact_id || '—'}</div></div><div><span className="text-muted-text">失败码</span><div className="font-mono text-xs text-foreground">{details.task.failure_code || '—'}</div></div></div>
         {schedulerRequirements ? <div className="rounded-xl border border-primary/20 bg-primary/5 p-3" aria-label="调度阶段详情"><h3 className="mb-2 font-medium text-foreground">调度阶段与数据门禁</h3><div className="grid gap-2 text-xs sm:grid-cols-2"><div><span className="text-muted-text">交易日 / 阶段</span><div className="text-foreground">{requirementText(schedulerRequirements, 'trade_date')} · {requirementText(schedulerRequirements, 'phase')}</div></div><div><span className="text-muted-text">Schedule Version / 时区</span><div className="text-foreground">{requirementText(schedulerRequirements, 'schedule_version')} · {requirementText(schedulerRequirements, 'timezone')}</div></div><div><span className="text-muted-text">计划时间 / Formal Deadline</span><div className="text-foreground">{requirementText(schedulerRequirements, 'scheduled_at')} · {requirementText(schedulerRequirements, 'formal_deadline_at')}</div></div><div><span className="text-muted-text">任务依赖</span><div className="font-mono text-foreground">{requirementText(schedulerRequirements, 'dependency_task_ids')}</div></div><div><span className="text-muted-text">主源 / 补充源</span><div className="text-foreground">{requirementText(schedulerRequirements, 'primary_provider_id')} / {requirementText(schedulerRequirements, 'supplemental_provider_ids')}</div></div><div><span className="text-muted-text">Snapshot / Revision</span><div className="text-foreground">{requirementText(schedulerRequirements, 'snapshot_publication_status')} / {requirementText(schedulerRequirements, 'revision_kind')}</div></div><div><span className="text-muted-text">质量缺口 / 降级原因</span><div className="text-foreground">{requirementText(schedulerRequirements, 'quality_gaps')} / {requirementText(schedulerRequirements, 'degradation_reasons')}</div></div><div><span className="text-muted-text">阻塞 / 失败 / 修订旧 Snapshot</span><div className="font-mono text-foreground">{requirementText(schedulerRequirements, 'blocked_reason_code')} / {requirementText(schedulerRequirements, 'failure_code')} / {requirementText(schedulerRequirements, 'correction_of_snapshot_id')}</div></div></div></div> : null}

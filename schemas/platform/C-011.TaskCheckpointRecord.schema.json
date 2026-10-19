@@ -55,6 +55,7 @@
     }
   },
   "additionalProperties": false,
+  "description": "Internal recovery record; only workers use the required resume verifier.",
   "properties": {
     "attempt_id": {
       "title": "Attempt Id",
@@ -118,13 +119,13 @@
     "attempt_id",
     "phase",
     "sequence",
-    "resume_token_hash",
     "input_hash",
     "handler_version",
     "storage_ref",
     "checkpoint_hash",
     "created_at",
-    "expires_at"
+    "expires_at",
+    "resume_token_hash"
   ],
   "title": "TaskCheckpointRecord",
   "type": "object"

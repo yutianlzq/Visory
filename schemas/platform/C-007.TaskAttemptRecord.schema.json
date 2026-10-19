@@ -14,6 +14,7 @@
     }
   },
   "additionalProperties": false,
+  "description": "Internal persisted attempt; the lease verifier never belongs to a public DTO.",
   "properties": {
     "attempt_id": {
       "title": "Attempt Id",
@@ -167,12 +168,12 @@
     "phase_progress",
     "worker_id",
     "worker_capabilities",
-    "lease_token_hash",
     "leased_at",
     "lease_expires_at",
     "heartbeat_at",
     "resource_usage",
-    "diagnostic_artifact_refs"
+    "diagnostic_artifact_refs",
+    "lease_token_hash"
   ],
   "title": "TaskAttemptRecord",
   "type": "object"

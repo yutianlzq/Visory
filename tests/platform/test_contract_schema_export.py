@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from importlib.metadata import version
 from pathlib import Path
 
 from src.schemas.platform.export import (
@@ -11,6 +12,16 @@ from src.schemas.platform.export import (
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 EXPORT_ROOT = REPO_ROOT / "schemas" / "platform"
+
+
+def test_contract_generator_uses_the_pinned_pydantic_version() -> None:
+    requirements = (REPO_ROOT / "requirements.txt").read_text(encoding="utf-8")
+    pins = [
+        line.split("#", 1)[0].strip()
+        for line in requirements.splitlines()
+        if line.startswith("pydantic==")
+    ]
+    assert pins == [f"pydantic=={version('pydantic')}"]
 
 
 def test_rendered_contract_exports_are_byte_stable() -> None:

@@ -18,6 +18,19 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 SCHEMA_EXPORT_ROOT = REPO_ROOT / "schemas" / "platform"
 
 
+def test_task_public_catalog_does_not_export_worker_credentials() -> None:
+    schemas = render_platform_openapi()["components"]["schemas"]
+    assert {"TaskLease", "TaskAttemptRecord", "TaskCheckpointRecord", "TaskDetails"}.isdisjoint(schemas)
+    details = schemas["PublicTaskDetails"]
+    for field, secret in (("attempts", "lease_token_hash"), ("checkpoints", "resume_token_hash")):
+        name = details["properties"][field]["items"]["$ref"].rsplit("/", 1)[1]
+        assert secret not in schemas[name]["properties"]
+        assert secret not in schemas[name]["required"]
+    generated = render_frontend_types()
+    assert "lease_token" not in generated
+    assert "resume_token_hash" not in generated
+
+
 def test_c010_openapi_contains_examples_and_stable_components() -> None:
     spec = render_platform_openapi()
 
@@ -27,6 +40,7 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "/api/platform/v1/asset-resolutions",
         "/api/platform/v1/backfills",
         "/api/platform/v1/backfills/stage-chain",
+        "/api/platform/v1/backfills/coverage",
         "/api/platform/v1/backfills/{batch_id}",
         "/api/platform/v1/provider-registry",
         "/api/platform/v1/providers",
@@ -58,6 +72,11 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "AssetResolutionResult",
         "AssetType",
         "BackfillBatchProjection",
+        "BackfillCoverageProjection",
+        "BackfillExecutionRangeProjection",
+        "BackfillPublicationEvidence",
+        "BackfillQuarantineEvidence",
+        "BackfillRejectionEvidence",
         "BackfillBatchRequest",
         "BackfillBatchType",
         "BackfillStage",
@@ -100,6 +119,10 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "ProviderRawSchemaDefinition",
         "ProviderRun",
         "ProviderRunOutcome",
+        "ProviderSourceEvidenceState",
+        "ProviderSourceExecutionState",
+        "ProviderSourceKind",
+        "ProviderSourceRouteEvidence",
         "QuarantineStatus",
         "RawCompression",
         "RawIngestionPublishResult",
@@ -124,14 +147,14 @@ def test_c010_openapi_contains_examples_and_stable_components() -> None:
         "StorageNamespace",
         "StorageRef",
         "PriorityClass",
-        "TaskAttemptRecord",
+        "TaskAttemptProjection",
         "TaskCancelRequest",
-        "TaskCheckpointRecord",
+        "TaskCheckpointProjection",
         "TaskCreateRequest",
-        "TaskDetails",
+        "PublicTaskDetails",
+        "PublicTaskDetailsResponse",
         "TaskEventRecord",
         "TaskListQuery",
-        "TaskLease",
         "TaskRecord",
         "TaskRetryRequest",
         "TaskState",
@@ -219,8 +242,8 @@ def test_generated_frontend_types_are_strict_and_cover_c010_fields() -> None:
     assert "export interface DataQualityDiff" in generated
     assert "export interface DataQualityActionRequest" in generated
     assert "export interface TaskRecord" in generated
-    assert "export interface TaskAttemptRecord" in generated
-    assert "export interface TaskCheckpointRecord" in generated
+    assert "export interface TaskAttemptProjection" in generated
+    assert "export interface TaskCheckpointProjection" in generated
     assert ": any" not in generated
     assert "<any>" not in generated
 

@@ -19,7 +19,7 @@ from .asset_identity import (
 )
 from .base import PlatformContractModel
 from .benchmark import BenchmarkIndexBar
-from .backfill import BackfillBatchProjection, BackfillBatchRequest, BackfillStageChainProjection, BackfillStageChainRequest, BackfillTaskRequirements
+from .backfill import BackfillBatchProjection, BackfillBatchRequest, BackfillCoverageProjection, BackfillStageChainProjection, BackfillStageChainRequest, BackfillTaskRequirements
 from .data_quality import (
     DataQualityActionRequest,
     DataQualityActionResult,
@@ -55,7 +55,7 @@ from .task import (
     TaskCancelRequest,
     TaskCheckpointRecord,
     TaskCreateRequest,
-    TaskDetails,
+    PublicTaskDetails,
     TaskEventRecord,
     TaskLease,
     TaskListQuery,
@@ -121,7 +121,7 @@ PLATFORM_CONTRACTS = ContractRegistry(
             contract_id="C-010/BackfillBatchRequest", owner_module="src.schemas.platform.backfill", producer="Operations backfill client", consumers=("backfill task service",), schema_model=BackfillBatchRequest, schema_version="1.0.0", business_key="batch_id", resource_id_field="batch_id", time_semantics=("trade_date", "date_from", "date_to"), version_semantics=("provider_policy_id",), quality_semantics=("dry_run does not publish", "fallback and quarantine are explicit"), lineage_fields=("batch_id", "supersedes_id"), storage_profile="embedded durable Task requirements", retention_class="AUDIT", compatibility="additive fields only", golden_payloads=_golden("success/backfill-batch-request.json", "correction/backfill-batch-request-correction.json", "rejected/backfill-month-crosses-calendar.json"),
         ),
         ContractRegistration(
-            contract_id="C-010/BackfillTaskRequirements", owner_module="src.schemas.platform.backfill", producer="Backfill task service", consumers=("durable task worker", "operations"), schema_model=BackfillTaskRequirements, schema_version="1.0.0", business_key="batch_id + stage + date range", resource_id_field="batch_id", time_semantics=("trade_date", "date_from", "date_to"), version_semantics=("checkpoint_phase",), quality_semantics=("failed and unavailable ranges remain visible",), lineage_fields=("batch_id", "supersedes_id"), storage_profile="durable Task requirements", retention_class="AUDIT", compatibility="checkpoint fields are additive", golden_payloads=_golden("success/backfill-task-requirements.json", "rejected/backfill-invalid-lineage-ref.json"),
+            contract_id="C-010/BackfillTaskRequirements", owner_module="src.schemas.platform.backfill", producer="Backfill task service", consumers=("durable task worker", "operations"), schema_model=BackfillTaskRequirements, schema_version="1.0.0", business_key="batch_id + stage + date range", resource_id_field="batch_id", time_semantics=("trade_date", "date_from", "date_to"), version_semantics=("checkpoint_phase",), quality_semantics=("failed and unavailable ranges remain visible", "child rejections bind fixed inputs and authoritative terminal diagnosis"), lineage_fields=("batch_id", "supersedes_id"), storage_profile="durable Task requirements", retention_class="AUDIT", compatibility="checkpoint fields are additive", golden_payloads=_golden("success/backfill-task-requirements.json", "rejected/backfill-invalid-lineage-ref.json"),
         ),
         ContractRegistration(
             contract_id="C-010/BackfillStageChainRequest", owner_module="src.schemas.platform.backfill", producer="Operations backfill client", consumers=("backfill task service",), schema_model=BackfillStageChainRequest, schema_version="1.0.0", business_key="ordered stage batch ids", resource_id_field=None, time_semantics=("batches[].trade_date", "batches[].date_from", "batches[].date_to"), version_semantics=("batches[].provider_policy_id",), quality_semantics=("all seven roadmap stages are required", "dependency task ids are server-managed"), lineage_fields=("batches[].batch_id",), storage_profile="request-only control-plane contract", retention_class="AUDIT", compatibility="stage order is closed for WP-0207 v1", golden_payloads=_golden("success/backfill-stage-chain-request.json", "rejected/backfill-stage-chain-wrong-order.json"),
@@ -130,7 +130,19 @@ PLATFORM_CONTRACTS = ContractRegistry(
             contract_id="C-010/BackfillStageChainProjection", owner_module="src.schemas.platform.backfill", producer="Backfill application service", consumers=("Operations", "P-DATA"), schema_model=BackfillStageChainProjection, schema_version="1.0.0", business_key="ordered stage task ids", resource_id_field=None, time_semantics=("batches[].trade_date", "batches[].date_from", "batches[].date_to"), version_semantics=("batches[].checkpoint_phase",), quality_semantics=("each stage status remains explicit", "each stage depends on the previous task"), lineage_fields=("batches[].batch_id", "batches[].task_id"), storage_profile="computed C-010 projection", retention_class="TEMP", compatibility="stage order is closed for WP-0207 v1", golden_payloads=_golden("success/backfill-stage-chain-projection.json"),
         ),
         ContractRegistration(
-            contract_id="C-010/BackfillBatchProjection", owner_module="src.schemas.platform.backfill", producer="Backfill application service", consumers=("Operations", "P-DATA"), schema_model=BackfillBatchProjection, schema_version="1.0.0", business_key="batch_id + task_id", resource_id_field="batch_id", time_semantics=("trade_date", "date_from", "date_to"), version_semantics=("checkpoint_phase",), quality_semantics=("status is explicit and derived from durable task state",), lineage_fields=("batch_id", "task_id"), storage_profile="computed C-010 projection", retention_class="TEMP", compatibility="status values are closed", golden_payloads=_golden("success/backfill-batch-projection.json"),
+            contract_id="C-010/BackfillBatchProjection", owner_module="src.schemas.platform.backfill", producer="Backfill application service", consumers=("Operations", "P-DATA"), schema_model=BackfillBatchProjection, schema_version="1.0.0", business_key="batch_id + task_id", resource_id_field="batch_id", time_semantics=("trade_date", "date_from", "date_to"), version_semantics=("checkpoint_phase",), quality_semantics=("status is explicit and derived from durable task state", "child rejection evidence never implies completion or retry permission"), lineage_fields=("batch_id", "task_id"), storage_profile="computed C-010 projection", retention_class="TEMP", compatibility="status values are closed", golden_payloads=_golden("success/backfill-batch-projection.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-010/BackfillCoverageProjection",
+            owner_module="src.schemas.platform.backfill",
+            producer="Backfill application service", consumers=("Operations", "P-DATA"),
+            schema_model=BackfillCoverageProjection, schema_version="1.0.0",
+            business_key="dataset + date_from + date_to", resource_id_field=None,
+            time_semantics=("date_from", "date_to"), version_semantics=("batches",),
+            quality_semantics=("UNPROVEN coverage keeps gaps visible", "monthly execution ranges never imply universe coverage", "retry actions require existing RETRY_WAIT tasks"),
+            lineage_fields=("batches", "execution_ranges[].task_id", "execution_ranges[].snapshot_refs"), storage_profile="computed read-only C-010 projection",
+            retention_class="TEMP", compatibility="additive coverage query; never certifies fixture history",
+            golden_payloads=_golden("success/backfill-coverage-projection.json"),
         ),
 
         ContractRegistration(
@@ -957,17 +969,17 @@ PLATFORM_CONTRACTS = ContractRegistry(
             owner_module="src.schemas.platform.task",
             producer="Task Control Application Service",
             consumers=("Platform API client", "operations"),
-            schema_model=TaskDetails,
-            schema_version="1.0.0",
+            schema_model=PublicTaskDetails,
+            schema_version="1.1.0",
             business_key="task.task_id",
             resource_id_field=None,
             time_semantics=("task.created_at", "state_events.event_at"),
             version_semantics=("task.task_schema_version",),
             quality_semantics=("task.task_state", "attempts.attempt_outcome"),
             lineage_fields=("task", "attempts", "state_events"),
-            storage_profile="C-010 response payload without arbitrary filesystem paths",
+            storage_profile="C-010 public projection; internal C-007/C-011 verifier fields are excluded",
             retention_class="AUDIT",
-            compatibility="new response fields must be additive and optional",
+            compatibility="1.1.0 corrects public DTO: lease/resume verifier hashes are never public; internal records remain strict",
             golden_payloads=_golden("success/task-details.json"),
         ),
         ContractRegistration(
@@ -976,16 +988,28 @@ PLATFORM_CONTRACTS = ContractRegistry(
             producer="Raw Ingestion Worker",
             consumers=("raw ingestion", "operations", "canonical"),
             schema_model=ProviderRun,
-            schema_version="1.0.0",
+            schema_version="1.1.0",
             business_key="provider_run_id",
             resource_id_field="provider_run_id",
             time_semantics=("started_at", "finished_at"),
-            version_semantics=("dataset_schema_version", "provider_policy_version", "adapter_version"),
+            version_semantics=(
+                "dataset_schema_version",
+                "provider_policy_version",
+                "adapter_version",
+                "source_route_evidence.source_route_hash",
+            ),
             quality_semantics=("run_outcome", "failure_code"),
-            lineage_fields=("provider_id", "actual_upstream", "task_id", "attempt_id", "raw_object_refs"),
+            lineage_fields=(
+                "provider_id",
+                "actual_upstream",
+                "source_route_evidence",
+                "task_id",
+                "attempt_id",
+                "raw_object_refs",
+            ),
             storage_profile="PostgreSQL provider_run; request is represented only by a secret-free fingerprint",
             retention_class="AUDIT",
-            compatibility="actual_upstream is recorded per run and never inferred from ProviderDefinition",
+            compatibility="source_route_evidence is additive for legacy rows and required on newly executed runs",
             golden_payloads=_golden("success/provider-run.json"),
         ),
         ContractRegistration(

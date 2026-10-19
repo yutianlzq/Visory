@@ -1289,6 +1289,7 @@ class SnapshotBuildTaskWorker:
         publication_guard: Callable[[object], None] | None = None,
     ) -> SnapshotBuildTaskResult:
         from src.services.platform.task_control import TaskControlError
+        from src.repositories.platform.errors import PlatformDatabaseError
         if lease.task.task_type != "data_snapshot_build":
             raise TaskControlError("TASK_TYPE_UNSUPPORTED", "Worker does not support this task type.", status_code=422)
         self.task_control.start_attempt(lease.attempt.attempt_id, lease.lease_token)
@@ -1306,6 +1307,17 @@ class SnapshotBuildTaskWorker:
             except TaskControlError:
                 pass
             return SnapshotBuildTaskResult(task_id=lease.task.task_id, attempt_id=lease.attempt.attempt_id, capability_certifications=(), published=False, failure_code=exc.error_code, requirement_status=ConsumerRequirementStatus.REJECTED)
+        except (OSError, PlatformDatabaseError) as exc:
+            retryable = isinstance(exc, OSError) or exc.retryable
+            code = "SNAPSHOT_PUBLICATION_IO_FAILED" if isinstance(exc, OSError) else exc.error_code
+            try:
+                self.task_control.record_failure(
+                    lease.attempt.attempt_id, lease.lease_token,
+                    failure_code=code, retryable=retryable,
+                )
+            except TaskControlError:
+                pass
+            raise
 
 
 __all__ = ["SnapshotBuildTaskWorker", "SnapshotCapabilityEngine", "SnapshotGateError", "SnapshotGateService", "SnapshotManifestPublisher"]

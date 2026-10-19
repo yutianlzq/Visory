@@ -834,6 +834,13 @@ class CanonicalNormalizationTaskWorker:
             identity_unresolved_count=0,
             identity_ambiguous_count=0,
             failure_reasons=(failure_code,),
+            task_id=lease.task.task_id,
+            attempt_id=lease.attempt.attempt_id,
+            dataset_id=lease.task.requirements.get("dataset_id"),
+            dataset_schema_version=lease.task.requirements.get("dataset_schema_version"),
+            mapping_version=lease.task.requirements.get("mapping_version"),
+            provider_run_refs=(lease.task.requirements["provider_run_id"],),
+            raw_object_refs=(lease.task.requirements["raw_object_id"],),
             created_at=self.normalizer.clock(),
         )
         try:
