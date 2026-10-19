@@ -73,11 +73,12 @@ _TOKEN_LIKE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _PLATFORM_PRIVATE_TEXT = re.compile(
-    r"bearer\s+|(?:api[_ -]?key|token|lease|password|secret|credential|authorization|cookie)[\"']?\s*[:=]|"
+    r"bearer\s+|(?:api[_ +-]?key|token|lease|password|passwd|secret|credentials?|authorization|cookie)[\"']?\s*[:=]|"
     r"https?://[^\s/@]+:[^\s/@]+@|"
     r"(?:postgres(?:ql)?|mysql|redis|mongodb)(?:\+[a-z0-9]+)?://|"
-    r"[a-z]:[\\/]|\\\\|file://|(?:^|\s)/(?!api(?:/|$))[a-z0-9_.-]+/|"
-    r"traceback|stack\s*trace|response[_ ]?(?:body|text)\s*[:=]|"
+    r"(?<![a-z0-9])[a-z]:[\\/]|\\\\[a-z0-9_.-]+[\\/]|file://|"
+    r"(?<![a-z0-9_./-])/(?!api(?:/|(?=$|[\s\"'?#)\]}])))[a-z0-9_.-]+|"
+    r"traceback|stack\s*trace|(?:response[_ ]?(?:body|text)|raw[_ ]?(?:body|payload|text))[\"']?\s*[:=]|"
     r"\beyJ[a-z0-9_-]+\.[a-z0-9_-]+\.[a-z0-9_-]+",
     re.IGNORECASE,
 )
@@ -85,7 +86,33 @@ _PLATFORM_PRIVATE_KEYS = frozenset({
     "lease", "lease_token_hash", "resume_token_hash", "connection_string",
     "dsn", "response_body", "response_text", "raw_body", "traceback",
     "stack", "stack_trace", "absolute_path", "physical_path",
+    "passwd", "credential", "credentials", "raw_payload",
 })
+_PLATFORM_JSON_ESCAPE = re.compile(r'\\(?:u([0-9a-fA-F]{4})|(["\\/bfnrt]))')
+_PLATFORM_PERCENT_ESCAPE = re.compile(r"%([0-9a-fA-F]{2})")
+_PLATFORM_JSON_CHARACTERS = {
+    '"': '"', "\\": "\\", "/": "/", "b": "\b", "f": "\f", "n": "\n", "r": "\r", "t": "\t",
+}
+
+
+def _platform_text_is_private(text: str, *, mapping_key: bool = False) -> bool:
+    # 仅还原检测视图；限制嵌套解码工作量，不改变可公开文本或内部恢复输入。
+    for _ in range(8):
+        if mapping_key:
+            normalized = "_".join(_mapping_key_parts(text))
+            if _is_sensitive_mapping_key(text) or normalized in _PLATFORM_PRIVATE_KEYS:
+                return True
+        if _PLATFORM_PRIVATE_TEXT.search(text) or _TOKEN_LIKE_PATTERN.search(text):
+            return True
+        decoded = _PLATFORM_JSON_ESCAPE.sub(
+            lambda match: chr(int(match[1], 16)) if match[1] else _PLATFORM_JSON_CHARACTERS[match[2]],
+            text,
+        )
+        decoded = _PLATFORM_PERCENT_ESCAPE.sub(lambda match: chr(int(match[1], 16)), decoded)
+        if decoded == text:
+            return False
+        text = decoded
+    return True  # 超出公开诊断解码预算时 fail closed。
 
 
 def sanitize_platform_public_payload(obj: Any) -> Any:
@@ -93,17 +120,14 @@ def sanitize_platform_public_payload(obj: Any) -> Any:
     if isinstance(obj, dict):
         result = {}
         for key, value in obj.items():
-            normalized = "_".join(_mapping_key_parts(str(key)))
-            if _is_sensitive_mapping_key(key) or normalized in _PLATFORM_PRIVATE_KEYS:
-                continue
-            if _PLATFORM_PRIVATE_TEXT.search(str(key)):
+            if _platform_text_is_private(str(key), mapping_key=True):
                 continue
             result[key] = sanitize_platform_public_payload(value)
         return result
     if isinstance(obj, (list, tuple)):
         return [sanitize_platform_public_payload(item) for item in obj]
     if isinstance(obj, str):
-        if _PLATFORM_PRIVATE_TEXT.search(obj) or _TOKEN_LIKE_PATTERN.search(obj):
+        if _platform_text_is_private(obj):
             return _REDACTED
     return obj
 

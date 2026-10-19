@@ -1,6 +1,46 @@
 # WP-0207 端到端闭环验收记录
 
-日期：2026-10-16。状态：WP-only draft PR 等待当前 head 的 CI 与最终审查（非 ready for merge）；`WP-0207=IN_PROGRESS`，生产 `NOT CERTIFIED`，`RELEASED=false`。以下最新记录覆盖历史轮次的当前验收结论，不改写历史证据。
+日期：2026-10-19。状态：本轮新增授权已覆盖上轮 lint 验收阻塞；精确候选最终判定与完整 gate/PostgreSQL 实测证据以仓库外 `procps-resume-final-report.md` / manifest 为准，不预记通过。PR #42 本地安全增量未提交或推送，不是 MERGE_READY。`WP-0207=IN_PROGRESS`，生产 `NOT CERTIFIED`，`RELEASED=false`。本节覆盖历史轮次的当前验收口径，不改写历史证据。
+
+## 2026-10-19 PR #42 公开文本安全与状态收敛
+
+- 只读 GitHub API 确认 PR #42 为 OPEN / non-draft / MERGEABLE / CLEAN，远端 head 为 `206b85c69e0e3c9181b496d468d0e743a688d98e`，base/main 为 `efe8e9b362cba13eca183c55be57bbbbc832b60b`。Run `38871182213` 的 governance/backend/Web 全部 SUCCESS，但只覆盖该远端 head，不覆盖本地后续补丁。早期轮次 Git fetch exit 128（connection aborted），不把缓存 refs 当作实时证据；dirty detached worktree 不 pull、不强制切分支。
+- PR #41 已于 `2026-10-07T15:38:31Z` 合入，merge/main 为 `efe8e9b362cba13eca183c55be57bbbbc832b60b`。当前 main 已为 VERIFIED 15/45、IN_PROGRESS 1、NOT_STARTED 29、RELEASED 0；不是仍停留在 14/45。WP-0207 不计入 VERIFIED，8 条真实 routes 仍 BLOCKED、Capability UNVERIFIED、Coverage UNPROVEN。
+- 本地安全增量只增强既有 Python/Web 公开文本检测视图：带引号/多层 JSON、Unicode/斜杠/百分号编码、绝对路径、原始响应与凭据诊断 fail closed；公开安全文本、逻辑 StorageRef、Hash、版本及 `/api` 路径保留原文。检测视图不得写回内部 Task requirements/actor、lease/resume verifier；没有新增公开 API、契约、Queue、Publisher、Repository 或 Migration。
+- 交付仅包含七个实现/测试路径、三份状态文档及 CHANGELOG 新安全条目；`AGENTS.md` 与 CHANGELOG 开工已有参考项目治理 hunk 保留原样且从候选补丁排除。所有受保护 worktree 的 HEAD/branch/status/逐文件 SHA-256 与真实 index 均先记录后复验；不得把整个 dirty 工作树直接提交。
+- 共享语料为 57 private（原 53 个加四个编码 mapping key 反例）/15 safe；Python/Web private 全部拒绝，safe 逐字保留。四个新增键为 `api%5Fkey`、字面量 `\u0061pi_key`、`%63redentials`、`response%5Fbody`，对应诊断字符串同时进入两端测试。RED 曾有 4 failed/53 passed 和真实 PostgreSQL HTTP 泄漏，修复后通过；不是只添加无法重现问题的测试。
+- 已审查 13 个 sanitizer 调用点，覆盖 Task HTTP/SSE、success/list warnings、error envelope、Backfill checkpoint/result/publication/requirements projection；内部原始 requirements/requested_by/actor、lease/resume hash 仍持久化保留，正确 token 成功、错误 token 拒绝。独立只读语义复核未发现范围内可证实的 bypass、safe 误杀或双端规则漂移，不将静态复核扩大为全仓/生产保证。
+- 真实来源、PIT/revision、Coverage、分页、合法零行、生产数据库、真实 `/data`、生产调度均不在本次授权范围；fixture 不提升这些证据等级。初轮未安装依赖；后续授权仅在临时 Linux 容器原样安装现有 CI 依赖并补装 procps，不修改 host 环境、依赖声明或 workflow，不为通过 gate 跳过失败用例或修复范围外 Legacy。
+- PR body 当前记录远端 `206b85c` 的既有验证和非生产边界，尚不包含本地新增编码补丁。此次无外部写入授权，不更新 PR body、不 commit/push/merge；未来推送须另行授权，并在新远端 head 重跑三项 CI、同步 PR body、完成最终语义审查，不能复用旧 CI 声称 MERGE_READY。
+
+### 隔离 Linux 续验历史与本轮验收口径
+
+- 只安装 `.github/requirements-ci.txt` 原样声明的依赖；已有 `python:3.11.17-slim` / `postgres:16-alpine` 均 `--pull=never`。安装和 `pip check` 各 exit 0，Pydantic 仍为 2.13.5；安装后断开外网，测试仅使用隔离 namespace 的 loopback PostgreSQL、tmpfs 数据和随机临时凭据，不挂载项目凭据或真实数据。
+- 在排除治理且保持 CHANGELOG 原始 CRLF 的候选 tree `bdf0d6edbcc771c48172ae39d3cacea33b84eaeb` 重跑真实 PostgreSQL 四文件：**125 passed / 0 skipped / exit 0**。最初 Windows bind 密码权限过宽导致的 115 个 setup errors 保留为环境失败；仅将测试密码复制到容器内 0600 文件后重跑，没有修改应用安全检查或断言。
+- 同一 tree 首次完整 Linux `bash scripts/ci_gate.sh` 真正退出码 **1**：**9 failed / 7774 passed / 0 skipped / 4 deselected / 56 warnings**，另有 572 subtests passed。失败均涉及子进程/进程组回收；该容器 PID 1 是不回收孤儿进程的 Python，已观测到僵尸进程，但不把这一相关性直接当作全部失败的因果证明。
+- 隔离续验使用 Docker 内置 `--init`，不新增依赖或修改测试；两次安装版本清单完全一致。文档同步前的部分运行不作为通过证据。三份文档同步后重新封装精确最终候选，再执行完整 gate；其实际退出码、数量、全部文件 hash、容器及临时凭据清理证明随仓库外 `linux-resume-final-report.md` / manifest 封存，不预记通过，也不以定向测试替代完整 gate。
+- 本轮按新增授权将已核验的 163 条既有完整 flake8 诊断记为 FOLLOW-UP，仍硬性要求 critical flake8 通过且新增诊断为 0；完整 flake8 的原始 exit 1 不改写为通过。只在隔离临时 Linux 容器安装 `procps` 及仓库既有 CI 依赖，使用 Docker 内置 `--init`，不改 scheduler 源码或断言。上轮精确 tree `19edbf6888f8cf6c1274fdf7ffe3358b9b96f335` 的完整 gate 为 1 failed/7782 passed/0 skipped/exit 1，唯一失败已证实容器缺少 `ps`；该历史失败不作为本轮结果。三文档先同步再封装，精确最终候选必须重跑完整 `scripts/ci_gate.sh` 和真实 PostgreSQL 四文件，不能用定向通过替代。最终 tree/hash、实际命令/退出码/数量、零新增诊断及清理证明统一封存在仓库外 `procps-resume-final-report.md` / manifest；不预记成功。
+
+以下为初轮 Windows 本地命令历史结果（Python 3.11.15 / Pydantic 2.13.5、Node 24.19.0；各测试集重叠，不累计），不冒充授权后 Linux 续验：
+
+| 命令/路径 | 实际结果与边界 |
+| --- | --- |
+| API public projection / Backfill / envelope / generated / rollback / Task / ingestion / Registry / Schema / Golden 定向 pytest | exit 0，935 passed / 0 skipped；包括真实 FastAPI HTTP/SSE、公开 warning/error envelope、内部恢复与 Backfill checkpoint/projection。 |
+| Web 四文件 Vitest（platformErrors/platformBackfill/OperationsTasksPage/BackfillPage） | exit 0，291 passed；同一共享语料用于三类公开错误 formatter。 |
+| 修改的两份 Web 文件 ESLint、`tsc -b`、Vite build | 各 exit 0；复用已安装依赖，无浏览器/生产联调结论。 |
+| 四份 Python 文件 py_compile / critical flake8 | 各 exit 0；critical 子集通过不表示完整 flake8 通过。 |
+| 四份 Python 文件完整 flake8 | exit 1，163 条；开工原字节同配置也是 163 条，逐诊断/行映射对照 current-only=0。不擅自修复无关历史格式问题，也不将其计为通过。 |
+| 生成导出 `--check`、AI assets、baseline、`git diff --check` | 各 exit 0；收尾工作树 baseline 640 links，排除治理的候选 638 links，两者均 0 broken / 0 imported secrets，无生成物漂移。 |
+| 隔离 PostgreSQL：Task HTTP/SSE、Task control、Backfill、Raw 四文件 | exit 0，125 passed / 0 skipped；一个真实持久化用例逐条循环全部 57 private，包含 checkpoint 写入/读回及正确/错误 lease/resume 校验。容器只绑定 loopback、数据 tmpfs；本轮所属容器、临时密码和状态文件已清理，cleanup exit 0。 |
+| 精确排除治理后的候选完整 `bash scripts/ci_gate.sh` | **未通过**：syntax/critical lint/generated/deterministic 通过，完整 pytest 为 **84 failed / 7689 passed / 10 skipped / 4 deselected / 60 warnings**，另有 572 subtests passed。执行包装器 exit 1；收尾等待时记录 KeyboardInterrupt，bash 子进程退出码未单独捕获，不伪造该值。pytest 最终汇总及 84 个失败节点完整保留，未主动中断测试。 |
+
+Windows 完整 gate 当时运行的候选 tree 为 `394705c5b210cdbf41802db04ecc961f2a0ab354`，补丁 SHA-256 为 `26cfa989944f687158ab6f15f20074dc691ba6276546ed9549717a44903117bf`；AGENTS/既有治理条目未进入该 tree，但收尾审查又发现临时索引的 CHANGELOG 行尾归一化导致整文件 diff，不符合最终 hunk 约束。此归档问题只在仓库外打包器修正：按原始 CRLF 写候选 blob，并强制 CHANGELOG numstat 为 1 added/0 deleted；原工作树始终只有安全/治理两个独立新增 hunk，治理原字节不动。后续结果补录只改变三份状态文档，安全代码/测试/语料相同；最终精确内容的 Linux gate 以仓库外封存报告为准，不能声称旧 Windows gate 或旧远端 CI 已覆盖后续内容。
+
+仓库外裸归档的首次治理/baseline 检查各 exit 1：Windows tar 将 `CLAUDE.md` symlink 展开为目标全文，且归档没有 Git metadata；不是正确的 checkout 语境。只在仓库外还原该 symlink 的原始短指针 blob，并指定只读 Git metadata、隔离候选 index/work tree 后，两项各 exit 0；原工作树两项亦 exit 0。保留首次错误，不修改仓库 `CLAUDE.md`、AGENTS 或检查器来绕过验证。
+
+**当前硬门禁：critical flake8、新增诊断 0、精确最终候选完整 gate 和真实 PostgreSQL 全部通过（0 skipped），以及范围/保护/清理检查通过；任一失败仍为 BLOCKED。**163 条固定既有完整 flake8 诊断已按用户授权记为 FOLLOW-UP，不再单独阻断。初轮 Windows 和无 init Linux 的进程回收失败，以及上轮 init 容器缺 `ps` 的单项失败均保留为历史，不冒充本轮结果，不扩大实现范围或借用旧远端 CI。过程中的漏传测试 helper 参数/F821 已修复，早期筛选未命中 exit 5 和中间失败不计通过。
+
+以下 2026-10-16 及更早段落均为当时的历史证据（其中 draft、未创建 PR、旧计数及旧 gate 结果不表示当前状态）。回滚本轮仅撤回本地安全增量的精确 hunk，不整文件 restore，不改治理 hunk 或已应用迁移；未推送时 main/远端 PR 不受影响。已应用 0014 时的既有迁移保留规则仍见下节，不执行 downgrade/stamp/版本表写入。中文专题无英文对应版本，未扩展双语首页。
 
 ## 2026-10-16 PR #42 公开边界与安全回滚修复
 

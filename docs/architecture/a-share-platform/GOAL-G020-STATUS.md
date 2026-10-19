@@ -1,5 +1,13 @@
 # Visory-G020 / WP-0207 分批 Backfill 状态
 
+## 2026-10-19 PR #42 公开文本安全增量（本地，未推送）
+
+- 实时 GitHub API：PR #42 OPEN / non-draft / MERGEABLE / CLEAN，head `206b85c69e0e3c9181b496d468d0e743a688d98e`；Run `38871182213` 三项 SUCCESS 仅覆盖该远端 head，不覆盖本轮本地 JSON/Unicode/百分号编码和绝对路径脱敏补丁。早期轮次 fetch exit 128，不对 dirty detached worktree 执行 pull 或切分支。
+- PR #41 已合入，main=`efe8e9b362cba13eca183c55be57bbbbc832b60b`，当前 VERIFIED 15/45、IN_PROGRESS 1、NOT_STARTED 29、RELEASED 0；WP-0207 仍 IN_PROGRESS、8 routes BLOCKED、Capability UNVERIFIED、Coverage UNPROVEN、NOT CERTIFIED、RELEASED=false。下方旧 PR-ready/draft/未创建 PR/旧计数都是历史记录，不覆盖本节。
+- 本轮精确验证、共享语料、真实 HTTP/SSE/内部 verifier、隔离 PostgreSQL、完整 gate 和最终判定统一记录在[权威验收记录](WP-0207-END-TO-END-CLOSEOUT.md#2026-10-19-pr-42-公开文本安全与状态收敛)，不以定向或旧 CI 代替完整 gate。内部原值/恢复输入保持不变；fixture 不是真实来源或 PIT 证明。
+- 本轮按新增授权将已核验的 163 条既有完整 flake8 诊断记为 FOLLOW-UP，仍硬性要求 critical flake8 通过且新增诊断为 0；完整 flake8 的原始 exit 1 不改写为通过。只在隔离临时 Linux 容器安装 `procps` 及仓库既有 CI 依赖，使用 Docker 内置 `--init`，不改 scheduler 源码或断言。上轮精确 tree `19edbf6888f8cf6c1274fdf7ffe3358b9b96f335` 的完整 gate 为 1 failed/7782 passed/0 skipped/exit 1，唯一失败已证实容器缺少 `ps`；该历史失败不作为本轮结果。三文档先同步再封装，精确最终候选必须重跑完整 `scripts/ci_gate.sh` 和真实 PostgreSQL 四文件，不能用定向通过替代。最终 tree/hash、实际命令/退出码/数量、零新增诊断及清理证明统一封存在仓库外 `procps-resume-final-report.md` / manifest；不预记成功。
+- 不提交 AGENTS.md 或 CHANGELOG 既有治理 hunk；未获 commit/push/PR body 更新或 merge 授权，均不执行。PR body 仍对应远端 head，不宣称已覆盖本地补丁；后续获准推送后必须更新 body、重跑新 head 三项 CI 并复审。回滚只反向本轮精确 hunk，保留治理字节与 0014 历史，不执行数据库回滚。中文专题无英文对应版本。
+
 ## 2026-10-16 续验：WP-only 本地候选补丁 PR-ready，非合入/生产认证
 
 - 初次审查中的父 fixture 门禁反例已在同一 WP-0207 范围修复：父入口校验实际 Raw plan 的 route/Raw Schema 后才创建业务子任务；Raw 对绕过构造校验的 route 再验证状态/hash。离线反例通过；真实隔离 PostgreSQL 首轮 117 passed/0 skipped，最终 route 修改后再验 5 passed/0 skipped，均为合成来源，不提升真实历史认证。

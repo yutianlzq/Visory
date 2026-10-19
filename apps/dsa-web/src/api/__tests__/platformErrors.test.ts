@@ -3,6 +3,7 @@ import { formatBackfillError } from '../platformBackfill';
 import { formatDataQualityError } from '../platformDataQuality';
 import { formatPlatformTaskError } from '../platformTasks';
 import { projectPlatformError } from '../platformErrors';
+import textCases from '../../../../../tests/fixtures/platform_public_text.json';
 
 const requestId = 'req_0123456789abcdef0123456789abcdef';
 const privateTexts = [
@@ -22,6 +23,7 @@ const privateTexts = [
   "{'api-key': 'fixture-secret'}",
   '{"apiKey" : "fixture-secret"}',
   'API Key: fixture-secret',
+  ...textCases.private.map(({ text }) => text),
 ];
 
 describe.each([
@@ -51,5 +53,15 @@ describe.each([
       request_id: 'token=fixture-secret',
     } } } };
     expect(format(cause)).not.toContain('fixture-secret');
+  });
+
+  it.each(textCases.safe)('preserves safe text exactly: $id', ({ text: message }) => {
+    const cause = { response: { data: { error: {
+      code: 'BACKFILL_SOURCE_UNAVAILABLE', message, request_id: requestId, retryable: true,
+    } } } };
+    expect(projectPlatformError(cause)).toEqual({
+      code: 'BACKFILL_SOURCE_UNAVAILABLE', message, requestId, retryable: true,
+    });
+    expect(format(cause)).toContain(message);
   });
 });

@@ -1,0 +1,298 @@
+{
+  "private": [
+    {
+      "id": "api-underscore",
+      "text": "api_key=fixture-secret"
+    },
+    {
+      "id": "api-hyphen",
+      "text": "api-key: fixture-secret"
+    },
+    {
+      "id": "api-camel",
+      "text": "apiKey = fixture-secret"
+    },
+    {
+      "id": "api-spaced",
+      "text": "API Key: fixture-secret"
+    },
+    {
+      "id": "api-json",
+      "text": "{\"api_key\": \"fixture-secret\"}"
+    },
+    {
+      "id": "api-json-single",
+      "text": "{'api-key': 'fixture-secret'}"
+    },
+    {
+      "id": "api_key-json-depth-2",
+      "text": "\"{\\\"api_key\\\": \\\"fixture-secret\\\"}\""
+    },
+    {
+      "id": "api_key-json-depth-3",
+      "text": "\"\\\"{\\\\\\\"api_key\\\\\\\": \\\\\\\"fixture-secret\\\\\\\"}\\\"\""
+    },
+    {
+      "id": "api-key-json-depth-2",
+      "text": "\"{\\\"api-key\\\": \\\"fixture-secret\\\"}\""
+    },
+    {
+      "id": "api-key-json-depth-3",
+      "text": "\"\\\"{\\\\\\\"api-key\\\\\\\": \\\\\\\"fixture-secret\\\\\\\"}\\\"\""
+    },
+    {
+      "id": "apiKey-json-depth-2",
+      "text": "\"{\\\"apiKey\\\": \\\"fixture-secret\\\"}\""
+    },
+    {
+      "id": "apiKey-json-depth-3",
+      "text": "\"\\\"{\\\\\\\"apiKey\\\\\\\": \\\\\\\"fixture-secret\\\\\\\"}\\\"\""
+    },
+    {
+      "id": "API Key-json-depth-2",
+      "text": "\"{\\\"API Key\\\": \\\"fixture-secret\\\"}\""
+    },
+    {
+      "id": "API Key-json-depth-3",
+      "text": "\"\\\"{\\\\\\\"API Key\\\\\\\": \\\\\\\"fixture-secret\\\\\\\"}\\\"\""
+    },
+    {
+      "id": "authorization-json-depth-2",
+      "text": "\"{\\\"authorization\\\": \\\"fixture-secret\\\"}\""
+    },
+    {
+      "id": "authorization-json-depth-3",
+      "text": "\"\\\"{\\\\\\\"authorization\\\\\\\": \\\\\\\"fixture-secret\\\\\\\"}\\\"\""
+    },
+    {
+      "id": "password-json-depth-2",
+      "text": "\"{\\\"password\\\": \\\"fixture-secret\\\"}\""
+    },
+    {
+      "id": "password-json-depth-3",
+      "text": "\"\\\"{\\\\\\\"password\\\\\\\": \\\\\\\"fixture-secret\\\\\\\"}\\\"\""
+    },
+    {
+      "id": "passwd-json-depth-2",
+      "text": "\"{\\\"passwd\\\": \\\"fixture-secret\\\"}\""
+    },
+    {
+      "id": "passwd-json-depth-3",
+      "text": "\"\\\"{\\\\\\\"passwd\\\\\\\": \\\\\\\"fixture-secret\\\\\\\"}\\\"\""
+    },
+    {
+      "id": "credential-json-depth-2",
+      "text": "\"{\\\"credential\\\": \\\"fixture-secret\\\"}\""
+    },
+    {
+      "id": "credential-json-depth-3",
+      "text": "\"\\\"{\\\\\\\"credential\\\\\\\": \\\\\\\"fixture-secret\\\\\\\"}\\\"\""
+    },
+    {
+      "id": "token-json-depth-2",
+      "text": "\"{\\\"token\\\": \\\"fixture-secret\\\"}\""
+    },
+    {
+      "id": "token-json-depth-3",
+      "text": "\"\\\"{\\\\\\\"token\\\\\\\": \\\\\\\"fixture-secret\\\\\\\"}\\\"\""
+    },
+    {
+      "id": "lease-json-depth-2",
+      "text": "\"{\\\"lease\\\": \\\"fixture-secret\\\"}\""
+    },
+    {
+      "id": "lease-json-depth-3",
+      "text": "\"\\\"{\\\\\\\"lease\\\\\\\": \\\\\\\"fixture-secret\\\\\\\"}\\\"\""
+    },
+    {
+      "id": "response_body-json-depth-2",
+      "text": "\"{\\\"response_body\\\": \\\"fixture-secret\\\"}\""
+    },
+    {
+      "id": "response_body-json-depth-3",
+      "text": "\"\\\"{\\\\\\\"response_body\\\\\\\": \\\\\\\"fixture-secret\\\\\\\"}\\\"\""
+    },
+    {
+      "id": "raw_body-json-depth-2",
+      "text": "\"{\\\"raw_body\\\": \\\"fixture-secret\\\"}\""
+    },
+    {
+      "id": "raw_body-json-depth-3",
+      "text": "\"\\\"{\\\\\\\"raw_body\\\\\\\": \\\\\\\"fixture-secret\\\\\\\"}\\\"\""
+    },
+    {
+      "id": "unix-bare",
+      "text": "/mnt/private/fixture-secret.json"
+    },
+    {
+      "id": "unix-single",
+      "text": "Cannot open '/mnt/private/fixture-secret.json'"
+    },
+    {
+      "id": "unix-double",
+      "text": "Cannot open \"/mnt/private/fixture-secret.json\""
+    },
+    {
+      "id": "unix-call",
+      "text": "open('/mnt/private/fixture-secret.json') failed"
+    },
+    {
+      "id": "unix-bracket",
+      "text": "[/mnt/private/fixture-secret.json]"
+    },
+    {
+      "id": "unix-colon",
+      "text": "path:/mnt/private/fixture-secret.json"
+    },
+    {
+      "id": "unix-root-file",
+      "text": "open('/fixture-secret')"
+    },
+    {
+      "id": "json-path",
+      "text": "\"{\\\"message\\\": \\\"Cannot open '/mnt/private/fixture-secret.json'\\\"}\""
+    },
+    {
+      "id": "slash-escape",
+      "text": "Cannot open \"\\/mnt\\/private\\/fixture-secret.json\""
+    },
+    {
+      "id": "unicode-key",
+      "text": "{\"\\u0061pi\\u005fkey\":\"fixture-secret\"}"
+    },
+    {
+      "id": "unicode-path",
+      "text": "Cannot open \"\\u002fmnt\\u002fprivate\\u002ffixture-secret.json\""
+    },
+    {
+      "id": "windows",
+      "text": "C:\\private\\fixture-secret.json"
+    },
+    {
+      "id": "unc",
+      "text": "\\\\server\\private\\fixture-secret.json"
+    },
+    {
+      "id": "dsn",
+      "text": "postgresql+psycopg://user:fixture-secret@localhost/database"
+    },
+    {
+      "id": "bearer",
+      "text": "Bearer fixture-secret"
+    },
+    {
+      "id": "raw-body",
+      "text": "raw_body: fixture-secret"
+    },
+    {
+      "id": "decode-budget",
+      "text": "\\u005cu005cu005cu005cu005cu005cu005cu005cu005cu0061pi_key=fixture-secret"
+    },
+    {
+      "id": "token-like",
+      "text": "sk-aaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "id": "credentials-json",
+      "text": "\"{\\\"credentials\\\": \\\"fixture-secret\\\"}\""
+    },
+    {
+      "id": "percent-path",
+      "text": "Cannot open %2Fmnt%2Fprivate%2Ffixture-secret.json"
+    },
+    {
+      "id": "percent-key",
+      "text": "api%5Fkey%3Dfixture-secret"
+    },
+    {
+      "id": "percent-key-nested",
+      "text": "\"api%255Fkey%253Dfixture-secret\""
+    },
+    {
+      "id": "form-spaced-key",
+      "text": "API+Key=fixture-secret"
+    },
+    {
+      "id": "percent-mapping-key",
+      "key": "api%5Fkey",
+      "text": "{\"api%5Fkey\":\"fixture-secret\"}"
+    },
+    {
+      "id": "unicode-mapping-key",
+      "key": "\\u0061pi_key",
+      "text": "{\"\\u0061pi_key\":\"fixture-secret\"}"
+    },
+    {
+      "id": "percent-credentials-key",
+      "key": "%63redentials",
+      "text": "{\"%63redentials\":\"fixture-secret\"}"
+    },
+    {
+      "id": "percent-response-key",
+      "key": "response%5Fbody",
+      "text": "{\"response%5Fbody\":\"fixture-secret\"}"
+    }
+  ],
+  "safe": [
+    {
+      "id": "logical-storage",
+      "text": "canonical/dataset=bar_1d_raw/data.parquet"
+    },
+    {
+      "id": "api-path",
+      "text": "/api/platform/v1/tasks"
+    },
+    {
+      "id": "quoted-api-path",
+      "text": "See '/api/platform/v1/tasks'"
+    },
+    {
+      "id": "api-root",
+      "text": "See '/api'"
+    },
+    {
+      "id": "url",
+      "text": "https://example.invalid/docs/public"
+    },
+    {
+      "id": "hash",
+      "text": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    {
+      "id": "version",
+      "text": "fixture-only@1.0.0"
+    },
+    {
+      "id": "plain",
+      "text": "Service unavailable."
+    },
+    {
+      "id": "arithmetic",
+      "text": "value / 2"
+    },
+    {
+      "id": "json-safe",
+      "text": "{\"message\": \"Service unavailable.\"}"
+    },
+    {
+      "id": "json-safe-twice",
+      "text": "\"{\\\"message\\\": \\\"Service unavailable.\\\"}\""
+    },
+    {
+      "id": "json-safe-thrice",
+      "text": "\"\\\"{\\\\\\\"message\\\\\\\": \\\\\\\"Service unavailable.\\\\\\\"}\\\"\""
+    },
+    {
+      "id": "percent-api",
+      "text": "See %2Fapi%2Fplatform%2Fv1%2Ftasks"
+    },
+    {
+      "id": "percent-url",
+      "text": "https://example.invalid/docs/hello%20world"
+    },
+    {
+      "id": "percentage",
+      "text": "50% complete"
+    }
+  ]
+}

@@ -3,13 +3,15 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
 from pydantic import ValidationError
 import pytest
 
 from api.middlewares.error_handler import add_error_handlers
+from api.platform.errors import platform_error
+from api.platform.responses import build_list_envelope, build_success_envelope
 from api.platform.router import router
 from src.services.platform.backfill import BackfillError
 from src.schemas.platform import PLATFORM_CONTRACTS, TaskDetails, TaskEventRecord
@@ -32,6 +34,61 @@ PRIVATE_TEXTS = (
 
 
 ROOT = Path(__file__).resolve().parents[3]
+TEXT_CASES = json.loads((ROOT / "tests/fixtures/platform_public_text.json").read_text(encoding="utf-8"))
+PRIVATE_TEXTS += tuple(case["text"] for case in TEXT_CASES["private"])
+
+
+@pytest.mark.parametrize("case", TEXT_CASES["private"], ids=lambda case: case["id"])
+def test_public_sanitizer_rejects_serialized_diagnostics_in_values_and_keys(case):
+    assert sanitize_platform_public_payload(case["text"]) == "[REDACTED]"
+    assert sanitize_platform_public_payload({case["text"]: "private diagnostic"}) == {}
+    if "key" in case:
+        assert sanitize_platform_public_payload({case["key"]: "fixture-secret"}) == {}
+
+
+@pytest.mark.parametrize("case", TEXT_CASES["safe"], ids=lambda case: case["id"])
+def test_public_sanitizer_keeps_safe_text_byte_for_byte(case):
+    assert sanitize_platform_public_payload(case["text"]) == case["text"]
+
+
+@pytest.mark.parametrize("case", TEXT_CASES["private"] + TEXT_CASES["safe"], ids=lambda case: case["id"])
+def test_real_http_warning_and_error_envelopes_share_public_diagnostic_policy(case):
+    text = case["text"]
+    expected = "[REDACTED]" if case in TEXT_CASES["private"] else text
+    data = {"diagnostic": text, **({case["key"]: "fixture-secret"} if "key" in case else {})}
+    app = FastAPI()
+    add_error_handlers(app)
+
+    @app.get("/api/platform/v1/fixture/warnings")
+    def warnings(request: Request, listed: bool = False):
+        if listed:
+            return build_list_envelope(
+                request=request, data=[data], warnings=(text,), data_snapshot_id=None,
+                cursor=None, next_cursor=None, limit=10, has_more=False,
+            )
+        return build_success_envelope(request=request, data=data, warnings=(text,), data_snapshot_id=None)
+
+    @app.get("/api/platform/v1/fixture/error")
+    def fail_request():
+        raise platform_error(503, code="BACKFILL_SOURCE_UNAVAILABLE", message=text, retryable=True, details=data)
+
+    with TestClient(app) as client:
+        for listed in (False, True):
+            response = client.get("/api/platform/v1/fixture/warnings", params={"listed": str(listed).lower()})
+            assert response.status_code == 200
+            payload = response.json()
+            assert payload["meta"]["warnings"] == [expected]
+            assert (payload["data"][0] if listed else payload["data"]) == {"diagnostic": expected}
+        response = client.get("/api/platform/v1/fixture/error")
+    assert response.status_code == 503
+    error = response.json()["error"]
+    assert error["details"] == {"diagnostic": expected}
+    assert error["code"] == "BACKFILL_SOURCE_UNAVAILABLE" and error["retryable"] is True
+    assert error["request_id"].startswith("req_")
+    if expected == text:
+        assert error["message"] == text
+    else:
+        assert error["message"] != text
 
 
 def _golden(name):

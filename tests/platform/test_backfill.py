@@ -4,6 +4,7 @@ import json
 
 from contextlib import contextmanager
 from datetime import date
+from pathlib import Path
 from types import SimpleNamespace
 
 from fastapi import FastAPI
@@ -15,6 +16,9 @@ import pytest
 from src.schemas.platform import BackfillBatchRequest, BackfillBatchType, BackfillStage, BackfillStageChainProjection, BackfillStageChainRequest, BackfillStatus, BackfillTaskRequirements, QualityStatus, ResourceType, TaskListQuery, TaskRecord, TaskState
 from src.services.platform.backfill import BackfillError, BackfillPipelineCoordinator, BackfillPipelineExecutor, BackfillProviderResult, BackfillService, BackfillStageChainExecutor, BackfillWorker, DeterministicBackfillProvider, DeterministicBackfillPublisher
 from src.services.platform.task_control import TaskControlError
+
+
+TEXT_CASES = json.loads((Path(__file__).resolve().parents[2] / "tests/fixtures/platform_public_text.json").read_text(encoding="utf-8"))
 
 
 def request(**overrides):
@@ -1131,6 +1135,35 @@ def test_checkpoint_writer_includes_dataset_and_resource_usage():
     worker._write_checkpoint(_lease_for(req), req, BackfillProviderResult(resource_usage={'rows': 3}), completed_partitions={0})
     assert payloads[0]['dataset'] == req.dataset
     assert payloads[0]['resource_usage'] == {'rows': 3}
+
+
+@pytest.mark.parametrize("case", TEXT_CASES["private"] + TEXT_CASES["safe"], ids=lambda case: case["id"])
+def test_backfill_checkpoint_and_projection_share_public_diagnostic_policy(case):
+    private_text = case["text"]
+    expected = "[REDACTED]" if case in TEXT_CASES["private"] else private_text
+    resource_usage = {"rows": 3, **({case["key"]: "fixture-secret"} if "key" in case else {})}
+    payloads = []
+    req = request()
+    worker = BackfillWorker(
+        FakeWorkerControl(), DeterministicBackfillProvider(),
+        checkpoint_writer=lambda **kw: (payloads.append(kw["payload"]) or _storage_ref(kw["payload"])),
+    )
+    result = BackfillProviderResult(differences_summary=private_text, quality_events=(private_text,), resource_usage=resource_usage)
+    worker._write_checkpoint(_lease_for(req), req, result, completed_partitions={0})
+    payload = json.loads(payloads[0])
+    assert payload["differences_summary"] == expected
+    assert payload["quality_events"] == [expected]
+    assert payload["resource_usage"] == {"rows": 3}
+    record = task(req)
+    projected = BackfillService.project(record.model_copy(update={"requirements": {
+        **record.requirements, "differences_summary": private_text, "quality_events": [private_text], "resource_usage": resource_usage,
+    }}))
+    assert projected.differences_summary == expected
+    assert projected.quality_events == (expected,)
+    assert projected.resource_usage == {"rows": 3}
+    assert result.differences_summary == private_text
+    assert result.quality_events == (private_text,)
+    assert result.resource_usage == resource_usage
 
 
 @pytest.mark.parametrize('change', [
