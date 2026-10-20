@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/yutianlzq/Visory/releases) page.
 
 ## [Unreleased]
+- [修复] WP-0303 新 Binding 写入与每次 Formal 复核共用 SourceRoute/准入 fingerprint 的 repository、commit、entrypoint、Bundle/name/release 和 wrapper version 精确身份关联；补充有效重算 Hash 的双向错配、隔离 PostgreSQL 发布回滚/持久化漂移和 Snapshot 消费反例，保留旧契约、迁移、数据及来源未认证状态。
 - [文档] WP-0303 独立候选交付校准 Registry 74→81、PR #42 已合入基线与当前 head CI 证据入口；保留本地验收和历史记录的边界，不提升 WP/真实来源/生产状态。
 - [修复] WP-0303 基于 PR #42 main 收敛来源绑定与 EndpointAdmission 联合门禁，Receipt 不得绕过缺失/阻断/fixture/漂移 SourceRoute；追加无 DDL 的 0017 merge revision 保留原迁移与来源数据，三类升级起点到达单一 head。
 - [测试] 2026-10-19 WP-0303 候选原生 Git tree Linux 定向 802 passed、隔离 PostgreSQL 全组 256 passed/0 skipped；原样完整 ci_gate exit 0（8178 passed/0 failed/0 skipped/4 deselected，572 subtests passed），测试后 1603 源文件无漂移，契约/治理/基线通过；旧 F1/F2/Golden/Hash 保留，backend CI 仅补固定历史 SHA 所需完整 checkout。此前 WP-0303 累计 gate 失败数字保留为历史，当前验收见实现记录第 22 节；本地 PR-ready 不等于 WP/来源/生产认证。

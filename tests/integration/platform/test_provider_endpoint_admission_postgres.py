@@ -30,6 +30,7 @@ from src.schemas.platform import (
     build_adapter_implementation_fingerprint,
     build_provider_endpoint_definition,
     build_provider_endpoint_run_binding,
+    build_provider_source_route_evidence,
     build_source_admission_receipt,
     compute_content_hash,
 )
@@ -647,7 +648,14 @@ def test_persisted_resealed_route_cannot_reuse_another_implementation(
     if boundary == "formal":
         service.publish_package(*package)
     before = _counts(database)
-    route = synthetic_source_route(run, **updates)
+    route = build_provider_source_route_evidence(
+        **(
+            run.source_route_evidence.model_dump(
+                mode="python", exclude={"source_route_hash"}
+            )
+            | updates
+        )
+    )
     with database.engine.begin() as connection:
         connection.execute(
             update(provider_run)

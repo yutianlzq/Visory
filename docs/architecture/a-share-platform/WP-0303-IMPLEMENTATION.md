@@ -1380,3 +1380,19 @@ Receipt 撤销生命周期是**真实 Endpoint 准入前必须另行设计/验�
 当前交付只供独立审查，仍为 `WP-0303=IN_PROGRESS`、`VERIFIED=15/45`、B1–B4 `NO_GO`、`market_breadth/market_emotion=missing`，真实来源 Formal/Paper 拒绝，`NOT CERTIFIED`、`RELEASED=false`。Receipt 完整撤销生命周期仍是第 22.5 节的真实 Endpoint 准入前 FOLLOW-UP，不在本 PR 新增。
 
 回滚沿用第 22.5 节：未部署且未应用迁移时可按封存清单精确逆向候选 hunks；已应用迁移的环境必须保留 revision 历史、导入依赖、Schema 与数据，只能在另行授权下前滚修复，不自动 downgrade/stamp 或整包删除迁移。
+
+## 24. 2026-10-20 PR 审查 BLOCKER：来源与准入实现身份收敛
+
+原审查基于候选 `91e9df5c243cf28de40b42c76fd4807fae126f6e`：有效 `PIT_CERTIFIED` 包与合法重建的 AVAILABLE SourceRoute 可分别通过检查，但 route 的 repository/commit/entrypoint 可以指向不同实现。根因是门禁分别验证 route 自身、Run/Raw/Endpoint 和 fingerprint 当前 observation，缺少两条证据链之间的实现身份关联；Repository 的新 Binding 插入也缺少该关联。
+
+- 保留现有交付分支继续修复；开工 fetch/pull-ff-only 成功，main 未漂移。仓库外记录另外 10 个可读、已初始化工作树的 HEAD/status 与 15406 个 Git 可见文件 Hash；不写原工作树，不承诺 ignored 文件的 Hash。
+- `validate_source_route_implementation()` 由新 Binding 插入和每次 Formal 复核共用；完整六字段对应关系以 [C-004 契约目录](platform-implementation-contract-catalog-v1.md) 为准。Formal 错配返回固定公开错误码，不包含源值。Snapshot build、Formal consumer 与 current pointer 继续复用原 verifier，不新增 API、CLI、配置或旁路。
+- 合成成功材料显式使 route/fingerprint 身份相同；不修改真实 registry 的 BLOCKED 默认值，不把 fixture 的 route 证据当真实准入。
+- RED checkpoint：`python -B -m pytest tests/platform/test_provider_endpoint_admission.py -k resealed -q -p no:cacheprovider --tb=short` 实际 **6 failed / 11 deselected**，六项均为完整 ProviderRun JSON 往返后 `DID NOT RAISE ProviderAdmissionGateError`。随后相同六项及既有 Admission/Snapshot 定向集 **57 passed**。中间修复时一次错误参数位置导致 TypeError，纠正后复验；不将该失败计为业务 RED。
+- 扩充为 route/fingerprint 双向六身份反例，并覆盖另一份完整一致的非默认实现成功路径。最终本地 Admission、mainline convergence、Snapshot foundation/lineage、SourceRoute 和旧回滚保护六文件集 **68 passed / 0 skipped / 1 warning**。命令：`python -B -m pytest tests/platform/test_provider_endpoint_admission.py tests/platform/test_wp0303_mainline_convergence.py tests/platform/test_snapshot_foundation.py tests/platform/test_snapshot_lineage_gate.py tests/platform/ingestion/test_provider_source_routes.py tests/platform/test_wp0207_rollback_contract.py -q -p no:cacheprovider --tb=short`。
+- 两份 PostgreSQL 文件收集到 **45 项**，包含六身份 × 发布写入/持久化后 Formal 复核的 12 项反例，以及 5 项 Snapshot 最终消费反例。本机 Docker daemon 未运行，未执行本地 PostgreSQL 或完整 Linux gate；这些测试必须由本次新 head 的 backend CI 实际运行，不能用收集成功或第 22 节旧计数代替。
+- 扩大本地运行 `python -B -m pytest tests/platform -m "not network" -q -p no:cacheprovider --tb=short` 时，在 API 三个文件收集阶段因本机缺少 `markdown2` 中止（exit 1，3 collection errors），未产生完整平台套件通过结论；不为此新增依赖或改变测试选择。完整 Linux/PG 结果仍以新 head CI 为准。
+- `check_ai_assets.py`、`check_visory_baseline.py`（最终文档更新后 726 links / 0 broken / 0 imported secrets / 1 workflow）、`export_platform_contracts.py --check`、变更 Python 的 `py_compile`/critical flake8 和 `git diff --check` 均通过；未新增依赖，当前本机无 coverage 工具，不报告未经测量的覆盖率。
+- 不改变 Schema/Registry/生成契约、迁移历史、旧 F1/F2/Golden/Hash 或已有持久化数据。旧 Run/Binding 可读；不满足关联的历史 Binding 不再允许 Formal 使用，也不原地修改它。修复回滚只撤销本节代码/测试/文档 hunks，迁移和既有数据保留；有数据环境仍须遵守第 22.5 节，不自动 downgrade。
+
+本次授权覆盖修复、commit/push、更新原 PR 和新 head CI 后重审；当前提交、CI run/job 与最终复核结论以 PR 描述为准，本节不预记远端成功。中文专题无对应英文版本，未改页面或报告格式。Receipt 撤销传播和既有依赖漏洞仍为独立 FOLLOW-UP；状态继续为 `WP-0303=IN_PROGRESS`、`VERIFIED=15/45`、B1–B4 `NO_GO`、`NOT CERTIFIED`、`RELEASED=false`。

@@ -268,10 +268,37 @@ def test_formal_verifier_accepts_only_complete_current_evidence() -> None:
     ),
     ids=("repository", "commit", "entrypoint", "bundle", "release", "wrapper"),
 )
-def test_formal_verifier_rejects_resealed_route_implementation_mismatch(updates) -> None:
+@pytest.mark.parametrize("mismatch_side", ("route", "fingerprint"))
+def test_formal_verifier_rejects_resealed_route_implementation_mismatch(
+    updates, mismatch_side
+) -> None:
     verifier = _verifier(*_package())
     original = verifier.raw_repository.run
-    route = synthetic_source_route(original, **updates)
+    route = synthetic_source_route(
+        original, **(updates if mismatch_side == "route" else {})
+    )
+    if mismatch_side == "fingerprint":
+        fields = {
+            "adapter_repository": "source_repository",
+            "adapter_commit": "source_commit",
+            "adapter_entrypoint": "function_symbol",
+            "adapter_name": "adapter_bundle_id",
+            "adapter_release": "adapter_bundle_version",
+            "adapter_version": "visory_wrapper_version",
+        }
+        fingerprint = build_adapter_implementation_fingerprint(
+            **(
+                verifier.repository.fingerprint.model_dump(
+                    mode="python", exclude={"implementation_fingerprint"}
+                )
+                | {fields[key]: value for key, value in updates.items()}
+            )
+        )
+        verifier.repository.fingerprint = fingerprint
+        verifier.repository.binding = _replace_binding(
+            verifier.repository.binding,
+            implementation_fingerprint=fingerprint.implementation_fingerprint,
+        )
     # 使用完整且经 JSON 往返校验的 Run，错配对象自身的 Hash/契约仍然有效。
     run = ProviderRun(
         **(
@@ -295,6 +322,40 @@ def test_formal_verifier_rejects_resealed_route_implementation_mismatch(updates)
     _assert_rejected(
         verifier, "SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH"
     )
+
+
+def test_matching_nondefault_implementation_identity_is_accepted() -> None:
+    endpoint, fingerprint, receipt, binding = _package()
+    fingerprint = build_adapter_implementation_fingerprint(
+        **(
+            fingerprint.model_dump(mode="python", exclude={"implementation_fingerprint"})
+            | {
+                "adapter_bundle_id": "other_bundle",
+                "adapter_bundle_version": "3.0.0",
+                "source_repository": "https://example.test/approved-adapter.git",
+                "source_commit": "d" * 40,
+                "function_symbol": "other.fetch",
+                "visory_wrapper_version": "2.0.0",
+            }
+        )
+    )
+    binding = _replace_binding(
+        binding, implementation_fingerprint=fingerprint.implementation_fingerprint
+    )
+    verifier = _verifier(endpoint, fingerprint, receipt, binding)
+    run = verifier.raw_repository.run
+    run.adapter_version = fingerprint.visory_wrapper_version
+    run.source_route_evidence = synthetic_source_route(
+        run,
+        adapter_name=fingerprint.adapter_bundle_id,
+        adapter_release=fingerprint.adapter_bundle_version,
+        adapter_repository=fingerprint.source_repository,
+        adapter_commit=fingerprint.source_commit,
+        adapter_entrypoint=fingerprint.function_symbol,
+    )
+    assert verifier.verify_formal_run(
+        None, RUN_ID, target_market="CN", target_date=NOW.date(), cutoff_at=NOW
+    ) == binding
 
 
 def test_legacy_run_without_binding_is_rejected() -> None:

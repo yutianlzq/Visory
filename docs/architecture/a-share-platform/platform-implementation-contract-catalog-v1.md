@@ -259,6 +259,19 @@ binding_hash
 
 Formal 路径必须拒绝：Binding 缺失；Endpoint/Provider/actual origin 不匹配；Endpoint 通配路径包含明文或编码后的 `.`/`..` 点段，或三轮解码后仍可继续解码；Receipt 不是同一 Dataset/schema/申请范围的有效 `PIT_CERTIFIED`；Receipt 或实现证据 Hash 漂移；Raw 不属于绑定 Run；一次 Run 内切换实际来源；换源后继续复用原 Run/Raw 身份。Preview 可以读取旧 Run，但不得把“可读”提升为来源认证。
 
+SourceRoute 自身 Hash 有效且 fingerprint 的当前实现观察有效，仍不能分别替对方背书。新增 Binding 写入和每次 Formal 复核必须共用以下精确实现身份关联：
+
+| SourceRoute 字段 | `AdapterImplementationFingerprint` 字段 |
+| --- | --- |
+| `adapter_repository` | `source_repository`（scheme/host 规范为小写，路径精确匹配，不猜测 `.git`/协议别名） |
+| `adapter_commit` | `source_commit` |
+| `adapter_entrypoint` | `function_symbol` |
+| `adapter_name` | `adapter_bundle_id` |
+| `adapter_release` | `adapter_bundle_version` |
+| `adapter_version`，且须与 Run 相同 | `visory_wrapper_version` |
+
+任一实现身份不一致时 Formal 返回 `SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH`；发布事务拒绝插入 Binding 并回滚本次新增准入对象。重新计算 route/fingerprint/Binding Hash 不能豁免关联。SourceRoute 的 `adapter_blob` 固定其源证据 Git 对象，不能与 fingerprint 的 `source_file_blob_sha256`/`source_file_sha256` 直接比较或转换；源文件路径、字节、函数符号、wrapper/Mapping/质量规则仍由既有当前实现 observation 完整核验。没有替换 observation resolver、放宽 SourceRoute 可执行状态或认证真实来源。
+
 四类对象由唯一后继 `0016_wp0303_provider_endpoint_admission` 持久化，0005—0015 不变。Migration/Repository 已覆盖同事务包发布、进程重启精确读回、一个 Run 唯一 Binding、全部 Raw 引用完整性，以及存在任一新记录时在任何 DROP/ALTER 前拒绝 downgrade；空表可安全回到 0015 再升级。同一 Endpoint/Fingerprint/Receipt 可被多个 Run 精确复用，同一 Binding 可幂等重放；发布事务按 downgrade 相同顺序锁定五表，避免并发首次插入竞争，任何同身份内容漂移均拒绝。
 
 当前 `REVOKED` 仅表示被 Binding 精确引用的 Receipt 自身是撤销状态；不可变 `ACCEPTED` Receipt 的后续撤销尚未定义 supersession/status-event 身份和查询链。阶段 C 在接入真实 Endpoint 前必须先追加并批准该语义，不得原地更新既有 Receipt，也不得把无关联的新 `REVOKED` Receipt 解释为已撤销旧 Receipt。

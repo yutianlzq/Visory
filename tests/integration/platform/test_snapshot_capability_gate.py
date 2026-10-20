@@ -701,6 +701,11 @@ def test_persisted_snapshot_capability_consumer_round_trip_and_formal_gate(isola
         ("route_missing", "SOURCE_ADMISSION_SOURCE_ROUTE_MISSING"),
         ("route_blocked", "SOURCE_ADMISSION_SOURCE_ROUTE_UNAVAILABLE"),
         ("route_fixture", "SOURCE_ADMISSION_SOURCE_ROUTE_UNAVAILABLE"),
+        ("route_repository", "SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH"),
+        ("route_commit", "SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH"),
+        ("route_entrypoint", "SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH"),
+        ("route_bundle", "SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH"),
+        ("route_release", "SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH"),
     ),
 )
 def test_snapshot_formal_gate_rejects_provider_admission_fail_closed_cases(
@@ -745,7 +750,18 @@ def test_snapshot_formal_gate_rejects_provider_admission_fail_closed_cases(
         with database.transaction() as session:
             run = RawIngestionRepository().get_provider_run(session, first.provider_run_refs[0])
         evidence = None
-        if scenario != "route_missing":
+        implementation_updates = {
+            "route_repository": {"adapter_repository": "https://example.test/other.git"},
+            "route_commit": {"adapter_commit": "d" * 40},
+            "route_entrypoint": {"adapter_entrypoint": "other.fetch"},
+            "route_bundle": {"adapter_name": "other_bundle"},
+            "route_release": {"adapter_release": "2.0.0"},
+        }
+        if scenario in implementation_updates:
+            evidence = synthetic_source_route(
+                run, **implementation_updates[scenario]
+            ).model_dump(mode="json")
+        elif scenario != "route_missing":
             evidence = synthetic_source_route(
                 run, state="BLOCKED" if scenario == "route_blocked" else "FIXTURE_ONLY",
                 kind="HTTP" if scenario == "route_blocked" else "FIXTURE",
