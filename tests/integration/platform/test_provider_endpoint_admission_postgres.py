@@ -132,7 +132,7 @@ def _create_run(database, tmp_path, *, run_suffix: str = "v1"):
     route = synthetic_source_route(SimpleNamespace(
         provider_id="a_stock_data", dataset_id="security_master", adapter_version="1.0.0",
         actual_upstream=response.actual_upstream, capability_market="CN",
-    ))
+    ), adapter_entrypoint="security_master.fetch")
     worker = RawIngestionTaskWorker(
         task_control,
         database,
@@ -184,7 +184,7 @@ def _package(run, raw, *, suffix: str = "v1", admission_level: str = "PIT_CERTIF
         provider_endpoint_id=endpoint.provider_endpoint_id,
         provider_id=endpoint.provider_id,
         endpoint_contract_version=endpoint.endpoint_contract_version,
-        adapter_bundle_id="a_stock_data_bundle",
+        adapter_bundle_id="a_stock_data",
         adapter_bundle_version="1.0.0",
         source_repository="https://github.com/example/a-stock-data.git",
         source_commit="a" * 40,

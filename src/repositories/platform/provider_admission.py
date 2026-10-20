@@ -17,6 +17,7 @@ from src.schemas.platform.provider_admission import (
     SourceAdmissionReceipt,
     compute_actual_origin_hash,
 )
+from src.schemas.platform.provider_source import ProviderSourceRouteEvidence
 
 
 metadata = MetaData()
@@ -245,6 +246,28 @@ def endpoint_allows_actual_upstream(endpoint: ProviderEndpointDefinition, actual
     return path.startswith(family[:-1]) if family.endswith("*") else path == family
 
 
+def validate_source_route_implementation(
+    route: ProviderSourceRouteEvidence,
+    fingerprint: AdapterImplementationFingerprint,
+) -> None:
+    # 两条证据链必须固定同一实现；Git blob SHA-1 不等同于文件 SHA-256。
+    repository = urlsplit(route.adapter_repository)
+    route_repository = urlunsplit(
+        (repository.scheme.lower(), repository.netloc.lower(), repository.path, "", "")
+    )
+    if (
+        route_repository != fingerprint.source_repository
+        or route.adapter_commit != fingerprint.source_commit
+        or route.adapter_entrypoint != fingerprint.function_symbol
+        or route.adapter_name != fingerprint.adapter_bundle_id
+        or route.adapter_release != fingerprint.adapter_bundle_version
+        or route.adapter_version != fingerprint.visory_wrapper_version
+    ):
+        raise ValueError(
+            "Provider source route implementation does not match its admission fingerprint."
+        )
+
+
 class ProviderAdmissionRepository:
     """Append-only Endpoint Admission persistence; callers own transactions."""
 
@@ -417,6 +440,8 @@ class ProviderAdmissionRepository:
             or fingerprint.implementation_fingerprint != record.implementation_fingerprint
         ):
             raise ValueError("ProviderEndpointRunBinding implementation fingerprint is inconsistent")
+        route = ProviderSourceRouteEvidence.model_validate(run["source_route_evidence"])
+        validate_source_route_implementation(route, fingerprint)
 
         receipt = cls.get_receipt(session, record.source_admission_receipt_id)
         if (
@@ -510,4 +535,5 @@ __all__ = [
     "provider_endpoint_run_binding",
     "provider_endpoint_run_binding_raw_object",
     "source_admission_receipt",
+    "validate_source_route_implementation",
 ]

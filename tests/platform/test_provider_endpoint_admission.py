@@ -75,7 +75,7 @@ def _package(*, admission_level: str = "PIT_CERTIFIED", admission_status: str = 
         provider_endpoint_id=endpoint.provider_endpoint_id,
         provider_id=endpoint.provider_id,
         endpoint_contract_version=endpoint.endpoint_contract_version,
-        adapter_bundle_id="a_stock_data_bundle",
+        adapter_bundle_id="a_stock_data",
         adapter_bundle_version="1.0.0",
         source_repository="https://github.com/example/a-stock-data.git",
         source_commit="a" * 40,

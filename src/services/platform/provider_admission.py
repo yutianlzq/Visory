@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from src.repositories.platform.provider_admission import (
     ProviderAdmissionRepository,
     endpoint_allows_actual_upstream,
+    validate_source_route_implementation,
 )
 from src.repositories.platform.raw_ingestion import RawIngestionRepository
 from src.schemas.platform.provider_admission import (
@@ -173,6 +174,7 @@ class ProviderEndpointAdmissionVerifier:
         session: object,
         binding: ProviderEndpointRunBinding,
         endpoint: ProviderEndpointDefinition,
+        fingerprint: AdapterImplementationFingerprint,
     ) -> None:
         run = self.raw_repository.get_provider_run(session, binding.provider_run_id)
         if run is None:
@@ -205,7 +207,14 @@ class ProviderEndpointAdmissionVerifier:
                 "SOURCE_ADMISSION_ENDPOINT_MISMATCH",
                 "ProviderRun redacted origin does not match the bound origin.",
             )
-        self._validate_source_route(run)
+        route = self._validate_source_route(run)
+        try:
+            validate_source_route_implementation(route, fingerprint)
+        except ValueError as exc:
+            raise ProviderAdmissionGateError(
+                "SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH",
+                "Provider source route implementation does not match its admission fingerprint.",
+            ) from exc
         if set(run.raw_object_refs) != set(binding.raw_object_refs) or len(
             run.raw_object_refs
         ) != len(binding.raw_object_refs):
@@ -231,7 +240,7 @@ class ProviderEndpointAdmissionVerifier:
                 )
 
     @staticmethod
-    def _validate_source_route(run: object) -> None:
+    def _validate_source_route(run: object) -> ProviderSourceRouteEvidence:
         evidence = getattr(run, "source_route_evidence", None)
         if evidence is None:
             raise ProviderAdmissionGateError(
@@ -265,6 +274,7 @@ class ProviderEndpointAdmissionVerifier:
                 "SOURCE_ADMISSION_SOURCE_ROUTE_MISMATCH",
                 "Provider source route does not match the admitted Run and Endpoint.",
             )
+        return route
 
     def _validate_receipt(
         self,
@@ -379,7 +389,7 @@ class ProviderEndpointAdmissionVerifier:
         self._validate_endpoint_binding(
             binding, endpoint, cutoff_at=cutoff_at, target_market=target_market
         )
-        self._validate_run_and_raw(session, binding, endpoint)
+        self._validate_run_and_raw(session, binding, endpoint, fingerprint)
         self._validate_receipt(
             binding,
             endpoint,
