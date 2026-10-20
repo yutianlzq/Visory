@@ -1,0 +1,164 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "admission_level": {
+      "title": "Admission Level",
+      "type": "string"
+    },
+    "admission_status": {
+      "title": "Admission Status",
+      "type": "string"
+    },
+    "coverage_manifest_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Coverage Manifest Hash",
+      "type": "string"
+    },
+    "coverage_summary": {
+      "additionalProperties": true,
+      "title": "Coverage Summary",
+      "type": "object"
+    },
+    "dataset_id": {
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "dataset_schema_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Dataset Schema Version",
+      "type": "string"
+    },
+    "endpoint_contract_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Endpoint Contract Version",
+      "type": "string"
+    },
+    "expected_unit_and_identity_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Expected Unit And Identity Hash",
+      "type": "string"
+    },
+    "issued_at": {
+      "format": "date-time",
+      "title": "Issued At",
+      "type": "string"
+    },
+    "license_evidence_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "License Evidence Hash",
+      "type": "string"
+    },
+    "observation_log_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Observation Log Hash",
+      "type": "string"
+    },
+    "provider_endpoint_id": {
+      "title": "Provider Endpoint Id",
+      "type": "string"
+    },
+    "provider_id": {
+      "title": "Provider Id",
+      "type": "string"
+    },
+    "quality_report_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Quality Report Hash",
+      "type": "string"
+    },
+    "reason_codes": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Reason Codes",
+      "type": "array"
+    },
+    "receipt_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Receipt Hash",
+      "type": "string"
+    },
+    "requested_date_from": {
+      "format": "date",
+      "title": "Requested Date From",
+      "type": "string"
+    },
+    "requested_date_to": {
+      "format": "date",
+      "title": "Requested Date To",
+      "type": "string"
+    },
+    "requested_market_scope": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Requested Market Scope",
+      "type": "array"
+    },
+    "revision_chain_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Revision Chain Hash",
+      "type": "string"
+    },
+    "sample_manifest_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Sample Manifest Hash",
+      "type": "string"
+    },
+    "source_admission_receipt_id": {
+      "title": "Source Admission Receipt Id",
+      "type": "string"
+    },
+    "source_contract_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Source Contract Hash",
+      "type": "string"
+    },
+    "valid_from": {
+      "format": "date-time",
+      "title": "Valid From",
+      "type": "string"
+    },
+    "valid_to": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Valid To"
+    }
+  },
+  "required": [
+    "source_admission_receipt_id",
+    "provider_endpoint_id",
+    "provider_id",
+    "endpoint_contract_version",
+    "dataset_id",
+    "dataset_schema_version",
+    "requested_market_scope",
+    "requested_date_from",
+    "requested_date_to",
+    "source_contract_hash",
+    "sample_manifest_hash",
+    "observation_log_hash",
+    "coverage_manifest_hash",
+    "revision_chain_hash",
+    "quality_report_hash",
+    "license_evidence_hash",
+    "expected_unit_and_identity_hash",
+    "coverage_summary",
+    "admission_level",
+    "admission_status",
+    "issued_at",
+    "valid_from",
+    "receipt_hash"
+  ],
+  "title": "SourceAdmissionReceipt",
+  "type": "object"
+}

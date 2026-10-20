@@ -1,0 +1,123 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "actual_origin_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Actual Origin Hash",
+      "type": "string"
+    },
+    "actual_origin_redacted": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Actual Origin Redacted"
+    },
+    "adapter_implementation_fingerprint_id": {
+      "title": "Adapter Implementation Fingerprint Id",
+      "type": "string"
+    },
+    "binding_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Binding Hash",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "dataset_id": {
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "dataset_schema_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Dataset Schema Version",
+      "type": "string"
+    },
+    "endpoint_contract_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Endpoint Contract Version",
+      "type": "string"
+    },
+    "implementation_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Implementation Fingerprint",
+      "type": "string"
+    },
+    "market": {
+      "title": "Market",
+      "type": "string"
+    },
+    "observed_schema_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Observed Schema Hash",
+      "type": "string"
+    },
+    "provider_endpoint_id": {
+      "title": "Provider Endpoint Id",
+      "type": "string"
+    },
+    "provider_endpoint_run_binding_id": {
+      "title": "Provider Endpoint Run Binding Id",
+      "type": "string"
+    },
+    "provider_id": {
+      "title": "Provider Id",
+      "type": "string"
+    },
+    "provider_run_id": {
+      "title": "Provider Run Id",
+      "type": "string"
+    },
+    "raw_object_refs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Raw Object Refs",
+      "type": "array"
+    },
+    "receipt_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Receipt Hash",
+      "type": "string"
+    },
+    "request_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Request Fingerprint",
+      "type": "string"
+    },
+    "source_admission_receipt_id": {
+      "title": "Source Admission Receipt Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider_endpoint_run_binding_id",
+    "provider_run_id",
+    "raw_object_refs",
+    "provider_id",
+    "provider_endpoint_id",
+    "endpoint_contract_version",
+    "adapter_implementation_fingerprint_id",
+    "implementation_fingerprint",
+    "source_admission_receipt_id",
+    "receipt_hash",
+    "dataset_id",
+    "dataset_schema_version",
+    "market",
+    "request_fingerprint",
+    "observed_schema_hash",
+    "actual_origin_hash",
+    "created_at",
+    "binding_hash"
+  ],
+  "title": "ProviderEndpointRunBinding",
+  "type": "object"
+}

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, Mapping, Sequence
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Any, Iterator, Mapping, Sequence
 
 from src.schemas.platform.hashing import canonical_json_bytes, compute_content_hash
 from src.schemas.platform.indicator import (
@@ -16,6 +17,9 @@ from src.schemas.platform.indicator import (
 
 from .indicator_registry import IndicatorRegistry, IndicatorResolutionError, normalize_parameters
 
+if TYPE_CHECKING:
+    from src.schemas.platform.provider import DatasetDefinition
+
 
 @dataclass(frozen=True, slots=True)
 class DatasetContractView:
@@ -28,94 +32,148 @@ class DatasetContractView:
     capability_id: str | None
 
 
-DEFAULT_DATASET_CATALOG: Mapping[str, DatasetContractView] = {
-    "bar_1d_raw": DatasetContractView(
-        dataset_id="bar_1d_raw",
-        schema_version="1.0.0",
-        fields={
-            "entity_key": "string",
-            "trade_date": "date",
-            "open": "decimal",
-            "high": "decimal",
-            "low": "decimal",
-            "close": "decimal",
-            "volume_shares": "decimal",
-            "amount_cny": "decimal",
-            "prev_close": "decimal",
-            "trading_status": "string",
-            "price_limit_up": "decimal",
-            "price_limit_down": "decimal",
-            "available_at": "timestamptz",
-        },
-        frequency="1d",
-        domain="a_share",
-        point_in_time=True,
-        capability_id="market_bars_daily",
-    ),
-    "security_master": DatasetContractView(
-        dataset_id="security_master",
-        schema_version="1.0.0",
-        fields={"entity_key": "string", "shares_outstanding": "decimal", "available_at": "timestamptz"},
-        frequency="event",
-        domain="a_share",
-        point_in_time=True,
-        capability_id="security_master_daily",
-    ),
-    "trading_calendar": DatasetContractView(
-        dataset_id="trading_calendar",
-        schema_version="1.0.0",
-        fields={"market": "string", "trade_date": "date", "is_open": "boolean", "available_at": "timestamptz"},
-        frequency="1d",
-        domain="a_share",
-        point_in_time=True,
-        capability_id="trading_calendar",
-    ),
-    "instrument_status_daily": DatasetContractView(
-        dataset_id="instrument_status_daily",
-        schema_version="1.0.0",
-        fields={"entity_key": "string", "trade_date": "date", "trading_status": "string", "available_at": "timestamptz"},
-        frequency="1d",
-        domain="a_share",
-        point_in_time=True,
-        capability_id="instrument_status_daily",
-    ),
-    "listing_status_history": DatasetContractView(
-        dataset_id="listing_status_history",
-        schema_version="1.0.0",
-        fields={"entity_key": "string", "effective_from": "date", "effective_to": "date", "listing_status": "string", "available_at": "timestamptz"},
-        frequency="event",
-        domain="a_share",
-        point_in_time=True,
-        capability_id="listing_status_history",
-    ),
-    "corporate_action": DatasetContractView(
-        dataset_id="corporate_action",
-        schema_version="1.0.0",
-        fields={"entity_key": "string", "ex_date": "date", "action_type": "string", "factor": "decimal", "available_at": "timestamptz"},
-        frequency="event",
-        domain="a_share",
-        point_in_time=True,
-        capability_id="corporate_actions_daily",
-    ),
-    "financial_statement": DatasetContractView(
-        dataset_id="financial_statement",
-        schema_version="1.0.0",
-        fields={"entity_key": "string", "statement_period": "date", "filing_date": "date", "line_item": "string", "value": "decimal", "unit": "string", "available_at": "timestamptz"},
-        frequency="event",
-        domain="a_share",
-        point_in_time=True,
-        capability_id="financial_statement_available_at",
-    ),
-    "benchmark_index_1d": DatasetContractView(
-        dataset_id="benchmark_index_1d",
-        schema_version="1.0.0",
-        fields={"benchmark_id": "string", "trade_date": "date", "close": "decimal", "available_at": "timestamptz"},
-        frequency="1d",
-        domain="a_share",
-        point_in_time=True,
-        capability_id="benchmark_index_daily",
-    ),
-}
+# 唯一字段来源是现有 DatasetDefinition；number 在计算层显式投影为 Decimal。
+DatasetCatalogKey = tuple[str, str]
+
+
+_DATASET_CAPABILITIES = MappingProxyType(
+    {
+        "bar_1d_raw": "market_bars_daily",
+        "security_master": "security_master_daily",
+        "trading_calendar": "trading_calendar",
+        "instrument_status_daily": "instrument_status_daily",
+        "listing_status_history": "listing_status_history",
+        "corporate_action": "corporate_actions_daily",
+        "financial_statement": "financial_statement_available_at",
+        "benchmark_index_1d": "benchmark_index_daily",
+    }
+)
+
+
+class DatasetCatalog:
+    """Read-only DatasetDefinition projection with mandatory exact-version lookup."""
+
+    __slots__ = ("_entries",)
+
+    def __init__(self, entries: Mapping[DatasetCatalogKey, DatasetContractView]) -> None:
+        self._entries = MappingProxyType(dict(entries))
+
+    def get(self, dataset_id: str, schema_version: str) -> DatasetContractView | None:
+        return self._entries.get((dataset_id, schema_version))
+
+    def __getitem__(self, key: DatasetCatalogKey) -> DatasetContractView:
+        return self._entries[key]
+
+    def __iter__(self) -> Iterator[DatasetCatalogKey]:
+        return iter(self._entries)
+
+    def __len__(self) -> int:
+        return len(self._entries)
+
+    def keys(self):
+        return self._entries.keys()
+
+    def items(self):
+        return self._entries.items()
+
+    def values(self):
+        return self._entries.values()
+
+
+DatasetCatalogLike = DatasetCatalog | Mapping[DatasetCatalogKey, DatasetContractView]
+
+
+def _catalog_get(
+    catalog: DatasetCatalogLike,
+    dataset_id: str,
+    schema_version: str,
+) -> DatasetContractView | None:
+    if isinstance(catalog, DatasetCatalog):
+        return catalog.get(dataset_id, schema_version)
+    return catalog.get((dataset_id, schema_version))
+
+
+def _project_dataset_catalog(
+    definitions: Sequence["DatasetDefinition"] | None = None,
+) -> DatasetCatalog:
+    if definitions is None:
+        from .provider_registry import _dataset_contracts
+
+        definitions = _dataset_contracts()
+
+    entries: dict[DatasetCatalogKey, DatasetContractView] = {}
+    for item in definitions:
+        if item.dataset_id not in _DATASET_CAPABILITIES:
+            continue
+        key = (item.dataset_id, item.schema_version)
+        if key in entries:
+            raise IndicatorResolutionError(
+                "INDICATOR_CATALOG_DRIFT",
+                "Dataset Catalog contains a duplicate exact-version projection",
+                details={"dataset_id": item.dataset_id, "schema_version": item.schema_version},
+            )
+        entries[key] = DatasetContractView(
+            dataset_id=item.dataset_id,
+            schema_version=item.schema_version,
+            fields=MappingProxyType(
+                {key: "decimal" if value == "number" else value for key, value in item.field_types.items()}
+            ),
+            frequency="1d" if item.frequency == "daily" else item.frequency,
+            domain=item.entity_scope,
+            point_in_time="available_at" in item.required_fields,
+            capability_id=_DATASET_CAPABILITIES[item.dataset_id],
+        )
+    return DatasetCatalog(entries)
+
+
+DEFAULT_DATASET_CATALOG = _project_dataset_catalog()
+
+
+def validate_dataset_projection(
+    view: DatasetContractView,
+    *,
+    dataset_catalog: DatasetCatalogLike | None = None,
+) -> None:
+    reference_catalog = dataset_catalog if isinstance(dataset_catalog, DatasetCatalog) else DEFAULT_DATASET_CATALOG
+    actual = _catalog_get(reference_catalog, view.dataset_id, view.schema_version)
+    if actual is None or view != actual:
+        raise IndicatorResolutionError(
+            "INDICATOR_CATALOG_DRIFT",
+            "Resolver Catalog must match the real DatasetDefinition projection",
+            details={"dataset_id": view.dataset_id, "schema_version": view.schema_version},
+        )
+
+
+def validate_definition_inputs(
+    definition: IndicatorDefinition,
+    *,
+    dataset_catalog: DatasetCatalogLike | None = None,
+) -> None:
+    catalog = DEFAULT_DATASET_CATALOG if dataset_catalog is None else dataset_catalog
+    for ref in definition.input_dataset_refs:
+        actual = _catalog_get(catalog, ref.dataset_id, ref.schema_version)
+        if actual is None:
+            raise IndicatorResolutionError(
+                "INDICATOR_UNREGISTERED_INPUT",
+                "definition requires an unavailable Dataset version",
+                details={
+                    "dataset_id": ref.dataset_id,
+                    "schema_version": ref.schema_version,
+                    "fields": ref.required_fields,
+                },
+            )
+        validate_dataset_projection(actual, dataset_catalog=catalog)
+        missing_fields = sorted(set(ref.required_fields) - set(actual.fields))
+        if missing_fields:
+            raise IndicatorResolutionError(
+                "INDICATOR_UNREGISTERED_INPUT",
+                "definition requires unavailable Dataset fields",
+                details={
+                    "dataset_id": ref.dataset_id,
+                    "schema_version": ref.schema_version,
+                    "fields": missing_fields,
+                },
+            )
 
 
 class FeatureDependencyResolver:
@@ -123,10 +181,18 @@ class FeatureDependencyResolver:
         self,
         registry: IndicatorRegistry,
         *,
-        dataset_catalog: Mapping[str, DatasetContractView] | None = None,
+        dataset_catalog: DatasetCatalogLike | None = None,
     ) -> None:
         self.registry = registry
-        self.dataset_catalog = dataset_catalog if dataset_catalog is not None else DEFAULT_DATASET_CATALOG
+        if dataset_catalog is None:
+            self.dataset_catalog: DatasetCatalogLike = DEFAULT_DATASET_CATALOG
+            self._projection_catalog = DEFAULT_DATASET_CATALOG
+        elif isinstance(dataset_catalog, DatasetCatalog):
+            self.dataset_catalog = dataset_catalog
+            self._projection_catalog = dataset_catalog
+        else:
+            self.dataset_catalog = MappingProxyType(dict(dataset_catalog))
+            self._projection_catalog = DEFAULT_DATASET_CATALOG
 
     def resolve(
         self,
@@ -141,6 +207,7 @@ class FeatureDependencyResolver:
         date_to: date | None = None,
         allowed_domains: set[str] | frozenset[str] | None = None,
         allow_retired: bool = False,
+        allow_unavailable: bool = False,
     ) -> FeatureDependencyPlan:
         self._validate_cutoff(cutoff_at)
         if date_to is not None and date_from is None:
@@ -149,6 +216,8 @@ class FeatureDependencyResolver:
             raise IndicatorResolutionError("INDICATOR_PARAMETER_INVALID", "date_to must not precede date_from")
         if consumer_kind not in {"PREVIEW", "FORMAL"}:
             raise IndicatorResolutionError("INDICATOR_PARAMETER_INVALID", "consumer_kind must be PREVIEW or FORMAL")
+        if allow_unavailable and consumer_kind != "PREVIEW":
+            raise IndicatorResolutionError("INDICATOR_CAPABILITY_MISSING", "unavailable diagnostic plans are preview-only")
         roots = [self._coerce_instance(item, universe_scope_hash) for item in required_instances]
         if not roots:
             raise IndicatorResolutionError("INDICATOR_PARAMETER_INVALID", "at least one required indicator is needed")
@@ -181,6 +250,7 @@ class FeatureDependencyResolver:
                 dataset_available_at=dataset_available_at,
                 allowed_domains=allowed_domains,
                 allow_retired=allow_retired,
+                allow_unavailable=allow_unavailable,
             )
             key = self._key_for(current, definition)
             key_tuple = key.sort_key
@@ -283,6 +353,7 @@ class FeatureDependencyResolver:
         dataset_available_at: Mapping[str, datetime] | None,
         allowed_domains: set[str] | frozenset[str] | None,
         allow_retired: bool,
+        allow_unavailable: bool,
     ) -> None:
         if definition.publication_status.value == "DRAFT" or (definition.publication_status.value == "RETIRED" and not allow_retired):
             raise IndicatorResolutionError("INDICATOR_DEFINITION_NOT_PUBLISHED", "indicator definition is not published")
@@ -294,17 +365,41 @@ class FeatureDependencyResolver:
             raise IndicatorResolutionError("INDICATOR_UNIVERSE_NOT_FROZEN", "cross-sectional indicator requires a frozen universe scope")
         if available_capabilities is not None and definition.capability_id and definition.capability_id not in available_capabilities:
             raise IndicatorResolutionError("INDICATOR_CAPABILITY_MISSING", "required indicator capability is unavailable", details={"capability_id": definition.capability_id})
+        if definition.indicator_id.startswith("market.sentiment."):
+            from .market_sentiment import validate_market_definition
+            validate_market_definition(definition)
         for dataset_ref in definition.input_dataset_refs:
-            catalog = self.dataset_catalog.get(dataset_ref.dataset_id)
+            catalog = _catalog_get(
+                self.dataset_catalog,
+                dataset_ref.dataset_id,
+                dataset_ref.schema_version,
+            )
             if catalog is None:
-                raise IndicatorResolutionError("INDICATOR_UNREGISTERED_INPUT", "input dataset is not registered", details={"dataset_id": dataset_ref.dataset_id})
+                raise IndicatorResolutionError(
+                    "INDICATOR_UNREGISTERED_INPUT",
+                    "input dataset exact version is not registered",
+                    details={
+                        "dataset_id": dataset_ref.dataset_id,
+                        "schema_version": dataset_ref.schema_version,
+                    },
+                )
+            validate_dataset_projection(catalog, dataset_catalog=self._projection_catalog)
             if catalog.domain != "a_share":
-                raise IndicatorResolutionError("INDICATOR_GLOBAL_DOMAIN_NOT_ALLOWED", "input dataset domain is outside A-share feature scope")
-            if catalog.schema_version != dataset_ref.schema_version:
-                raise IndicatorResolutionError("INDICATOR_INPUT_TYPE_MISMATCH", "input dataset schema version does not match")
+                raise IndicatorResolutionError(
+                    "INDICATOR_GLOBAL_DOMAIN_NOT_ALLOWED",
+                    "input dataset domain is outside A-share feature scope",
+                )
             missing_fields = sorted(set(dataset_ref.required_fields) - set(catalog.fields))
-            if missing_fields:
-                raise IndicatorResolutionError("INDICATOR_UNREGISTERED_INPUT", "input dataset fields are not registered", details={"fields": missing_fields})
+            if missing_fields and not (allow_unavailable and definition.indicator_id.startswith("market.sentiment.")):
+                raise IndicatorResolutionError(
+                    "INDICATOR_UNREGISTERED_INPUT",
+                    "input dataset fields are not registered",
+                    details={
+                        "dataset_id": dataset_ref.dataset_id,
+                        "schema_version": dataset_ref.schema_version,
+                        "fields": missing_fields,
+                    },
+                )
             if consumer_kind == "FORMAL" and not catalog.point_in_time:
                 raise IndicatorResolutionError("INDICATOR_PIT_NOT_ALLOWED", "formal consumers cannot use a non-PIT dataset")
             if available_capabilities is not None and catalog.capability_id and catalog.capability_id not in available_capabilities:
@@ -338,7 +433,20 @@ class FeatureDependencyResolver:
                 capability_ids.add(definition.capability_id)
             for dataset_ref in definition.input_dataset_refs:
                 dataset_refs.add(f"{dataset_ref.dataset_id}@{dataset_ref.schema_version}")
-                catalog = self.dataset_catalog[dataset_ref.dataset_id]
+                catalog = _catalog_get(
+                    self.dataset_catalog,
+                    dataset_ref.dataset_id,
+                    dataset_ref.schema_version,
+                )
+                if catalog is None:
+                    raise IndicatorResolutionError(
+                        "INDICATOR_UNREGISTERED_INPUT",
+                        "input dataset exact version is not registered",
+                        details={
+                            "dataset_id": dataset_ref.dataset_id,
+                            "schema_version": dataset_ref.schema_version,
+                        },
+                    )
                 if catalog.capability_id:
                     capability_ids.add(catalog.capability_id)
         return sorted(dataset_refs), sorted(capability_ids)
@@ -367,6 +475,8 @@ class FeatureDependencyResolver:
 
 __all__ = [
     "DEFAULT_DATASET_CATALOG",
+    "DatasetCatalog",
+    "DatasetCatalogKey",
     "DatasetContractView",
     "FeatureDependencyPlan",
     "FeatureDependencyResolver",

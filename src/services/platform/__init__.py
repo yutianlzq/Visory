@@ -5,6 +5,12 @@ from .canonical_normalization import CanonicalNormalizationError, CanonicalNorma
 from .daily_scheduler import DailyScheduleResult, DailySchedulerService, FormalDeadlineDecision, ScheduledPhaseSubmission, SupplementalDecision
 from .task_control import TaskControlError, TaskControlService
 from .provider_registry import ADAPTER_REGISTRY, ProviderRegistryService
+from .provider_admission import (
+    AdapterImplementationObservation,
+    ProviderAdmissionGateError,
+    ProviderAdmissionService,
+    ProviderEndpointAdmissionVerifier,
+)
 from .snapshot import SnapshotBuildTaskWorker, SnapshotCapabilityEngine, SnapshotGateError, SnapshotGateService, SnapshotManifestPublisher
 from .raw_ingestion import (
     ControlledProviderAdapterRegistry,
@@ -20,6 +26,6 @@ from .raw_ingestion import (
 )
 
 
-__all__ = ["FeatureMaterializationError", "FeaturePublicationError", "FeatureStore", "FeatureStoreMaterializer", "affected_feature_instances", "ADAPTER_REGISTRY", "BackfillError", "BackfillExecutionResult", "BackfillProviderResult", "BackfillService", "BackfillStageChainExecution", "BackfillStageChainExecutor", "BackfillWorker", "DeterministicBackfillProvider", "backfill_stage_dependencies", "DailyScheduleResult", "DailySchedulerService", "FormalDeadlineDecision", "ScheduledPhaseSubmission", "SupplementalDecision", "ArtifactPublisherService", "CanonicalNormalizationError", "CanonicalNormalizer", "CanonicalNormalizationService", "CanonicalNormalizationTaskWorker", "ProviderCanonicalMapper", "ControlledProviderAdapterRegistry", "FakeProviderTransport", "ProviderRateLimiter", "PostgresRateLimiter", "ProviderRegistryService", "RawIngestionError", "RawIngestionOrphanCandidate", "RawIngestionOrphanScanResult", "RawIngestionOrphanScanner", "RawIngestionTaskWorker", "RawObjectPublisher", "SnapshotBuildTaskWorker", "SnapshotCapabilityEngine", "SnapshotGateError", "SnapshotGateService", "SnapshotManifestPublisher", "TaskControlError", "TaskControlService", "DEFAULT_DATASET_CATALOG", "FeatureDependencyResolver", "BUILTIN_REGISTRY", "F1_INDICATOR_DEFINITIONS", "IndicatorRegistry", "IndicatorResolutionError", "default_indicator_registry", "normalize_parameters"]
+__all__ = ["FeatureMaterializationError", "FeaturePublicationError", "FeatureStore", "FeatureStoreMaterializer", "affected_feature_instances", "ADAPTER_REGISTRY", "BackfillError", "BackfillExecutionResult", "BackfillProviderResult", "BackfillService", "BackfillStageChainExecution", "BackfillStageChainExecutor", "BackfillWorker", "DeterministicBackfillProvider", "backfill_stage_dependencies", "DailyScheduleResult", "DailySchedulerService", "FormalDeadlineDecision", "ScheduledPhaseSubmission", "SupplementalDecision", "ArtifactPublisherService", "CanonicalNormalizationError", "CanonicalNormalizer", "CanonicalNormalizationService", "CanonicalNormalizationTaskWorker", "ProviderCanonicalMapper", "ControlledProviderAdapterRegistry", "FakeProviderTransport", "ProviderRateLimiter", "PostgresRateLimiter", "ProviderRegistryService", "AdapterImplementationObservation", "ProviderAdmissionGateError", "ProviderAdmissionService", "ProviderEndpointAdmissionVerifier", "RawIngestionError", "RawIngestionOrphanCandidate", "RawIngestionOrphanScanResult", "RawIngestionOrphanScanner", "RawIngestionTaskWorker", "RawObjectPublisher", "SnapshotBuildTaskWorker", "SnapshotCapabilityEngine", "SnapshotGateError", "SnapshotGateService", "SnapshotManifestPublisher", "TaskControlError", "TaskControlService", "DEFAULT_DATASET_CATALOG", "FeatureDependencyResolver", "BUILTIN_REGISTRY", "F1_INDICATOR_DEFINITIONS", "IndicatorRegistry", "IndicatorResolutionError", "default_indicator_registry", "normalize_parameters"]
 from .feature_dependency import DEFAULT_DATASET_CATALOG, FeatureDependencyResolver
 from .indicator_registry import BUILTIN_REGISTRY, F1_INDICATOR_DEFINITIONS, IndicatorRegistry, IndicatorResolutionError, default_indicator_registry, normalize_parameters

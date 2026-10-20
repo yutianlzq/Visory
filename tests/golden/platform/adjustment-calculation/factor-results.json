@@ -1,0 +1,698 @@
+{
+  "a01_no_action-backward_fixed_base": {
+    "canonical_result": {
+      "anchor_trade_date": {
+        "$date": "2026-08-31"
+      },
+      "base_trade_date": {
+        "$date": "2026-08-27"
+      },
+      "cutoff_at": {
+        "$datetime": "2026-08-31T08:00:00.000000Z"
+      },
+      "direction": "BACKWARD_FIXED_BASE",
+      "fixture_kind": "FIXTURE_ONLY",
+      "input_semantic_hash": "sha256:f56e4a1f452b052a1ff0ed8e7528c740eb4a3dd9cd28143a46b501c44e2ba378",
+      "method_ref": {
+        "formula_digest": "sha256:0323630e9afbeb603930db1965580fe9efc31c82d817f53fad18d2547280ddf3",
+        "method_contract_hash": "sha256:e87746bf449b25b3410f1f2930607d263917f0079998d0bc427fe53df96359ff",
+        "method_contract_version": "1.0.0",
+        "method_id": "pit_price_continuity",
+        "method_version": "1.0.0"
+      },
+      "result_contract_version": "1.0.0",
+      "rows": [
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-27"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-28"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-31"
+          }
+        }
+      ],
+      "selection_hash": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "content_hash": "sha256:997fb37b49b6e1c73811ef85c8650862c920b51f85b66122c6b9bf17e19a98fa"
+  },
+  "a01_no_action-forward_fixed_anchor": {
+    "canonical_result": {
+      "anchor_trade_date": {
+        "$date": "2026-08-31"
+      },
+      "base_trade_date": {
+        "$date": "2026-08-27"
+      },
+      "cutoff_at": {
+        "$datetime": "2026-08-31T08:00:00.000000Z"
+      },
+      "direction": "FORWARD_FIXED_ANCHOR",
+      "fixture_kind": "FIXTURE_ONLY",
+      "input_semantic_hash": "sha256:d9c7d109f8c461be2b29d1f84ac68ba716517500e5a2ea58e1d72c41f6a16dfd",
+      "method_ref": {
+        "formula_digest": "sha256:fb4b987fa43044a80ddad0bb47847080448c89fd7877940a69b6fc90d56b4555",
+        "method_contract_hash": "sha256:9b4faf1e0fad5f1a5ec0828d255c87efd1155535b90c1eba0f510bf5dec07f25",
+        "method_contract_version": "1.0.0",
+        "method_id": "pit_price_continuity",
+        "method_version": "1.0.0"
+      },
+      "result_contract_version": "1.0.0",
+      "rows": [
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-27"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-28"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-31"
+          }
+        }
+      ],
+      "selection_hash": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "content_hash": "sha256:7a40f130ae07ff96d0e77980211b1d031fb08142dd5213c4253f87b50934479d"
+  },
+  "a02_cash-backward_fixed_base": {
+    "canonical_result": {
+      "anchor_trade_date": {
+        "$date": "2026-08-31"
+      },
+      "base_trade_date": {
+        "$date": "2026-08-27"
+      },
+      "cutoff_at": {
+        "$datetime": "2026-08-31T08:00:00.000000Z"
+      },
+      "direction": "BACKWARD_FIXED_BASE",
+      "fixture_kind": "FIXTURE_ONLY",
+      "input_semantic_hash": "sha256:57ff995ad46fdea2ee1ee4c7b72872377cd6b1bfbb9fb6c8b8e1d6b165aa20b1",
+      "method_ref": {
+        "formula_digest": "sha256:0323630e9afbeb603930db1965580fe9efc31c82d817f53fad18d2547280ddf3",
+        "method_contract_hash": "sha256:e87746bf449b25b3410f1f2930607d263917f0079998d0bc427fe53df96359ff",
+        "method_contract_version": "1.0.0",
+        "method_id": "pit_price_continuity",
+        "method_version": "1.0.0"
+      },
+      "result_contract_version": "1.0.0",
+      "rows": [
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-27"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.111111111111111111",
+          "trade_date": {
+            "$date": "2026-08-28"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.111111111111111111",
+          "trade_date": {
+            "$date": "2026-08-31"
+          }
+        }
+      ],
+      "selection_hash": "sha256:b66812666ec9524f089d8abbb6923382be443212e9a05b8b63739ef8f57b2ade"
+    },
+    "content_hash": "sha256:58c9178ff96425035b844706c476d9ef58d76039269ce8e767a1e8addeac7bcf"
+  },
+  "a02_cash-forward_fixed_anchor": {
+    "canonical_result": {
+      "anchor_trade_date": {
+        "$date": "2026-08-31"
+      },
+      "base_trade_date": {
+        "$date": "2026-08-27"
+      },
+      "cutoff_at": {
+        "$datetime": "2026-08-31T08:00:00.000000Z"
+      },
+      "direction": "FORWARD_FIXED_ANCHOR",
+      "fixture_kind": "FIXTURE_ONLY",
+      "input_semantic_hash": "sha256:f753d50842203aaca839353c8cb389576f4c2a0d892d288562688c2537dfaf92",
+      "method_ref": {
+        "formula_digest": "sha256:fb4b987fa43044a80ddad0bb47847080448c89fd7877940a69b6fc90d56b4555",
+        "method_contract_hash": "sha256:9b4faf1e0fad5f1a5ec0828d255c87efd1155535b90c1eba0f510bf5dec07f25",
+        "method_contract_version": "1.0.0",
+        "method_id": "pit_price_continuity",
+        "method_version": "1.0.0"
+      },
+      "result_contract_version": "1.0.0",
+      "rows": [
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "0.900000000000000000",
+          "trade_date": {
+            "$date": "2026-08-27"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-28"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-31"
+          }
+        }
+      ],
+      "selection_hash": "sha256:b66812666ec9524f089d8abbb6923382be443212e9a05b8b63739ef8f57b2ade"
+    },
+    "content_hash": "sha256:7a54d0ddd990b1c10599a4cf442a079d794b67b76b87cf590ed31e54f97addfe"
+  },
+  "a03_cash_bonus-backward_fixed_base": {
+    "canonical_result": {
+      "anchor_trade_date": {
+        "$date": "2026-08-31"
+      },
+      "base_trade_date": {
+        "$date": "2026-08-27"
+      },
+      "cutoff_at": {
+        "$datetime": "2026-08-31T08:00:00.000000Z"
+      },
+      "direction": "BACKWARD_FIXED_BASE",
+      "fixture_kind": "FIXTURE_ONLY",
+      "input_semantic_hash": "sha256:7077d1bb83dc041b4e30241658effd7d22e2bddb8219be132c097ef6eafbf811",
+      "method_ref": {
+        "formula_digest": "sha256:0323630e9afbeb603930db1965580fe9efc31c82d817f53fad18d2547280ddf3",
+        "method_contract_hash": "sha256:e87746bf449b25b3410f1f2930607d263917f0079998d0bc427fe53df96359ff",
+        "method_contract_version": "1.0.0",
+        "method_id": "pit_price_continuity",
+        "method_version": "1.0.0"
+      },
+      "result_contract_version": "1.0.0",
+      "rows": [
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-27"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.666666666666666667",
+          "trade_date": {
+            "$date": "2026-08-28"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.666666666666666667",
+          "trade_date": {
+            "$date": "2026-08-31"
+          }
+        }
+      ],
+      "selection_hash": "sha256:cad2279a8a0c96b065a5c6a8fba58098e2039086d8b69a8f07e9b8a0f9589141"
+    },
+    "content_hash": "sha256:87c7a15cf05a05829292dfa4ef27beb896de311832cefb1e153a68842ccd778e"
+  },
+  "a03_cash_bonus-forward_fixed_anchor": {
+    "canonical_result": {
+      "anchor_trade_date": {
+        "$date": "2026-08-31"
+      },
+      "base_trade_date": {
+        "$date": "2026-08-27"
+      },
+      "cutoff_at": {
+        "$datetime": "2026-08-31T08:00:00.000000Z"
+      },
+      "direction": "FORWARD_FIXED_ANCHOR",
+      "fixture_kind": "FIXTURE_ONLY",
+      "input_semantic_hash": "sha256:d2188cfa5a3903e15ea363a416d3621a995b7fba4c91ff93f6c0441211999364",
+      "method_ref": {
+        "formula_digest": "sha256:fb4b987fa43044a80ddad0bb47847080448c89fd7877940a69b6fc90d56b4555",
+        "method_contract_hash": "sha256:9b4faf1e0fad5f1a5ec0828d255c87efd1155535b90c1eba0f510bf5dec07f25",
+        "method_contract_version": "1.0.0",
+        "method_id": "pit_price_continuity",
+        "method_version": "1.0.0"
+      },
+      "result_contract_version": "1.0.0",
+      "rows": [
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "0.600000000000000000",
+          "trade_date": {
+            "$date": "2026-08-27"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-28"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-31"
+          }
+        }
+      ],
+      "selection_hash": "sha256:cad2279a8a0c96b065a5c6a8fba58098e2039086d8b69a8f07e9b8a0f9589141"
+    },
+    "content_hash": "sha256:bfc8410d9fb88c26bbc69d548dd6acaf969607f1ede8b3b080c5b37aaef79027"
+  },
+  "a04_split-backward_fixed_base": {
+    "canonical_result": {
+      "anchor_trade_date": {
+        "$date": "2026-08-31"
+      },
+      "base_trade_date": {
+        "$date": "2026-08-27"
+      },
+      "cutoff_at": {
+        "$datetime": "2026-08-31T08:00:00.000000Z"
+      },
+      "direction": "BACKWARD_FIXED_BASE",
+      "fixture_kind": "FIXTURE_ONLY",
+      "input_semantic_hash": "sha256:d68de1e53e3c127f0e95191111934e94a24fb080e3da6ca5b2efda26259999ec",
+      "method_ref": {
+        "formula_digest": "sha256:0323630e9afbeb603930db1965580fe9efc31c82d817f53fad18d2547280ddf3",
+        "method_contract_hash": "sha256:e87746bf449b25b3410f1f2930607d263917f0079998d0bc427fe53df96359ff",
+        "method_contract_version": "1.0.0",
+        "method_id": "pit_price_continuity",
+        "method_version": "1.0.0"
+      },
+      "result_contract_version": "1.0.0",
+      "rows": [
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-27"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "2.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-28"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "2.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-31"
+          }
+        }
+      ],
+      "selection_hash": "sha256:94b1c219e0a92723f6a79828fa26a2d30d6ba6fde7ee7ab40e1c8cf6a43668a1"
+    },
+    "content_hash": "sha256:41bb5e047180cb61737e3545760281f77d8cac2a3ba6d3f78c41d70fef54c73a"
+  },
+  "a04_split-forward_fixed_anchor": {
+    "canonical_result": {
+      "anchor_trade_date": {
+        "$date": "2026-08-31"
+      },
+      "base_trade_date": {
+        "$date": "2026-08-27"
+      },
+      "cutoff_at": {
+        "$datetime": "2026-08-31T08:00:00.000000Z"
+      },
+      "direction": "FORWARD_FIXED_ANCHOR",
+      "fixture_kind": "FIXTURE_ONLY",
+      "input_semantic_hash": "sha256:feea137d12e00d668c0ebd69f975e6ff36356ee21c36463bda34c3e4de55989e",
+      "method_ref": {
+        "formula_digest": "sha256:fb4b987fa43044a80ddad0bb47847080448c89fd7877940a69b6fc90d56b4555",
+        "method_contract_hash": "sha256:9b4faf1e0fad5f1a5ec0828d255c87efd1155535b90c1eba0f510bf5dec07f25",
+        "method_contract_version": "1.0.0",
+        "method_id": "pit_price_continuity",
+        "method_version": "1.0.0"
+      },
+      "result_contract_version": "1.0.0",
+      "rows": [
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "0.500000000000000000",
+          "trade_date": {
+            "$date": "2026-08-27"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-28"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-31"
+          }
+        }
+      ],
+      "selection_hash": "sha256:94b1c219e0a92723f6a79828fa26a2d30d6ba6fde7ee7ab40e1c8cf6a43668a1"
+    },
+    "content_hash": "sha256:1105d982bb5c34d3c8b637a98517bd7de1a7f9099d6069401d2ff35efa1292ed"
+  },
+  "a05_chain-backward_fixed_base": {
+    "canonical_result": {
+      "anchor_trade_date": {
+        "$date": "2026-08-31"
+      },
+      "base_trade_date": {
+        "$date": "2026-08-27"
+      },
+      "cutoff_at": {
+        "$datetime": "2026-08-31T08:00:00.000000Z"
+      },
+      "direction": "BACKWARD_FIXED_BASE",
+      "fixture_kind": "FIXTURE_ONLY",
+      "input_semantic_hash": "sha256:a32ade7a7142acf2dae93609c73d48b0639f591c1275f678a44ead975b8724b8",
+      "method_ref": {
+        "formula_digest": "sha256:0323630e9afbeb603930db1965580fe9efc31c82d817f53fad18d2547280ddf3",
+        "method_contract_hash": "sha256:e87746bf449b25b3410f1f2930607d263917f0079998d0bc427fe53df96359ff",
+        "method_contract_version": "1.0.0",
+        "method_id": "pit_price_continuity",
+        "method_version": "1.0.0"
+      },
+      "result_contract_version": "1.0.0",
+      "rows": [
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-27"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.111111111111111111",
+          "trade_date": {
+            "$date": "2026-08-28"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "2.222222222222222222",
+          "trade_date": {
+            "$date": "2026-08-31"
+          }
+        }
+      ],
+      "selection_hash": "sha256:1bdf0cc07409836e04fc25ba316be89cfa4f872d4700b5b9042625222a7d8427"
+    },
+    "content_hash": "sha256:ecdd33180339eef2ccbd9d8abfaff1a3f175aa288eca0a61a9915a1570a88c83"
+  },
+  "a05_chain-forward_fixed_anchor": {
+    "canonical_result": {
+      "anchor_trade_date": {
+        "$date": "2026-08-31"
+      },
+      "base_trade_date": {
+        "$date": "2026-08-27"
+      },
+      "cutoff_at": {
+        "$datetime": "2026-08-31T08:00:00.000000Z"
+      },
+      "direction": "FORWARD_FIXED_ANCHOR",
+      "fixture_kind": "FIXTURE_ONLY",
+      "input_semantic_hash": "sha256:30adf4db14402a58050861913d6d092fdc3ace8db7e4164616c16b19cd123c89",
+      "method_ref": {
+        "formula_digest": "sha256:fb4b987fa43044a80ddad0bb47847080448c89fd7877940a69b6fc90d56b4555",
+        "method_contract_hash": "sha256:9b4faf1e0fad5f1a5ec0828d255c87efd1155535b90c1eba0f510bf5dec07f25",
+        "method_contract_version": "1.0.0",
+        "method_id": "pit_price_continuity",
+        "method_version": "1.0.0"
+      },
+      "result_contract_version": "1.0.0",
+      "rows": [
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "0.450000000000000000",
+          "trade_date": {
+            "$date": "2026-08-27"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "0.500000000000000000",
+          "trade_date": {
+            "$date": "2026-08-28"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-31"
+          }
+        }
+      ],
+      "selection_hash": "sha256:1bdf0cc07409836e04fc25ba316be89cfa4f872d4700b5b9042625222a7d8427"
+    },
+    "content_hash": "sha256:44ed17e5ffc733c2954620532e18c444fe382d4af5904c188a9cd23246576bb2"
+  },
+  "bonus_only-backward_fixed_base": {
+    "canonical_result": {
+      "anchor_trade_date": {
+        "$date": "2026-08-31"
+      },
+      "base_trade_date": {
+        "$date": "2026-08-27"
+      },
+      "cutoff_at": {
+        "$datetime": "2026-08-31T08:00:00.000000Z"
+      },
+      "direction": "BACKWARD_FIXED_BASE",
+      "fixture_kind": "FIXTURE_ONLY",
+      "input_semantic_hash": "sha256:5afb39bdd7d93262ab4764374d1d1530ad41605e185eb358ae364eda8d768b75",
+      "method_ref": {
+        "formula_digest": "sha256:0323630e9afbeb603930db1965580fe9efc31c82d817f53fad18d2547280ddf3",
+        "method_contract_hash": "sha256:e87746bf449b25b3410f1f2930607d263917f0079998d0bc427fe53df96359ff",
+        "method_contract_version": "1.0.0",
+        "method_id": "pit_price_continuity",
+        "method_version": "1.0.0"
+      },
+      "result_contract_version": "1.0.0",
+      "rows": [
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-27"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "2.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-28"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "2.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-31"
+          }
+        }
+      ],
+      "selection_hash": "sha256:a49469e2df00b9f3b94286ce3510f09222b0e66b9ac7c5a89048c97f6600e253"
+    },
+    "content_hash": "sha256:17412d4fad3254b72d7c1d06084d028aa5946527db2503179a9bd310c51bf740"
+  },
+  "bonus_only-forward_fixed_anchor": {
+    "canonical_result": {
+      "anchor_trade_date": {
+        "$date": "2026-08-31"
+      },
+      "base_trade_date": {
+        "$date": "2026-08-27"
+      },
+      "cutoff_at": {
+        "$datetime": "2026-08-31T08:00:00.000000Z"
+      },
+      "direction": "FORWARD_FIXED_ANCHOR",
+      "fixture_kind": "FIXTURE_ONLY",
+      "input_semantic_hash": "sha256:ee695de63d2aa125370ce7a389f2d49f78f12edbd7040b8bf216089c90e4be55",
+      "method_ref": {
+        "formula_digest": "sha256:fb4b987fa43044a80ddad0bb47847080448c89fd7877940a69b6fc90d56b4555",
+        "method_contract_hash": "sha256:9b4faf1e0fad5f1a5ec0828d255c87efd1155535b90c1eba0f510bf5dec07f25",
+        "method_contract_version": "1.0.0",
+        "method_id": "pit_price_continuity",
+        "method_version": "1.0.0"
+      },
+      "result_contract_version": "1.0.0",
+      "rows": [
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "0.500000000000000000",
+          "trade_date": {
+            "$date": "2026-08-27"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-28"
+          }
+        },
+        {
+          "available_at": {
+            "$datetime": "2026-08-31T07:00:00.000000Z"
+          },
+          "entity_key": "fixture_security",
+          "factor": "1.000000000000000000",
+          "trade_date": {
+            "$date": "2026-08-31"
+          }
+        }
+      ],
+      "selection_hash": "sha256:a49469e2df00b9f3b94286ce3510f09222b0e66b9ac7c5a89048c97f6600e253"
+    },
+    "content_hash": "sha256:bcd2d0dadfff2f48eb9d4c58165b0ab2b2d3cc3b8468e236ae9108de3fed311a"
+  }
+}

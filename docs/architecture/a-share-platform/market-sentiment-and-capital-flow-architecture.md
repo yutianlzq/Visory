@@ -2,7 +2,7 @@
 
 状态：已确认（Design Approved）
 
-最后更新：2026-08-28
+最后更新：2026-10-15
 
 ## 1. 决策摘要
 
@@ -14,12 +14,22 @@
 - 资金行为由订单规模资金、杠杆资金、公开席位、大宗交易、板块资金和互联互通活跃度等证据组成，不建立无法验证的“真实主力账户”字段；
 - 页面解释分与策略信号分离：页面使用固定、可审计权重，策略可以基于原始指标滚动优化，但不得改写页面历史口径；
 - 每项指标必须绑定唯一 `metric_id`、公式版本、实际数据源、DataSnapshot、FeatureSnapshot、`available_at` 和质量状态；
-- `a-stock-data` 是核心源，Financial-API 是补充和受控灾备；同一资金口径不得在没有版本记录的情况下跨源拼接；
+- `a-stock-data` 是固定 Adapter Bundle 和能力参考，腾讯、通达信、东财、巨潮、BaoStock、新浪及交易所等实际上游分别注册 Provider/Endpoint；Financial-API 是补充和受控灾备，同一资金口径不得在没有版本记录的情况下跨源拼接；
 - T 日盘后指标只可用于 T+1 及之后的策略决策；缺失是 `unknown`，不是零；
 - 市场总览可以按能力降级，依赖缺失指标的正式策略必须阻断；
 - Vibe-Research 只作为页面布局和交互参考，指标公式、历史口径和快照由平台统一管理。
 
 本文描述目标架构，不表示当前代码已经具备相应实现。
+
+### WP-0303 受限实现边界 2026-10-08
+
+[WP-0303-PREP](WP-0303-PREP.md) 固定当前契约，[受限实现与本地验收记录](WP-0303-IMPLEMENTATION.md) 记录实际代码、命令、缺口及回滚。实现复用既有 Registry/DAG/FeatureStore，单值市场行使用 `entity_key=aggregate:cn_a_equity_v1`；`domain=a_share` 和每日冻结 scope Hash 不变。Catalog 只投影真实字段，旧 F1 Definition/Hash 不原地改写。
+
+真实路径只计算闭合原始指标；完整评分为隔离 fixture 算法证据。上游 PIT 输入及三个长 normalized ID 的 PostgreSQL 64 字符限制仍阻断完整链；两个市场能力始终 missing，Snapshot 为 PROVISIONAL，Formal/Paper 拒绝。Correction 保留旧固定引用；每日 scope/源引用改变时不得伪装同一逻辑 Manifest identity 或改绑最新。无本轮生产发布或认证；WP-0303 为 IN_PROGRESS，非 VERIFIED/RELEASED。
+
+2026-10-15 基于 `a-stock-data@29b07d2e37005b9fd568bca1262f6e572b5f9407` 进一步固定 [Adapter Bundle 与真实 Provider 分层](WP-0303-A-STOCK-DATA-ADAPTER-ARCHITECTURE.md)：仓库版本只作为实现指纹，各 Endpoint 独立声明 Schema、分页、零行、覆盖、PIT 和修订能力。`except -> []`、Bundle 内静默 fallback、当前历史重下载或自由文本 `actual_upstream` 都不能解锁 B1—B4 或市场能力。
+
+完整 Goal 按 [WP-0303-FULL-INPUT-TO-FEATURE-CLOSEOUT Goal v2](WP-0303-FULL-INPUT-TO-FEATURE-CLOSEOUT-GOAL.md) 重排。未来 Formal 市场输入除固定 DataSnapshot/Partition 外，还必须引用 `ProviderEndpointRunBinding`；Binding 必须对应相同 Provider/Endpoint、Dataset/schema、Raw/Run、实现指纹和有效 `PIT_CERTIFIED` `SourceAdmissionReceipt`。无 Binding 的旧 Run 可兼容读取，但不得认证市场能力。
 
 ## 2. 模块边界
 
@@ -487,6 +497,8 @@ certified_capabilities:
 
 `market_emotion` 只有五个必需维度全部通过时才能认证。单个资金通道失败不阻断其他通道；依赖综合资金压力的策略必须满足其全部必需通道。
 
+对 `market_breadth`、`market_emotion` 及其必需原始指标，所有 Formal 输入分区还必须能沿 lineage 读到 `ProviderEndpointRunBinding` 和相同 Dataset/schema/申请范围的 `PIT_CERTIFIED` `SourceAdmissionReceipt`。Receipt 缺失、被撤销、范围不足或证据 Hash 漂移时，能力保持 missing；不得退化到 `actual_upstream` 文本、Adapter Bundle commit、当前历史下载或 fixture。
+
 ### 10.2 核心表族
 
 | 表族 | 主键或唯一键 | 内容 |
@@ -543,7 +555,7 @@ Parquet 保存原始指标、资金证据和板块明细；PostgreSQL 保存 Def
 本模块服从16:00采集和19:00正式策略硬截止：
 
 ```text
-16:00        a-stock-data核心采集
+16:00        固定 Adapter Bundle 驱动实际主 Provider Endpoint 采集
 16:30        Provisional DataSnapshot目标
 16:40        Financial-API补充判定
 17:10        CERTIFIED:backtest_core目标
@@ -589,6 +601,8 @@ market_feature_runtime:
 - 检测到未来函数、全区间标准化或当前板块成分回填；
 - 同一输入和版本重复计算得到不同结果；
 - 综合分所需必需维度缺失却被标记为完整成功。
+- Formal 输入没有 `ProviderEndpointRunBinding`，或 Binding 的 Endpoint/实现指纹/Receipt/Dataset/schema/Raw 引用不一致；
+- `SourceAdmissionReceipt` 非有效 `PIT_CERTIFIED`、范围不覆盖计算窗口，或来源证据 Hash 漂移。
 
 ### 12.2 能力级降级
 

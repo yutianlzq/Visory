@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from contextlib import contextmanager
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -27,6 +27,10 @@ from src.schemas.platform import (
 )
 from src.services.platform.canonical_normalization import deterministic_manifest_hash
 from src.services.platform.snapshot import SnapshotGateError, SnapshotGateService
+from tests.platform._provider_admission_support import (
+    synthetic_admission_verifier,
+    synthetic_source_route,
+)
 
 
 NOW = datetime(2026, 8, 31, 8, tzinfo=timezone.utc)
@@ -111,6 +115,11 @@ class _Registry:
 
     def get_provider_raw_schema(self, session, provider_id, adapter_version, dataset_id, dataset_schema_version, provider_schema_version):
         return self.raw_schemas.get((provider_id, adapter_version, dataset_id, dataset_schema_version, provider_schema_version))
+
+
+class _PassThroughAdmissionVerifier:
+    def verify_formal_run(self, *_args, **_kwargs):
+        return None
 
 
 class _Fixture:
@@ -216,6 +225,7 @@ class _Fixture:
                 raw_object_refs=(raw_object_id,),
                 finished_at=NOW,
             )
+            provider_run.source_route_evidence = synthetic_source_route(provider_run)
             raw_object = SimpleNamespace(
                 raw_object_id=raw_object_id,
                 provider_run_id=provider_run_id,
@@ -289,13 +299,28 @@ class _Fixture:
         )
 
 
-def _service(fixture: _Fixture, tmp_path: Path) -> SnapshotGateService:
+def _admission(fixture: _Fixture):
+    return synthetic_admission_verifier(
+        runs=fixture.raw.runs.values(),
+        raw_repository=fixture.raw,
+        cutoff_at=NOW,
+        admission_level="PIT_CERTIFIED",
+    )
+
+
+def _service(
+    fixture: _Fixture,
+    tmp_path: Path,
+    *,
+    admission_verifier,
+) -> SnapshotGateService:
     return SnapshotGateService(
         _Database(),
         runtime_root=tmp_path,
         canonical_repository=fixture.canonical,
         raw_repository=fixture.raw,
         provider_registry=fixture.registry,
+        admission_verifier=admission_verifier,
     )
 
 
@@ -308,6 +333,7 @@ def test_build_lineage_validation_runs_inside_database_transaction(tmp_path: Pat
         canonical_repository=fixture.canonical,
         raw_repository=fixture.raw,
         provider_registry=fixture.registry,
+        admission_verifier=_admission(fixture),
     )
     observed_transaction_state: list[bool] = []
     original = service._validate_build_lineage
@@ -322,12 +348,37 @@ def test_build_lineage_validation_runs_inside_database_transaction(tmp_path: Pat
     assert observed_transaction_state == [True]
 
 
+def test_backtest_gate_rejects_legacy_run_without_admission_binding(
+    tmp_path: Path,
+) -> None:
+    fixture = _Fixture(tmp_path)
+    empty_admission = synthetic_admission_verifier(
+        runs=(),
+        raw_repository=fixture.raw,
+        cutoff_at=NOW,
+        admission_level="PIT_CERTIFIED",
+    )
+
+    with pytest.raises(SnapshotGateError) as captured:
+        _service(
+            fixture,
+            tmp_path,
+            admission_verifier=empty_admission,
+        ).validate_gate(fixture.requirements, partition_rows=fixture.rows)
+
+    assert captured.value.error_code == "SOURCE_ADMISSION_BINDING_MISSING"
+
+
 def test_backtest_gate_rejects_unregistered_policy_anchor(tmp_path: Path) -> None:
     fixture = _Fixture(tmp_path)
     fixture.registry.policies.pop("bar_1d_raw_v1")
 
     with pytest.raises(SnapshotGateError) as captured:
-        _service(fixture, tmp_path).validate_gate(fixture.requirements, partition_rows=fixture.rows)
+        _service(
+            fixture,
+            tmp_path,
+            admission_verifier=_PassThroughAdmissionVerifier(),
+        ).validate_gate(fixture.requirements, partition_rows=fixture.rows)
 
     assert captured.value.error_code == "SNAPSHOT_POLICY_NOT_REGISTERED"
 
@@ -338,7 +389,11 @@ def test_backtest_gate_rejects_raw_provider_lineage_mismatch(tmp_path: Path) -> 
     raw.request_fingerprint = compute_bytes_hash(b"different-request")
 
     with pytest.raises(SnapshotGateError) as captured:
-        _service(fixture, tmp_path).validate_gate(fixture.requirements, partition_rows=fixture.rows)
+        _service(
+            fixture,
+            tmp_path,
+            admission_verifier=_PassThroughAdmissionVerifier(),
+        ).validate_gate(fixture.requirements, partition_rows=fixture.rows)
 
     assert captured.value.error_code == "SNAPSHOT_RAW_LINEAGE_MISMATCH"
 
@@ -349,7 +404,11 @@ def test_backtest_gate_rejects_provider_raw_schema_drift(tmp_path: Path) -> None
     raw.observed_schema_hash = compute_bytes_hash(b"drifted-schema")
 
     with pytest.raises(SnapshotGateError) as captured:
-        _service(fixture, tmp_path).validate_gate(fixture.requirements, partition_rows=fixture.rows)
+        _service(
+            fixture,
+            tmp_path,
+            admission_verifier=_PassThroughAdmissionVerifier(),
+        ).validate_gate(fixture.requirements, partition_rows=fixture.rows)
 
     assert captured.value.error_code == "SNAPSHOT_RAW_SCHEMA_MISMATCH"
 
@@ -360,12 +419,17 @@ def test_backtest_gate_accepts_declared_supplemental_provider(tmp_path: Path) ->
     raw = fixture.raw.raws[run.raw_object_refs[0]]
     run.provider_id = "financial_api"
     run.actual_upstream = "Financial-API"
+    run.source_route_evidence = synthetic_source_route(run)
     raw.provider_id = "financial_api"
     raw.actual_upstream = "Financial-API"
     fixture.registry.raw_schemas[("financial_api", "1.0.0", run.dataset_id, "1.0.0", "1.0.0")] = fixture.registry.raw_schemas.pop(("a_stock_data", "1.0.0", run.dataset_id, "1.0.0", "1.0.0"))
     mapping = fixture.canonical.mappings.pop(("a_stock_data", run.dataset_id, "1.0.0", "1.0.0"))
     fixture.canonical.mappings[("financial_api", run.dataset_id, "1.0.0", "1.0.0")] = mapping
 
-    evidence = _service(fixture, tmp_path).validate_gate(fixture.requirements, partition_rows=fixture.rows)
+    evidence = _service(
+        fixture,
+        tmp_path,
+        admission_verifier=_admission(fixture),
+    ).validate_gate(fixture.requirements, partition_rows=fixture.rows)
 
     assert len(evidence.partition_refs) == len(DATASETS)

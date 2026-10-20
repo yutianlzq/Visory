@@ -17,6 +17,7 @@ from .asset_identity import (
     AssetResolutionResult,
     IdentityQuarantineRecord,
 )
+from .adjustment import ADJUSTMENT_HASH_PROFILE, AdjustmentMethod, DerivedCanonicalPartition, DerivedDataSnapshot
 from .base import PlatformContractModel
 from .benchmark import BenchmarkIndexBar
 from .backfill import BackfillBatchProjection, BackfillBatchRequest, BackfillCoverageProjection, BackfillStageChainProjection, BackfillStageChainRequest, BackfillTaskRequirements
@@ -33,6 +34,12 @@ from .data_quality import (
     DataQualityTimelineStage,
 )
 from .provider import DatasetDefinition, ProviderCapability, ProviderDefinition, ProviderPolicy
+from .provider_admission import (
+    AdapterImplementationFingerprint,
+    ProviderEndpointDefinition,
+    ProviderEndpointRunBinding,
+    SourceAdmissionReceipt,
+)
 from .provider_raw_schema import ProviderRawSchemaDefinition
 from .raw_ingestion import ProviderRun, RawIngestionPublishResult, RawIngestionQuarantine, RawIngestionTaskRequirements, RawObject
 from .snapshot import (
@@ -117,6 +124,132 @@ def _golden(*paths: str) -> tuple[str, ...]:
 
 PLATFORM_CONTRACTS = ContractRegistry(
     (
+        ContractRegistration(
+            contract_id="C-004/ProviderEndpointDefinition",
+            owner_module="src.schemas.platform.provider_admission",
+            producer="Provider Endpoint Admission",
+            consumers=("raw ingestion admission", "Formal snapshot gate"),
+            schema_model=ProviderEndpointDefinition,
+            schema_version="1.0.0",
+            business_key="provider_endpoint_id + provider_id + endpoint_contract_version",
+            resource_id_field=None,
+            time_semantics=("effective_from", "effective_to"),
+            version_semantics=("endpoint_contract_version",),
+            quality_semantics=("request/response, pagination, zero-row, revision, retry and license semantics are immutable",),
+            lineage_fields=("provider_id", "dataset_bindings", "definition_hash"),
+            storage_profile="PostgreSQL provider_endpoint_definition",
+            retention_class="PINNED",
+            compatibility="pure additive C-004 object; ProviderRun@1.0.0 and RawObject@1.0.0 remain byte-identical",
+            golden_payloads=_golden(
+                "success/provider-endpoint-definition.json",
+                "rejected/provider-endpoint-definition-hash-mismatch.json",
+            ),
+        ),
+        ContractRegistration(
+            contract_id="C-004/AdapterImplementationFingerprint",
+            owner_module="src.schemas.platform.provider_admission",
+            producer="Provider Endpoint Admission",
+            consumers=("ProviderEndpointRunBinding", "Formal snapshot gate"),
+            schema_model=AdapterImplementationFingerprint,
+            schema_version="1.0.0",
+            business_key="adapter_implementation_fingerprint_id",
+            resource_id_field=None,
+            time_semantics=("created_at",),
+            version_semantics=("adapter_bundle_version", "endpoint_contract_version", "visory_wrapper_version", "mapping_version", "quality_rule_versions"),
+            quality_semantics=("commit, source bytes, function symbol, wrapper, Mapping and quality rules are revalidated",),
+            lineage_fields=("provider_endpoint_id", "source_commit", "implementation_fingerprint"),
+            storage_profile="PostgreSQL adapter_implementation_fingerprint",
+            retention_class="PINNED",
+            compatibility="new fingerprints are append-only and never rewrite ProviderDefinition adapter versions",
+            golden_payloads=_golden(
+                "success/adapter-implementation-fingerprint.json",
+                "rejected/adapter-implementation-fingerprint-hash-mismatch.json",
+            ),
+        ),
+        ContractRegistration(
+            contract_id="C-004/SourceAdmissionReceipt",
+            owner_module="src.schemas.platform.provider_admission",
+            producer="Provider Endpoint Admission",
+            consumers=("ProviderEndpointRunBinding", "Formal snapshot gate"),
+            schema_model=SourceAdmissionReceipt,
+            schema_version="1.0.0",
+            business_key="source_admission_receipt_id",
+            resource_id_field=None,
+            time_semantics=("requested_date_from", "requested_date_to", "issued_at", "valid_from", "valid_to"),
+            version_semantics=("endpoint_contract_version", "dataset_schema_version", "admission_level"),
+            quality_semantics=("only an accepted, effective, in-scope PIT_CERTIFIED receipt can admit Formal input",),
+            lineage_fields=("provider_endpoint_id", "dataset_id", "receipt_hash"),
+            storage_profile="PostgreSQL source_admission_receipt",
+            retention_class="PINNED",
+            compatibility="CURRENT_SNAPSHOT, HISTORICAL_SERIES and VERSIONED_ARCHIVE never imply PIT certification",
+            golden_payloads=_golden(
+                "success/source-admission-receipt.json",
+                "rejected/source-admission-receipt-hash-mismatch.json",
+            ),
+        ),
+        ContractRegistration(
+            contract_id="C-004/ProviderEndpointRunBinding",
+            owner_module="src.schemas.platform.provider_admission",
+            producer="Provider Endpoint Admission",
+            consumers=("Canonical/Snapshot lineage", "Formal snapshot gate"),
+            schema_model=ProviderEndpointRunBinding,
+            schema_version="1.0.0",
+            business_key="provider_endpoint_run_binding_id + provider_run_id",
+            resource_id_field=None,
+            time_semantics=("created_at",),
+            version_semantics=("endpoint_contract_version", "dataset_schema_version"),
+            quality_semantics=("one ProviderRun binds one actual Endpoint and every RawObject exactly once",),
+            lineage_fields=("provider_run_id", "raw_object_refs", "adapter_implementation_fingerprint_id", "source_admission_receipt_id", "binding_hash"),
+            storage_profile="PostgreSQL provider_endpoint_run_binding and raw-object join",
+            retention_class="PINNED",
+            compatibility="legacy runs remain readable for Preview but cannot enter Formal without a binding",
+            golden_payloads=_golden(
+                "success/provider-endpoint-run-binding.json",
+                "rejected/provider-endpoint-run-binding-hash-mismatch.json",
+            ),
+        ),
+        ContractRegistration(
+            contract_id="C-004/AdjustmentMethod", owner_module="src.schemas.platform.adjustment",
+            producer="offline adjustment contract validation", consumers=("offline contract tests",),
+            schema_model=AdjustmentMethod, schema_version="1.0.0", business_key="method_id,method_version",
+            resource_id_field=None,
+            hash_profile=ADJUSTMENT_HASH_PROFILE,
+            time_semantics=("source availability is separate from platform audit clocks",),
+            version_semantics=("explicit contract version and exact input versions",),
+            quality_semantics=("fail-closed references, PIT and complete coverage; not certification",),
+            lineage_fields=("method_contract_hash", "formula_digest"),
+            storage_profile="contract only; existing Canonical/Snapshot resource and storage namespace",
+            retention_class="PINNED", compatibility="legacy PROVIDER payloads and hashes are unchanged; explicit DERIVED opt-in only",
+            golden_payloads=_golden("success/adjustment-method.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-004/DerivedCanonicalPartition", owner_module="src.schemas.platform.adjustment",
+            producer="offline adjustment contract validation", consumers=("offline contract tests",),
+            schema_model=DerivedCanonicalPartition, schema_version="2.0.0", business_key="dataset_id,dataset_schema_version,partition_key,revision",
+            resource_id_field='canonical_partition_id',
+            hash_profile=ADJUSTMENT_HASH_PROFILE,
+            time_semantics=("source availability is separate from platform audit clocks",),
+            version_semantics=("explicit contract version and exact input versions",),
+            quality_semantics=("fail-closed references, PIT and complete coverage; not certification",),
+            lineage_fields=("lineage.inputs", "lineage.source_roots", "lineage.quality_evidence", "lineage.coverage_receipt", "supersedes_id"),
+            storage_profile="contract only; existing Canonical/Snapshot resource and storage namespace",
+            retention_class="PINNED", compatibility="legacy PROVIDER payloads and hashes are unchanged; explicit DERIVED opt-in only",
+            golden_payloads=_golden("success/derived-canonical-partition.json"),
+        ),
+        ContractRegistration(
+            contract_id="C-004/DerivedDataSnapshot", owner_module="src.schemas.platform.adjustment",
+            producer="offline adjustment contract validation", consumers=("offline contract tests",),
+            schema_model=DerivedDataSnapshot, schema_version="2.0.0", business_key="trade_date,cutoff_at,canonical_partitions,revision",
+            resource_id_field='snapshot_id',
+            hash_profile=ADJUSTMENT_HASH_PROFILE,
+            time_semantics=("source availability is separate from platform audit clocks",),
+            version_semantics=("explicit contract version and exact input versions",),
+            quality_semantics=("fail-closed references, PIT and complete coverage; not certification",),
+            lineage_fields=("canonical_partitions", "supersedes_id"),
+            storage_profile="contract only; existing Canonical/Snapshot resource and storage namespace",
+            retention_class="PINNED", compatibility="legacy PROVIDER payloads and hashes are unchanged; explicit DERIVED opt-in only",
+            golden_payloads=_golden("success/derived-data-snapshot.json"),
+        ),
         ContractRegistration(
             contract_id="C-010/BackfillBatchRequest", owner_module="src.schemas.platform.backfill", producer="Operations backfill client", consumers=("backfill task service",), schema_model=BackfillBatchRequest, schema_version="1.0.0", business_key="batch_id", resource_id_field="batch_id", time_semantics=("trade_date", "date_from", "date_to"), version_semantics=("provider_policy_id",), quality_semantics=("dry_run does not publish", "fallback and quarantine are explicit"), lineage_fields=("batch_id", "supersedes_id"), storage_profile="embedded durable Task requirements", retention_class="AUDIT", compatibility="additive fields only", golden_payloads=_golden("success/backfill-batch-request.json", "correction/backfill-batch-request-correction.json", "rejected/backfill-month-crosses-calendar.json"),
         ),

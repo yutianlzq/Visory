@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -7,8 +8,9 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from src.schemas.platform import PLATFORM_CONTRACTS, compute_content_hash
+from src.schemas.platform import DatasetDefinition, PLATFORM_CONTRACTS, compute_content_hash
 from src.schemas.platform.indicator import (
+    DatasetInputRef,
     FeatureInstanceKey,
     IndicatorDefinition,
     IndicatorDependencyRef,
@@ -22,10 +24,14 @@ from src.services.platform.feature_dependency import (
     FeatureDependencyResolver,
     FeatureInstance,
     IndicatorResolutionError,
+    _project_dataset_catalog,
+    validate_dataset_projection,
+    validate_definition_inputs,
 )
 from src.services.platform.indicator_registry import (
     BUILTIN_REGISTRY,
     F1_INDICATOR_DEFINITIONS,
+    F2_INDICATOR_DEFINITIONS,
     BuiltinImplementation,
     IndicatorRegistry,
     default_indicator_registry,
@@ -34,6 +40,20 @@ from src.services.platform.indicator_registry import (
 
 UTC = timezone.utc
 CUTOFF = datetime(2026, 1, 2, 8, 0, tzinfo=UTC)
+
+
+def _versioned_bar_datasets() -> tuple[DatasetDefinition, DatasetDefinition]:
+    from src.services.platform.provider_registry import _dataset_contracts
+
+    version_one = next(item for item in _dataset_contracts() if item.dataset_id == "bar_1d_raw")
+    payload = version_one.model_dump()
+    payload["schema_version"] = "2.0.0"
+    payload["optional_fields"] = (*payload["optional_fields"], "adjusted_close")
+    payload["field_types"]["adjusted_close"] = "number"
+    payload["units"]["adjusted_close"] = "cny_per_share"
+    payload["time_semantics"]["adjusted_close"] = "session_observation"
+    payload["null_semantics"]["adjusted_close"] = "nullable_when_not_traded"
+    return version_one, DatasetDefinition.model_validate(payload)
 
 
 def _definition(
@@ -129,7 +149,7 @@ def test_builtin_registry_is_static_and_contains_the_first_f1_definitions() -> N
     registry = default_indicator_registry()
     registered_ids = {item.indicator_id for item in registry.list()}
 
-    assert set(F1_INDICATOR_DEFINITIONS) == registered_ids
+    assert set(F1_INDICATOR_DEFINITIONS) | set(F2_INDICATOR_DEFINITIONS) == registered_ids
     assert {
         "return_unadjusted",
         "return_point_in_time_adjusted",
@@ -193,6 +213,140 @@ def test_parameter_normalization_preserves_integer_decimal_and_string_distinctio
     with pytest.raises(IndicatorResolutionError) as error:
         registry.create_instance("test_indicator", {"period": 14.0})
     assert error.value.code == "INDICATOR_PARAMETER_INVALID"
+
+
+def test_dataset_catalog_projects_exact_versions_without_latest_fallback() -> None:
+    version_one, version_two = _versioned_bar_datasets()
+
+    catalog = _project_dataset_catalog((version_one, version_two))
+
+    assert catalog.get("bar_1d_raw", "1.0.0").schema_version == "1.0.0"
+    assert catalog.get("bar_1d_raw", "2.0.0").fields["adjusted_close"] == "decimal"
+    assert catalog.get("bar_1d_raw", "9.0.0") is None
+    with pytest.raises(TypeError):
+        catalog.get("bar_1d_raw")  # type: ignore[call-arg]
+
+
+def test_dataset_catalog_rejects_duplicate_exact_version_keys() -> None:
+    version_one, _ = _versioned_bar_datasets()
+
+    with pytest.raises(IndicatorResolutionError) as error:
+        _project_dataset_catalog((version_one, version_one))
+
+    assert error.value.code == "INDICATOR_CATALOG_DRIFT"
+    assert error.value.details == {"dataset_id": "bar_1d_raw", "schema_version": "1.0.0"}
+
+
+def test_resolver_selects_the_exact_dataset_schema_version() -> None:
+    version_one, version_two = _versioned_bar_datasets()
+    catalog = _project_dataset_catalog((version_one, version_two))
+    definition = _definition(
+        indicator_id="versioned_input",
+        input_dataset_refs=(
+            DatasetInputRef(
+                dataset_id="bar_1d_raw",
+                schema_version="2.0.0",
+                required_fields=("adjusted_close",),
+            ),
+        ),
+    )
+
+    plan = FeatureDependencyResolver(
+        IndicatorRegistry((definition,)),
+        dataset_catalog=catalog,
+    ).resolve(("versioned_input",))
+
+    assert plan.dataset_refs == ("bar_1d_raw@2.0.0",)
+    validate_dataset_projection(
+        catalog.get("bar_1d_raw", "2.0.0"),
+        dataset_catalog=catalog,
+    )
+    validate_definition_inputs(definition, dataset_catalog=catalog)
+
+
+def test_resolver_rejects_unknown_dataset_schema_version_by_exact_key() -> None:
+    definition = _definition(
+        indicator_id="unknown_dataset_version",
+        input_dataset_refs=(
+            DatasetInputRef(
+                dataset_id="bar_1d_raw",
+                schema_version="9.0.0",
+                required_fields=("close",),
+            ),
+        ),
+    )
+
+    with pytest.raises(IndicatorResolutionError) as error:
+        FeatureDependencyResolver(IndicatorRegistry((definition,))).resolve((definition.indicator_id,))
+
+    assert error.value.code == "INDICATOR_UNREGISTERED_INPUT"
+    assert error.value.details["dataset_id"] == "bar_1d_raw"
+    assert error.value.details["schema_version"] == "9.0.0"
+
+
+@pytest.mark.parametrize(
+    "updates",
+    (
+        {"schema_version": "2.0.0"},
+        {"fields": {"entity_key": "string"}},
+        {"frequency": "event"},
+        {"domain": "global"},
+        {"point_in_time": False},
+        {"capability_id": None},
+    ),
+)
+def test_resolver_rejects_any_exact_dataset_projection_drift(updates) -> None:
+    catalog = dict(DEFAULT_DATASET_CATALOG)
+    key = ("bar_1d_raw", "1.0.0")
+    catalog[key] = replace(catalog[key], **updates)
+
+    with pytest.raises(IndicatorResolutionError) as error:
+        FeatureDependencyResolver(
+            IndicatorRegistry((_definition(),)),
+            dataset_catalog=catalog,
+        ).resolve(("test_indicator",))
+
+    assert error.value.code == "INDICATOR_CATALOG_DRIFT"
+    assert error.value.details["dataset_id"] == "bar_1d_raw"
+    assert "schema_version" in error.value.details
+
+
+def test_explicit_legacy_dataset_version_preserves_plan_hash_and_required_fields() -> None:
+    version_one, version_two = _versioned_bar_datasets()
+    definition = _definition(
+        indicator_id="explicit_v1",
+        input_dataset_refs=(
+            DatasetInputRef(
+                dataset_id="bar_1d_raw",
+                schema_version="1.0.0",
+                required_fields=("close",),
+            ),
+        ),
+    )
+    registry = IndicatorRegistry((definition,))
+    default_plan = FeatureDependencyResolver(registry).resolve((definition.indicator_id,))
+    versioned_plan = FeatureDependencyResolver(
+        registry,
+        dataset_catalog=_project_dataset_catalog((version_one, version_two)),
+    ).resolve((definition.indicator_id,))
+
+    assert versioned_plan.plan_hash == default_plan.plan_hash
+    assert versioned_plan.dataset_refs == ("bar_1d_raw@1.0.0",)
+    assert registry.get(definition.indicator_id, "1.0.0").definition_hash == definition.definition_hash
+
+    missing_field = _definition(
+        indicator_id="explicit_v1_missing_field",
+        input_dataset_refs=(
+            DatasetInputRef(
+                dataset_id="bar_1d_raw",
+                schema_version="1.0.0",
+                required_fields=("not_registered",),
+            ),
+        ),
+    )
+    with pytest.raises(IndicatorResolutionError) as error:
+        FeatureDependencyResolver(IndicatorRegistry((missing_field,))).resolve((missing_field.indicator_id,))
+    assert error.value.code == "INDICATOR_UNREGISTERED_INPUT"
 
 
 def test_resolver_returns_stable_topological_order_and_plan_hash() -> None:
@@ -395,10 +549,13 @@ def test_resolver_never_admits_global_definitions_into_a_share_plans(allowed_dom
 
 
 def test_resolver_rejects_global_dataset_catalog_by_default() -> None:
-    from dataclasses import replace
-
-    catalog = dict(DEFAULT_DATASET_CATALOG)
-    catalog["bar_1d_raw"] = replace(catalog["bar_1d_raw"], domain="global")
-    resolver = FeatureDependencyResolver(IndicatorRegistry((_definition(),)), dataset_catalog=catalog)
+    version_one, _ = _versioned_bar_datasets()
+    payload = version_one.model_dump()
+    payload["entity_scope"] = "global"
+    global_dataset = DatasetDefinition.model_validate(payload)
+    resolver = FeatureDependencyResolver(
+        IndicatorRegistry((_definition(),)),
+        dataset_catalog=_project_dataset_catalog((global_dataset,)),
+    )
     with pytest.raises(IndicatorResolutionError, match="INDICATOR_GLOBAL_DOMAIN_NOT_ALLOWED"):
         resolver.resolve(("test_indicator",))

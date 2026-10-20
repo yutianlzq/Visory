@@ -5,7 +5,7 @@ import os
 import shutil
 import tempfile
 from collections.abc import Callable, Iterator, Mapping, Sequence
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from functools import wraps
@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from src.schemas.platform.feature import (
+    FEATURE_PARTITION_KEY_MAX_LENGTH,
     FeatureBundle,
     FeatureMaterializationError,
     FeaturePartition,
@@ -34,6 +35,7 @@ from src.artifacts.namespace import StorageNamespaceResolver, fsync_directory
 from src.repositories.platform.feature import FeatureRepository
 
 if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
     from src.repositories.platform.database import PostgresDatabase
 
 
@@ -56,9 +58,29 @@ def _locked(method):
 
 def _publication_locked(method):
     @wraps(method)
-    def call(self, *args, **kwargs):
-        with self._publication_guard():
-            return method(self, *args, **kwargs)
+    def call(self, plan, *args, **kwargs):
+        partition_keys = tuple(
+            _partition_key(item, kwargs.get("date_from"), kwargs.get("date_to")) for item in plan.ordered_instances
+        )
+        if any(len(key) > FEATURE_PARTITION_KEY_MAX_LENGTH for key in partition_keys):
+            raise FeatureMaterializationError(
+                f"partition_key exceeds the {FEATURE_PARTITION_KEY_MAX_LENGTH} character contract"
+            )
+        with ExitStack() as guards:
+            if self._database is not None:
+                session = guards.enter_context(self._database.transaction())
+                try:
+                    self._repository.validate_indicator_ids(
+                        session, tuple(item.indicator_id for item in plan.ordered_instances),
+                        partition_keys=partition_keys,
+                    )
+                except ValueError as exc:
+                    raise FeatureMaterializationError(str(exc)) from exc
+                self._publication_session = session
+                guards.callback(setattr, self, "_publication_session", None)
+            # 真实列宽检查先于文件锁/Parquet；表锁保持到控制面提交，防止检查后缩列。
+            guards.enter_context(self._publication_guard())
+            return method(self, plan, *args, **kwargs)
     return call
 
 
@@ -114,13 +136,16 @@ class FeatureStore:
         indicator_registry: IndicatorRegistry | None = None,
         database: "PostgresDatabase | None" = None,
         repository: FeatureRepository | None = None,
+        fixture_only: bool = False,
     ) -> None:
+        self._fixture_only = fixture_only
         self._lock = RLock()
         self._temporary_root = tempfile.TemporaryDirectory(prefix="visory-feature-store-") if runtime_root is None else None
         root = Path(self._temporary_root.name if self._temporary_root is not None else runtime_root)
         self._resolver = StorageNamespaceResolver(root)
         self._clock = clock
         self._database = database
+        self._publication_session: Session | None = None
         self._repository = repository or FeatureRepository()
         # A materializer without a Definition registry cannot prove schema, PIT, or warmup semantics.
         self._indicator_registry = indicator_registry or default_indicator_registry()
@@ -130,10 +155,20 @@ class FeatureStore:
         self._pinned: set[str] = set()
         self._partition_payloads: dict[str, bytes] = {}
 
+    @contextmanager
+    def _database_session(self) -> Iterator["Session"]:
+        # 发布已在真实列宽预检中开启事务；水合和写入复用它，兼容单连接池。
+        assert self._database is not None
+        if self._publication_session is not None:
+            yield self._publication_session
+        else:
+            with self._database.transaction() as session:
+                yield session
+
     def _hydrate_snapshot_from_database(self, snapshot_id: str) -> None:
         if snapshot_id in self._snapshots or self._database is None:
             return
-        with self._database.transaction() as session:
+        with self._database_session() as session:
             snapshot = self._repository.get_snapshot(session, snapshot_id)
             if snapshot is None:
                 return
@@ -153,7 +188,7 @@ class FeatureStore:
     def _hydrate_bundle_from_database(self, bundle_id: str) -> None:
         if bundle_id in self._bundles or self._database is None:
             return
-        with self._database.transaction() as session:
+        with self._database_session() as session:
             bundle = self._repository.get_bundle(session, bundle_id)
             if bundle is None:
                 return
@@ -240,6 +275,9 @@ class FeatureStore:
         if set(rows_by_instance) != declared_instances:
             raise FeatureMaterializationError("rows_by_instance must exactly match FeatureDependencyPlan")
         kind = ConsumerKind(consumer_kind)
+        market_plan = any(item.indicator_id.startswith("market.sentiment.") for item in plan.ordered_instances)
+        if (market_plan or self._fixture_only) and kind is ConsumerKind.FORMAL_BACKTEST:
+            raise FeaturePublicationError("market capability is unavailable for Formal/Paper materialization")
         if correction_of_snapshot_id is not None:
             self._hydrate_snapshot_from_database(correction_of_snapshot_id)
         if bundle_id is not None:
@@ -318,7 +356,7 @@ class FeatureStore:
                 output_items = tuple(item for item in all_items if date_from <= item.trade_date <= output_end)
                 if not output_items:
                     raise FeatureMaterializationError(f"missing output rows after warmup for {instance.indicator_id}")
-                if plan.warmup_requirement:
+                if plan.warmup_requirement and not market_plan:
                     warmup_rows = tuple(item for item in all_items if item.trade_date < date_from)
                     if any(item.value is None or item.quality_status is not QualityStatus.COMPLETE for item in warmup_rows):
                         raise FeaturePublicationError("quality gate rejected warmup inputs")
@@ -445,7 +483,11 @@ class FeatureStore:
             staged_payloads[partition.feature_partition_id] = partition_payload
             staged_by_instance[instance] = partition
 
-        if any(item.quality_status is not QualityStatus.COMPLETE for item in staged.values()):
+        incomplete = any(item.quality_status is not QualityStatus.COMPLETE for item in staged_by_instance.values())
+        diagnostic = market_plan and kind is ConsumerKind.PREVIEW
+        if any(item.quality_status not in {QualityStatus.COMPLETE, QualityStatus.PARTIAL, QualityStatus.UNAVAILABLE} for item in staged_by_instance.values()):
+            raise FeaturePublicationError("quality gate rejected feature publication")
+        if incomplete and not diagnostic:
             raise FeaturePublicationError("quality gate rejected feature publication")
         snapshot_id = snapshot_id or _stable_id(
             ResourceType.FEATURE_SNAPSHOT, {
@@ -481,10 +523,11 @@ class FeatureStore:
             definition_refs=tuple(sorted({f"{item.indicator_id}@{item.definition_version}" for item in plan.ordered_instances})),
             publication_status=(
                 PublicationStatus.PROVISIONAL
-                if effective_snapshot_type is FeatureSnapshotType.HISTORICAL_REBUILD
+                if effective_snapshot_type is FeatureSnapshotType.HISTORICAL_REBUILD or market_plan or self._fixture_only
                 else PublicationStatus.CERTIFIED
             ),
-            quality_status=QualityStatus.COMPLETE,
+            quality_status=QualityStatus.PARTIAL if incomplete else QualityStatus.COMPLETE,
+            missing_capabilities=("market_breadth", "market_emotion") if market_plan else (),
             max_source_available_at=max(item.max_available_at for item in staged_by_instance.values()),
             quality_report_id=quality_report_id,
             revision=(
@@ -555,6 +598,26 @@ class FeatureStore:
         consumer_kind: ConsumerKind,
     ) -> None:
         definition = self._indicator_registry.get(instance.indicator_id, instance.definition_version)
+        from .feature_dependency import validate_definition_inputs
+        from .market_sentiment import PREFIX, AGGREGATE_KEY, unavailable_metrics, validate_market_definition
+        if self._fixture_only and any("FIXTURE_ONLY" not in row.data_flags for row in rows):
+            raise FeatureMaterializationError("isolated fixture rows require FIXTURE_ONLY flags")
+        if definition.indicator_id.startswith(PREFIX):
+            validate_market_definition(definition)
+            if instance.universe_scope_hash is None or plan.universe_scope_hash != instance.universe_scope_hash:
+                raise FeatureMaterializationError("market universe_scope_hash must be frozen and consistent")
+            if any(row.entity_key != AGGREGATE_KEY or
+                   tuple(flag for flag in row.data_flags if flag.startswith("UNIVERSE_SCOPE_HASH:")) != ("UNIVERSE_SCOPE_HASH:"+instance.universe_scope_hash,) for row in rows):
+                raise FeatureMaterializationError("market rows must match the frozen aggregate scope")
+            unavailable = definition.indicator_id[len(PREFIX):] in unavailable_metrics()
+            if unavailable and not self._fixture_only and any(row.value is not None for row in rows):
+                raise FeatureMaterializationError("market dependency is unavailable; fixture cannot certify real inputs")
+            if any("FIXTURE_ONLY" in row.data_flags for row in rows) and not self._fixture_only:
+                raise FeatureMaterializationError("fixture-only rows require an isolated fixture store")
+            if not unavailable:
+                validate_definition_inputs(definition)
+        else:
+            validate_definition_inputs(definition)
         if definition.domain != "a_share":
             raise FeatureMaterializationError("feature definition domain is outside A-share scope")
         try:
@@ -630,6 +693,11 @@ class FeatureStore:
         snapshot: FeatureSnapshot,
         bundle: FeatureBundle,
     ) -> FeatureSnapshot:
+        from .market_sentiment import validate_market_publication
+        try:
+            validate_market_publication(snapshot, bundle.consumer_kind)
+        except ValueError as exc:
+            raise FeaturePublicationError(str(exc)) from exc
         existing_snapshot = self._snapshots.get(snapshot.feature_snapshot_id)
         if existing_snapshot is not None and existing_snapshot != snapshot:
             # Manifest identity excludes computed/published timestamps; retrying the same
@@ -785,7 +853,7 @@ class FeatureStore:
         """Commit feature files and their immutable control-plane records as one publication."""
         assert self._database is not None
         try:
-            with self._database.transaction() as session:
+            with self._database_session() as session:
                 existing_bundle = self._repository.get_bundle(session, bundle.feature_bundle_id, for_update=True)
                 if existing_bundle is not None:
                     if existing_bundle != bundle:
@@ -851,6 +919,9 @@ class FeatureStore:
                         raise FeaturePublicationError("feature partition payload size mismatch")
                     if "sha256:" + sha256(persisted_payload).hexdigest() != partition.partition_hash:
                         raise FeaturePublicationError("feature partition payload hash mismatch")
+                if self._publication_session is not None:
+                    # 提交成功后才更新内存目录；commit失败也走下方新文件清理与事务回滚。
+                    session.commit()
         except Exception:
             for moved in moved_paths:
                 try:
@@ -891,6 +962,42 @@ class FeatureStore:
     @_locked
     def published_partition(self, partition_id: str) -> FeaturePartition:
         return self._partitions[partition_id]
+
+    @_locked
+    def consume_bundle(self, bundle_id: str, requirement) -> FeatureBundle:
+        """固定 Bundle 消费入口；Paper 使用相同 FORMAL_BACKTEST requirement。"""
+        from .market_sentiment import validate_market_publication
+        from src.schemas.platform.snapshot import ConsumerRequirement
+        if not isinstance(requirement, ConsumerRequirement):
+            raise FeaturePublicationError("ConsumerRequirement is required")
+        self._hydrate_bundle_from_database(bundle_id)
+        bundle = self._bundles.get(bundle_id)
+        if bundle is None:
+            raise FeaturePublicationError("fixed published feature bundle is required; latest is not supported")
+        for snapshot_id in bundle.feature_snapshot_ids:
+            snapshot = self._snapshots[snapshot_id]
+            try:
+                validate_market_publication(snapshot, requirement.consumer_kind)
+            except ValueError as exc:
+                raise FeaturePublicationError(str(exc)) from exc
+            available = set(snapshot.certified_capabilities)
+            # Preview 显式接受诊断缺失；不改变 Snapshot 的能力认证字段。
+            if requirement.consumer_kind is ConsumerKind.PREVIEW and requirement.allow_provisional:
+                available |= set(snapshot.missing_capabilities)
+            if not set(requirement.required_capabilities) <= available:
+                raise FeaturePublicationError("required feature capability is not certified")
+            ranks = {QualityStatus.FAILED: 0, QualityStatus.UNAVAILABLE: 0, QualityStatus.PARTIAL: 1,
+                     QualityStatus.STALE: 1, QualityStatus.COMPLETE: 2}
+            if ranks[snapshot.quality_status] < ranks[requirement.min_quality_status]:
+                raise FeaturePublicationError("feature quality below consumer minimum")
+            if snapshot.publication_status.value not in {status.value for status in requirement.accepted_publication_statuses}:
+                raise FeaturePublicationError("snapshot publication status is not accepted")
+            if requirement.consumer_kind is ConsumerKind.FORMAL_BACKTEST and (
+                snapshot.quality_status is not QualityStatus.COMPLETE or snapshot.published_at is None or snapshot.published_at > bundle.cutoff_at
+            ):
+                raise FeaturePublicationError("formal snapshot must be complete and published before cutoff")
+            self._verify_snapshot_files(snapshot, {})
+        return bundle
 
     @_locked
     def published_bundle(self, bundle_id: str) -> FeatureBundle:

@@ -234,6 +234,7 @@ def _definition(
     point_in_time: bool = True,
     domain: str = "a_share",
     materialization: str = "F1_LONG_TERM",
+    definition_version: str = "1.0.0",
 ) -> IndicatorDefinition:
     implementation = BUILTIN_REGISTRY[formula_ref]
     return IndicatorDefinition(
@@ -242,7 +243,7 @@ def _definition(
         domain=domain,
         frequency="1d",
         schema_version="1.0.0",
-        definition_version="1.0.0",
+        definition_version=definition_version,
         formula_type=FormulaType.PYTHON_BUILTIN,
         formula_ref=formula_ref,
         implementation_version=implementation.implementation_version,
@@ -401,6 +402,28 @@ class IndicatorResolutionError(ValueError):
         super().__init__(f"{code}: {message}")
 
 
+# 旧 14 个定义保留；新版只投影已声明的 Canonical 状态，不推断停牌或认证来源。
+F1_VERSIONED_INDICATOR_DEFINITIONS = (
+    _definition(
+        "trading_halt_state",
+        "Trading Halt State (Canonical Instrument Status)",
+        "trading_halt_state_builtin",
+        definition_version="2.0.0",
+        input_dataset_refs=(
+            DatasetInputRef(
+                dataset_id="instrument_status_daily",
+                schema_version="1.0.0",
+                required_fields=(
+                    "entity_key", "status_date", "instrument_status", "is_tradable", "available_at"
+                ),
+            ),
+        ),
+        output_schema=(IndicatorOutputDefinition(alias="value", value_type="string", unit="code"),),
+        capability_id="instrument_status_daily",
+    ),
+)
+
+
 def _semver_key(value: str) -> tuple[int, int, int, str]:
     core, _, suffix = value.partition("-")
     major, minor, patch = (int(part) for part in core.split("."))
@@ -456,8 +479,21 @@ def normalize_parameters(definition: IndicatorDefinition, parameters: Mapping[st
     return normalized
 
 
+# F2 追加到同一受控 Registry；旧 F1 定义及 Hash 不改写。
+from .market_sentiment import f2_builtins, f2_definitions
+
+BUILTIN_REGISTRY = MappingProxyType(dict(BUILTIN_REGISTRY) | f2_builtins(_builtin))
+F2_INDICATOR_DEFINITIONS = f2_definitions(_definition)
+
+
 class IndicatorRegistry:
-    def __init__(self, definitions: Sequence[IndicatorDefinition], *, builtins: Mapping[str, BuiltinImplementation] = BUILTIN_REGISTRY) -> None:
+    def __init__(
+        self,
+        definitions: Sequence[IndicatorDefinition],
+        *,
+        builtins: Mapping[str, BuiltinImplementation] = BUILTIN_REGISTRY,
+        default_definition_versions: Mapping[str, str] | None = None,
+    ) -> None:
         items = tuple(definitions)
         keys = [(item.indicator_id, item.definition_version) for item in items]
         if len(keys) != len(set(keys)):
@@ -466,6 +502,10 @@ class IndicatorRegistry:
         if any(key != implementation.builtin_id for key, implementation in builtin_items.items()):
             raise ValueError("builtin registry keys must match builtin identifiers")
         self._definitions = MappingProxyType({key: item for key, item in zip(keys, items)})
+        defaults = dict(default_definition_versions or {})
+        if any((indicator_id, version) not in self._definitions for indicator_id, version in defaults.items()):
+            raise ValueError("default definition versions must reference registered exact versions")
+        self._default_definition_versions = MappingProxyType(defaults)
         self._builtins = MappingProxyType(builtin_items)
         for definition in items:
             if definition.formula_type is not FormulaType.PYTHON_BUILTIN:
@@ -486,6 +526,8 @@ class IndicatorRegistry:
         return tuple(self._definitions[key] for key in sorted(self._definitions))
 
     def get(self, indicator_id: str, definition_version: str | None = None) -> IndicatorDefinition:
+        if definition_version is None:
+            definition_version = self._default_definition_versions.get(indicator_id)
         if definition_version is not None:
             definition = self._definitions.get((indicator_id, definition_version))
             if definition is None:
@@ -523,13 +565,20 @@ class IndicatorRegistry:
 
 
 def default_indicator_registry() -> IndicatorRegistry:
-    return IndicatorRegistry(tuple(F1_INDICATOR_DEFINITIONS.values()))
+    return IndicatorRegistry(
+        tuple(F1_INDICATOR_DEFINITIONS.values())
+        + F1_VERSIONED_INDICATOR_DEFINITIONS
+        + tuple(F2_INDICATOR_DEFINITIONS.values()),
+        # 追加版本不能让旧的无版本调用静默选到新版。
+        default_definition_versions={"trading_halt_state": "1.0.0"},
+    )
 
 
 __all__ = [
     "BUILTIN_REGISTRY",
     "BuiltinImplementation",
     "F1_INDICATOR_DEFINITIONS",
+    "F1_VERSIONED_INDICATOR_DEFINITIONS",
     "IndicatorRegistry",
     "IndicatorResolutionError",
     "default_indicator_registry",

@@ -19,6 +19,10 @@
 
 本决策编号为 **D-028**。
 
+### WP-0303 受限实现边界 2026-10-08
+
+WP-0303 复用本 Store，不新增发布链或公共 FeatureRow Schema；实际发布/固定 Bundle 消费门禁、fixture 隔离、Correction 与长 ID 限制的权威记录见 [受限实现及本地验收](WP-0303-IMPLEMENTATION.md)，市场输入与算法契约见 [PREP](WP-0303-PREP.md)。该受限扩展不提供市场 Formal/Paper 能力，亦不表示生产发布或认证。
+
 ## 2. 目标
 
 Feature Store 不是另一套行情数据库，而是 Canonical Data 之上的统一计算、认证和发布层。它必须同时满足：

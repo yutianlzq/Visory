@@ -1,0 +1,36 @@
+{
+  "contract_id": "C-004/SourceAdmissionReceipt",
+  "payload": {
+    "admission_level": "PIT_CERTIFIED",
+    "admission_status": "ACCEPTED",
+    "coverage_manifest_hash": "sha256:d4c3fc02f55f293f3477041979b60354029707f4d31991e062b660cd064c8d5b",
+    "coverage_summary": {
+      "complete": true,
+      "covered_dates": 365,
+      "terminal_pages_verified": true
+    },
+    "dataset_id": "bar_1d_raw",
+    "dataset_schema_version": "1.0.0",
+    "endpoint_contract_version": "1.0.0",
+    "expected_unit_and_identity_hash": "sha256:334bd049af760251f3ceca1d5b41a1a729c6a9c27e9a581a8a90381cde0f7975",
+    "issued_at": "2026-01-01T00:00:00Z",
+    "license_evidence_hash": "sha256:7f68ffac1d5e52715dbe00021c6a2827fbf25a82038f61be09c39cc616e7deeb",
+    "observation_log_hash": "sha256:ad3c5ed88666543e7a9311a7b0d898f0a53cb128ebaeb2d2d335d5d9537991e7",
+    "provider_endpoint_id": "a_stock_data_bar_daily",
+    "provider_id": "a_stock_data",
+    "quality_report_hash": "sha256:4cb9eeced3b50106f8d0e62376192e99880dbc9b42259ef6c1548c5a162bb5cb",
+    "reason_codes": [],
+    "receipt_hash": "sha256:47775a51a560fd7e3a38a02550e703cdd377c29d935b7fcd1bb3f5e7d8e1c184",
+    "requested_date_from": "2026-01-01",
+    "requested_date_to": "2026-12-31",
+    "requested_market_scope": [
+      "CN"
+    ],
+    "revision_chain_hash": "sha256:4fc37eb09e288d03427a510404e92e993affdd35312aace87675e7ef97130dff",
+    "sample_manifest_hash": "sha256:65cf9d4188ed0ddae37036f981d506e0ece499b1ce3926168e9372468cf7e7b5",
+    "source_admission_receipt_id": "receipt_bar_cn_2026",
+    "source_contract_hash": "sha256:4d9484b82e6bce9ae5b04c8f2174529ee0179b4b01cb859214a636a8e22cb89f",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
+  }
+}

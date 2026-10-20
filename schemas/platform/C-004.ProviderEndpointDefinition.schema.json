@@ -1,0 +1,216 @@
+{
+  "$defs": {
+    "EndpointDatasetBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "dataset_id": {
+          "title": "Dataset Id",
+          "type": "string"
+        },
+        "dataset_schema_version": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "title": "Dataset Schema Version",
+          "type": "string"
+        },
+        "market_scope": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Market Scope",
+          "type": "array"
+        }
+      },
+      "required": [
+        "dataset_id",
+        "dataset_schema_version",
+        "market_scope"
+      ],
+      "title": "EndpointDatasetBinding",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "cancellation_semantics": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Cancellation Semantics",
+      "type": "string"
+    },
+    "dataset_bindings": {
+      "items": {
+        "$ref": "#/$defs/EndpointDatasetBinding"
+      },
+      "title": "Dataset Bindings",
+      "type": "array"
+    },
+    "definition_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Definition Hash",
+      "type": "string"
+    },
+    "effective_from": {
+      "format": "date-time",
+      "title": "Effective From",
+      "type": "string"
+    },
+    "effective_to": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Effective To"
+    },
+    "endpoint_contract_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Endpoint Contract Version",
+      "type": "string"
+    },
+    "error_semantics": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Error Semantics",
+      "type": "string"
+    },
+    "license_evidence_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "License Evidence Hash",
+      "type": "string"
+    },
+    "license_semantics": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "License Semantics",
+      "type": "string"
+    },
+    "market_scope": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Market Scope",
+      "type": "array"
+    },
+    "no_data_semantics": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "No Data Semantics",
+      "type": "string"
+    },
+    "pagination_semantics": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Pagination Semantics",
+      "type": "string"
+    },
+    "path_family": {
+      "title": "Path Family",
+      "type": "string"
+    },
+    "provider_endpoint_id": {
+      "title": "Provider Endpoint Id",
+      "type": "string"
+    },
+    "provider_id": {
+      "title": "Provider Id",
+      "type": "string"
+    },
+    "rate_limit_semantics": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Rate Limit Semantics",
+      "type": "string"
+    },
+    "redacted_origin_allowlist": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Redacted Origin Allowlist",
+      "type": "array"
+    },
+    "request_method": {
+      "title": "Request Method",
+      "type": "string"
+    },
+    "request_schema_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Request Schema Hash",
+      "type": "string"
+    },
+    "response_schema_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Response Schema Hash",
+      "type": "string"
+    },
+    "retry_semantics": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Retry Semantics",
+      "type": "string"
+    },
+    "revision_semantics": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Revision Semantics",
+      "type": "string"
+    },
+    "source_publication_semantics": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Source Publication Semantics",
+      "type": "string"
+    },
+    "terminal_semantics": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Terminal Semantics",
+      "type": "string"
+    },
+    "total_semantics": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Total Semantics",
+      "type": "string"
+    },
+    "valid_zero_row_semantics": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Valid Zero Row Semantics",
+      "type": "string"
+    }
+  },
+  "required": [
+    "provider_endpoint_id",
+    "provider_id",
+    "endpoint_contract_version",
+    "request_method",
+    "redacted_origin_allowlist",
+    "path_family",
+    "request_schema_hash",
+    "response_schema_hash",
+    "dataset_bindings",
+    "market_scope",
+    "pagination_semantics",
+    "total_semantics",
+    "terminal_semantics",
+    "valid_zero_row_semantics",
+    "no_data_semantics",
+    "error_semantics",
+    "revision_semantics",
+    "cancellation_semantics",
+    "source_publication_semantics",
+    "rate_limit_semantics",
+    "retry_semantics",
+    "license_semantics",
+    "license_evidence_hash",
+    "effective_from",
+    "definition_hash"
+  ],
+  "title": "ProviderEndpointDefinition",
+  "type": "object"
+}

@@ -67,11 +67,15 @@
 
 ```text
 ProviderDefinition
-  └── ProviderCapability
-        └── ProviderPolicy(dataset级)
-              └── ProviderRun
-                    └── RawObject
-                          └── CanonicalPartition
+  ├── ProviderCapability
+  │     └── ProviderPolicy(dataset级)
+  └── ProviderEndpointDefinition（本地已实现，来源未准入）
+        ├── AdapterImplementationFingerprint
+        └── SourceAdmissionReceipt
+
+ProviderRun + RawObject
+  └── ProviderEndpointRunBinding（本地已实现，Formal fail-closed）
+        └── CanonicalPartition
 ```
 
 ### 3.2 ProviderDefinition
@@ -177,7 +181,102 @@ retention_class=PINNED
 
 Raw只追加、不改写、不删源字段、不保存请求密钥。HTTP失败正文可以保存到受控诊断Artifact，但必须脱敏。
 
-### 3.6 DatasetDefinition与CanonicalPartition
+### 3.6 Endpoint Admission 纯追加契约
+
+状态：`Implemented Locally / Source Not Admitted`。四对象已进入 Registry、JSON Schema、Golden、PostgreSQL `0016`、Repository 和 Snapshot Formal fail-closed 门禁；不表示任何真实 Endpoint、历史数据或生产来源已获准。
+
+为保持 `ProviderRun@1.0.0`、`RawObject@1.0.0` 和既有 Golden/Hash 字节不变，Endpoint Admission 采用新 `contract_id` 纯追加，不注册同名 `ProviderRun@2.0.0`。当前 `ContractRegistry` 以 `contract_id` 唯一，旧运行对象只能通过独立 Binding 获得 Endpoint 准入语义。
+
+`ProviderEndpointDefinition`：
+
+```text
+provider_endpoint_id
+provider_id
+endpoint_contract_version
+request_method / redacted_origin_allowlist[] / path_family
+request_schema_hash / response_schema_hash
+dataset_bindings[]
+market_scope[]
+pagination_semantics / total_semantics / terminal_semantics
+valid_zero_row_semantics / no_data_semantics / error_semantics
+revision_semantics / cancellation_semantics
+source_publication_semantics
+rate_limit_semantics / retry_semantics / license_semantics
+license_evidence_hash
+effective_from / effective_to
+definition_hash
+```
+
+`AdapterImplementationFingerprint`：
+
+```text
+adapter_implementation_fingerprint_id
+provider_endpoint_id / provider_id / endpoint_contract_version
+adapter_bundle_id / adapter_bundle_version
+source_repository / source_commit
+source_file_path / source_file_blob_sha256 / source_file_sha256
+function_symbol
+visory_wrapper_version / visory_wrapper_hash
+mapping_version / mapping_hash
+quality_rule_versions[] / quality_rule_hashes[]
+created_at
+implementation_fingerprint
+```
+
+`SourceAdmissionReceipt`：
+
+```text
+source_admission_receipt_id
+provider_endpoint_id / provider_id / endpoint_contract_version
+dataset_id / dataset_schema_version
+requested_market_scope / requested_date_from / requested_date_to
+source_contract_hash / sample_manifest_hash
+observation_log_hash / coverage_manifest_hash
+revision_chain_hash / quality_report_hash / license_evidence_hash
+expected_unit_and_identity_hash
+coverage_summary
+admission_level=CURRENT_SNAPSHOT|HISTORICAL_SERIES|VERSIONED_ARCHIVE|PIT_CERTIFIED
+admission_status=ACCEPTED|REJECTED|REVOKED
+reason_codes[]
+issued_at / valid_from / valid_to
+receipt_hash
+```
+
+`ProviderEndpointRunBinding`：
+
+```text
+provider_endpoint_run_binding_id
+provider_run_id / raw_object_refs[]
+provider_id / provider_endpoint_id / endpoint_contract_version
+adapter_implementation_fingerprint_id / implementation_fingerprint
+source_admission_receipt_id / receipt_hash
+dataset_id / dataset_schema_version
+market / request_fingerprint / observed_schema_hash
+actual_origin_redacted / actual_origin_hash
+created_at
+binding_hash
+```
+
+Formal 路径必须拒绝：Binding 缺失；Endpoint/Provider/actual origin 不匹配；Endpoint 通配路径包含明文或编码后的 `.`/`..` 点段，或三轮解码后仍可继续解码；Receipt 不是同一 Dataset/schema/申请范围的有效 `PIT_CERTIFIED`；Receipt 或实现证据 Hash 漂移；Raw 不属于绑定 Run；一次 Run 内切换实际来源；换源后继续复用原 Run/Raw 身份。Preview 可以读取旧 Run，但不得把“可读”提升为来源认证。
+
+SourceRoute 自身 Hash 有效且 fingerprint 的当前实现观察有效，仍不能分别替对方背书。新增 Binding 写入和每次 Formal 复核必须共用以下精确实现身份关联：
+
+| SourceRoute 字段 | `AdapterImplementationFingerprint` 字段 |
+| --- | --- |
+| `adapter_repository` | `source_repository`（scheme/host 规范为小写，路径精确匹配，不猜测 `.git`/协议别名） |
+| `adapter_commit` | `source_commit` |
+| `adapter_entrypoint` | `function_symbol` |
+| `adapter_name` | `adapter_bundle_id` |
+| `adapter_release` | `adapter_bundle_version` |
+| `adapter_version`，且须与 Run 相同 | `visory_wrapper_version` |
+
+任一实现身份不一致时 Formal 返回 `SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH`；发布事务拒绝插入 Binding 并回滚本次新增准入对象。重新计算 route/fingerprint/Binding Hash 不能豁免关联。SourceRoute 的 `adapter_blob` 固定其源证据 Git 对象，不能与 fingerprint 的 `source_file_blob_sha256`/`source_file_sha256` 直接比较或转换；源文件路径、字节、函数符号、wrapper/Mapping/质量规则仍由既有当前实现 observation 完整核验。没有替换 observation resolver、放宽 SourceRoute 可执行状态或认证真实来源。
+
+四类对象由唯一后继 `0016_wp0303_provider_endpoint_admission` 持久化，0005—0015 不变。Migration/Repository 已覆盖同事务包发布、进程重启精确读回、一个 Run 唯一 Binding、全部 Raw 引用完整性，以及存在任一新记录时在任何 DROP/ALTER 前拒绝 downgrade；空表可安全回到 0015 再升级。同一 Endpoint/Fingerprint/Receipt 可被多个 Run 精确复用，同一 Binding 可幂等重放；发布事务按 downgrade 相同顺序锁定五表，避免并发首次插入竞争，任何同身份内容漂移均拒绝。
+
+当前 `REVOKED` 仅表示被 Binding 精确引用的 Receipt 自身是撤销状态；不可变 `ACCEPTED` Receipt 的后续撤销尚未定义 supersession/status-event 身份和查询链。阶段 C 在接入真实 Endpoint 前必须先追加并批准该语义，不得原地更新既有 Receipt，也不得把无关联的新 `REVOKED` Receipt 解释为已撤销旧 Receipt。
+
+### 3.7 DatasetDefinition与CanonicalPartition
 
 `DatasetDefinition`支持同一`dataset_id`保存多个不可变`schema_version`；ProviderCapability和ProviderPolicy必须显式绑定`dataset_schema_version`。每个字段的类型、单位、时间语义和Null语义必须逐项声明，禁止统一推断。
 
@@ -220,9 +319,9 @@ created_at / published_at
 
 Canonical行情、身份、日历、公司行动、财务和状态数据的字段定义见[A股数据平台与Canonical Data Contract v1](data-platform-and-canonical-contract.md)。`entity_key + trade_date`等业务主键必须由`DatasetDefinition`明确，不能由Parquet文件顺序暗示。
 
-### 3.7 C-004门禁
+### 3.8 C-004门禁
 
-必须拒绝：身份未解析、单位未知、主键重复、时区丢失、权威字段被补充源覆盖、Raw缺失、Hash不符、Provider实际来源未知、历史数据`available_at`无依据却进入正式策略。
+必须拒绝：身份未解析、单位未知、主键重复、时区丢失、权威字段被补充源覆盖、Raw缺失、Hash不符、Provider实际来源未知、历史数据`available_at`无依据却进入正式策略。Endpoint Admission 扩展实现后，Formal 还必须拒绝缺少 `ProviderEndpointRunBinding`、Receipt 非 `PIT_CERTIFIED`、证据 Hash 漂移、Dataset/schema/范围不匹配和换源复用同一 Run。
 
 ## 4. C-005 Snapshot、能力认证与Correction
 

@@ -2,7 +2,7 @@
 
 状态：已确认（Design Approved）
 
-最后更新：2026-08-28
+最后更新：2026-10-15
 
 ## 1. 决策摘要
 
@@ -11,9 +11,9 @@
 第一版SLA固定为：
 
 - 15:50只做进程、网络、磁盘、凭据和Provider能力预检，不读取当日正式业务数据；
-- 16:00启动a-stock-data核心采集；
+- 16:00通过固定 a-stock-data Adapter Bundle 启动各数据集的实际主 Provider Endpoint 采集；
 - 16:30目标发布`PROVISIONAL`快照；
-- 16:40核心源失败或质量不合格时启用Financial-API补充；
+- 16:40主 Provider Endpoint 失败或质量不合格时，按版本化策略启用 Financial-API 补充；
 - 17:10目标发布`CERTIFIED:backtest_core`；
 - 17:30目标发布市场、板块和复盘能力认证；
 - 19:00为T日正式策略硬截止；
@@ -23,7 +23,7 @@
 
 ## 2. 为什么从16:00开始
 
-- a-stock-data的部分盘后能力明确提示在15:30后调用，16:00仍为上游更新保留至少30分钟缓冲；
+- a-stock-data 所引用的部分上游盘后能力明确提示在15:30后调用，16:00仍为实际上游更新保留至少30分钟缓冲；
 - 平台使用日线T日收盘事实生成T+1计划，不要求15:00后立即成交；
 - 晚一小时不会产生T+1交易时序损失，同时比17:00启动多出一小时用于指标和策略计算；
 - 当前服务器只有四核，错开上游更新高峰也有利于降低重复请求和补数压力。
@@ -89,7 +89,7 @@ Preflight不生成DataSnapshot，也不把实时行情保存为当日正式日K�
 6. 板块、资金、涨跌停池、热点和公告；
 7. 财务和估值修订。
 
-每个数据集单独生成ProviderRun。a-stock-data内部若从主上游切换到备用上游，必须保存`actual_upstream`和降级原因。
+每个数据集、实际 Provider Endpoint 单独生成 ProviderRun。a-stock-data 只作为固定 Adapter Bundle；内部若从主上游切换到备用上游，必须结束原 Run，并为备用 Provider/Endpoint 创建新的 ProviderRun、RawObject、Partition 和质量报告，同时保存 `actual_upstream` 与降级原因。禁止在一个成功 Run 内静默换源，或把异常返回的空数组当成合法零行。详见 [WP-0303 a-stock-data Adapter Bundle 分层架构](WP-0303-A-STOCK-DATA-ADAPTER-ARCHITECTURE.md)。
 
 ### 4.3 16:30 Provisional
 
@@ -107,7 +107,7 @@ Provisional只用于Web快速查看和Preview。页面必须显示“数据未�
 
 出现以下任一条件时启用Financial-API：
 
-- a-stock-data核心任务失败两次；
+- 当前策略指定的主 Provider Endpoint 任务失败两次；
 - 核心行情覆盖率未达到门槛；
 - Security、Calendar、Bar、Status或CorporateAction质量门禁失败；
 - 上游Schema变化导致Adapter无法确认字段；

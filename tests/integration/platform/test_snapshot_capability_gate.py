@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -12,10 +13,18 @@ from sqlalchemy import update
 
 from src.artifacts.hashing import compute_bytes_hash
 from src.artifacts.namespace import StorageNamespaceResolver
-from src.repositories.platform import SnapshotRepository, upgrade_database
+from src.repositories.platform import (
+    ProviderAdmissionRepository,
+    SnapshotRepository,
+    upgrade_database,
+)
 from src.repositories.platform.canonical import CanonicalRepository
 from src.repositories.platform.provider import ProviderRegistryRepository, provider_capability
-from src.repositories.platform.raw_ingestion import RawIngestionRepository
+from src.repositories.platform.raw_ingestion import (
+    RawIngestionRepository,
+    provider_run,
+    raw_object,
+)
 from src.repositories.platform.task import TaskControlRepository
 from src.services.platform.provider_registry import ProviderRegistryService
 from src.schemas.platform import (
@@ -26,6 +35,7 @@ from src.schemas.platform import (
     ConsumerKind,
     ConsumerRequirement,
     DataSnapshot,
+    EndpointDatasetBinding,
     PriorityClass,
     ProviderCapabilityStatus,
     ProviderRun,
@@ -46,17 +56,28 @@ from src.schemas.platform import (
     TaskAttemptRecord,
     TaskRecord,
     TaskState,
+    build_adapter_implementation_fingerprint,
+    build_provider_endpoint_definition,
+    build_provider_endpoint_run_binding,
+    build_source_admission_receipt,
     compute_content_hash,
     compute_snapshot_manifest_hash,
     generate_resource_id,
 )
 from src.services.platform.canonical_normalization import deterministic_manifest_hash
+from src.services.platform.provider_admission import (
+    AdapterImplementationObservation,
+    ProviderEndpointAdmissionVerifier,
+)
 from src.services.platform.snapshot import SnapshotCapabilityEngine, SnapshotGateError, SnapshotGateService, SnapshotManifestPublisher
 
 
 NOW = datetime(2026, 8, 31, 12, 0, tzinfo=timezone.utc)
 TRADE_DATE = date(2026, 8, 31)
 DATASETS = ("security_master", "trading_calendar", "bar_1d_raw", "benchmark_index_1d")
+
+
+from tests.platform._provider_admission_support import synthetic_source_route
 
 
 def _resource(prefix: ResourceType, suffix: str) -> str:
@@ -381,6 +402,7 @@ def _persist_lineage(session, snapshot: DataSnapshot) -> None:
             run_outcome=ProviderRunOutcome.SUCCEEDED,
             raw_object_refs=(raw.raw_object_id,),
         )
+        run = run.model_copy(update={"source_route_evidence": synthetic_source_route(run)})
         report = canonical.get_quality_report(session, ref.quality_report_id)
         if report is not None:
             continue
@@ -456,6 +478,189 @@ def _persist_snapshot(database, snapshot: DataSnapshot, certifications: tuple[Ca
             assert persisted_requirement == requirement
 
 
+def _admission_hash(label: str) -> str:
+    return compute_content_hash({"snapshot_admission_evidence": label})
+
+
+def _persist_admission_packages(
+    database,
+    snapshot: DataSnapshot,
+    *,
+    first_admission_level: str = "PIT_CERTIFIED",
+    first_admission_status: str = "ACCEPTED",
+    first_valid_to: datetime | None = None,
+    first_requested_date_to: date = date(2026, 12, 31),
+) -> None:
+    with database.transaction() as session:
+        admission = ProviderAdmissionRepository()
+        raw_repository = RawIngestionRepository()
+        for index, ref in enumerate(snapshot.canonical_partitions, start=1):
+            run = raw_repository.get_provider_run(session, ref.provider_run_refs[0])
+            raw = raw_repository.get_raw_object(session, ref.raw_object_refs[0])
+            assert run is not None and raw is not None
+            suffix = f"r{snapshot.revision}_{index}_{ref.dataset_id}"
+            endpoint = build_provider_endpoint_definition(
+                provider_endpoint_id=f"snapshot_endpoint_{suffix}",
+                provider_id=run.provider_id,
+                endpoint_contract_version="1.0.0",
+                request_method="GET",
+                redacted_origin_allowlist=(run.actual_upstream,),
+                path_family="/",
+                request_schema_hash=_admission_hash(f"request-schema-{suffix}"),
+                response_schema_hash=_admission_hash(f"response-schema-{suffix}"),
+                dataset_bindings=(
+                    EndpointDatasetBinding(
+                        dataset_id=run.dataset_id,
+                        dataset_schema_version=run.dataset_schema_version,
+                        market_scope=(run.capability_market,),
+                    ),
+                ),
+                market_scope=(run.capability_market,),
+                pagination_semantics="isolated PostgreSQL test pins one terminal response",
+                total_semantics="isolated PostgreSQL test pins the declared row count",
+                terminal_semantics="isolated PostgreSQL test terminates after one response",
+                valid_zero_row_semantics="zero rows require explicit isolated evidence",
+                no_data_semantics="no data stays distinct from provider failure",
+                error_semantics="provider errors stay explicit",
+                revision_semantics="revision evidence is pinned",
+                cancellation_semantics="cancellation evidence is pinned",
+                source_publication_semantics="source publication time is preserved",
+                rate_limit_semantics="no network requests are issued by this test",
+                retry_semantics="no network retries are issued by this test",
+                license_semantics="isolated license evidence is pinned",
+                license_evidence_hash=_admission_hash(f"license-{suffix}"),
+                effective_from=NOW - timedelta(days=30),
+            )
+            fingerprint = build_adapter_implementation_fingerprint(
+                adapter_implementation_fingerprint_id=f"snapshot_fingerprint_{suffix}",
+                provider_endpoint_id=endpoint.provider_endpoint_id,
+                provider_id=endpoint.provider_id,
+                endpoint_contract_version=endpoint.endpoint_contract_version,
+                adapter_bundle_id=run.source_route_evidence.adapter_name,
+                adapter_bundle_version=run.source_route_evidence.adapter_release,
+                source_repository=run.source_route_evidence.adapter_repository,
+                source_commit=run.source_route_evidence.adapter_commit,
+                source_file_path=f"isolated/{ref.dataset_id}.py",
+                source_file_blob_sha256=_admission_hash(f"blob-{suffix}"),
+                source_file_sha256=_admission_hash(f"file-{suffix}"),
+                function_symbol=run.source_route_evidence.adapter_entrypoint,
+                visory_wrapper_version=run.source_route_evidence.adapter_version,
+                visory_wrapper_hash=_admission_hash(f"wrapper-{suffix}"),
+                mapping_version="1.0.0",
+                mapping_hash=_admission_hash(f"mapping-{suffix}"),
+                quality_rule_versions=("1.0.0",),
+                quality_rule_hashes=(_admission_hash(f"quality-{suffix}"),),
+                created_at=NOW - timedelta(days=3),
+            )
+            admission_level = (
+                first_admission_level if index == 1 else "PIT_CERTIFIED"
+            )
+            admission_status = (
+                first_admission_status if index == 1 else "ACCEPTED"
+            )
+            receipt = build_source_admission_receipt(
+                source_admission_receipt_id=f"snapshot_receipt_{suffix}",
+                provider_endpoint_id=endpoint.provider_endpoint_id,
+                provider_id=endpoint.provider_id,
+                endpoint_contract_version=endpoint.endpoint_contract_version,
+                dataset_id=run.dataset_id,
+                dataset_schema_version=run.dataset_schema_version,
+                requested_market_scope=(run.capability_market,),
+                requested_date_from=date(2026, 1, 1),
+                requested_date_to=(
+                    first_requested_date_to
+                    if index == 1
+                    else date(2026, 12, 31)
+                ),
+                source_contract_hash=_admission_hash(f"source-contract-{suffix}"),
+                sample_manifest_hash=_admission_hash(f"sample-manifest-{suffix}"),
+                observation_log_hash=_admission_hash(f"observation-log-{suffix}"),
+                coverage_manifest_hash=_admission_hash(f"coverage-manifest-{suffix}"),
+                revision_chain_hash=_admission_hash(f"revision-chain-{suffix}"),
+                quality_report_hash=_admission_hash(f"quality-report-{suffix}"),
+                license_evidence_hash=endpoint.license_evidence_hash,
+                expected_unit_and_identity_hash=_admission_hash(f"unit-identity-{suffix}"),
+                coverage_summary={"isolated": True, "complete": True},
+                admission_level=admission_level,
+                admission_status=admission_status,
+                reason_codes=("TEST_REVOKED",) if admission_status == "REVOKED" else (),
+                issued_at=NOW - timedelta(days=3),
+                valid_from=NOW - timedelta(days=2),
+                valid_to=first_valid_to if index == 1 else None,
+            )
+            binding = build_provider_endpoint_run_binding(
+                provider_endpoint_run_binding_id=f"snapshot_binding_{suffix}",
+                provider_run_id=run.provider_run_id,
+                raw_object_refs=(raw.raw_object_id,),
+                provider_id=run.provider_id,
+                provider_endpoint_id=endpoint.provider_endpoint_id,
+                endpoint_contract_version=endpoint.endpoint_contract_version,
+                adapter_implementation_fingerprint_id=(
+                    fingerprint.adapter_implementation_fingerprint_id
+                ),
+                implementation_fingerprint=fingerprint.implementation_fingerprint,
+                source_admission_receipt_id=receipt.source_admission_receipt_id,
+                receipt_hash=receipt.receipt_hash,
+                dataset_id=run.dataset_id,
+                dataset_schema_version=run.dataset_schema_version,
+                market=run.capability_market,
+                request_fingerprint=run.request_fingerprint,
+                observed_schema_hash=run.observed_schema_hash,
+                actual_origin_redacted=run.actual_upstream,
+                created_at=NOW - timedelta(minutes=20),
+            )
+            admission.add_endpoint(session, endpoint)
+            admission.add_fingerprint(session, fingerprint)
+            admission.add_receipt(session, receipt)
+            admission.add_binding(session, binding)
+
+
+def _admission_verifier(
+    *,
+    evidence_drift: bool = False,
+    implementation_drift: bool = False,
+) -> ProviderEndpointAdmissionVerifier:
+    def resolve_evidence(receipt):
+        hashes = receipt.evidence_hashes()
+        if evidence_drift:
+            hashes["coverage_manifest_hash"] = _admission_hash("drifted-coverage")
+        return hashes
+
+    def resolve_implementation(fingerprint):
+        observed = AdapterImplementationObservation.from_fingerprint(fingerprint)
+        if implementation_drift:
+            return replace(
+                observed,
+                source_file_sha256=_admission_hash("drifted-source-file"),
+            )
+        return observed
+
+    return ProviderEndpointAdmissionVerifier(
+        evidence_hash_resolver=resolve_evidence,
+        implementation_observation_resolver=resolve_implementation,
+    )
+
+
+def _snapshot_service(
+    database,
+    runtime_root: Path,
+    *,
+    repository=None,
+    evidence_drift: bool = False,
+    implementation_drift: bool = False,
+) -> SnapshotGateService:
+    return SnapshotGateService(
+        database,
+        runtime_root=runtime_root,
+        repository=repository,
+        admission_verifier=_admission_verifier(
+            evidence_drift=evidence_drift,
+            implementation_drift=implementation_drift,
+        ),
+        clock=lambda: NOW,
+    )
+
+
 def test_persisted_snapshot_capability_consumer_round_trip_and_formal_gate(isolated_postgres_database, tmp_path: Path) -> None:
     database = isolated_postgres_database
     upgrade_database(database.engine)
@@ -463,6 +668,7 @@ def test_persisted_snapshot_capability_consumer_round_trip_and_formal_gate(isola
     snapshot, certifications = _build_snapshot(snapshot_id=_resource(ResourceType.DATA_SNAPSHOT, "000000000001"), runtime_root=tmp_path)
     requirement = _requirement()
     _persist_snapshot(database, snapshot, certifications, requirement)
+    _persist_admission_packages(database, snapshot)
 
     repository = SnapshotRepository()
     with database.transaction() as session:
@@ -473,8 +679,137 @@ def test_persisted_snapshot_capability_consumer_round_trip_and_formal_gate(isola
     assert set(restored_certifications) == set(certifications)
     assert restored_requirement == requirement
 
-    service = SnapshotGateService(database, runtime_root=tmp_path, clock=lambda: NOW)
+    service = _snapshot_service(database, tmp_path)
     assert service.check_consumer(snapshot, requirement).value == "ACCEPTED"
+
+
+@pytest.mark.parametrize(
+    ("scenario", "expected_error"),
+    (
+        ("missing_binding", "SOURCE_ADMISSION_BINDING_MISSING"),
+        ("current_snapshot", "SOURCE_ADMISSION_RECEIPT_NOT_PIT_CERTIFIED"),
+        ("historical_series", "SOURCE_ADMISSION_RECEIPT_NOT_PIT_CERTIFIED"),
+        ("versioned_archive", "SOURCE_ADMISSION_RECEIPT_NOT_PIT_CERTIFIED"),
+        ("revoked", "SOURCE_ADMISSION_RECEIPT_REVOKED"),
+        ("expired", "SOURCE_ADMISSION_RECEIPT_EXPIRED"),
+        ("date_scope", "SOURCE_ADMISSION_RECEIPT_SCOPE_MISMATCH"),
+        ("evidence_drift", "SOURCE_ADMISSION_EVIDENCE_HASH_MISMATCH"),
+        ("implementation_drift", "SOURCE_ADMISSION_IMPLEMENTATION_MISMATCH"),
+        ("raw_omission", "SOURCE_ADMISSION_RAW_LINEAGE_MISMATCH"),
+        ("request_mismatch", "SOURCE_ADMISSION_RUN_CONTRACT_MISMATCH"),
+        ("internal_source_switch", "SOURCE_ADMISSION_ENDPOINT_MISMATCH"),
+        ("route_missing", "SOURCE_ADMISSION_SOURCE_ROUTE_MISSING"),
+        ("route_blocked", "SOURCE_ADMISSION_SOURCE_ROUTE_UNAVAILABLE"),
+        ("route_fixture", "SOURCE_ADMISSION_SOURCE_ROUTE_UNAVAILABLE"),
+        ("route_repository", "SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH"),
+        ("route_commit", "SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH"),
+        ("route_entrypoint", "SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH"),
+        ("route_bundle", "SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH"),
+        ("route_release", "SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH"),
+    ),
+)
+def test_snapshot_formal_gate_rejects_provider_admission_fail_closed_cases(
+    isolated_postgres_database,
+    tmp_path: Path,
+    scenario: str,
+    expected_error: str,
+) -> None:
+    database = isolated_postgres_database
+    upgrade_database(database.engine)
+    _bootstrap_registry(database)
+    snapshot, certifications = _build_snapshot(
+        snapshot_id=_resource(ResourceType.DATA_SNAPSHOT, "000000000010"),
+        runtime_root=tmp_path,
+    )
+    requirement = _requirement()
+    _persist_snapshot(database, snapshot, certifications, requirement)
+
+    if scenario != "missing_binding":
+        level = {
+            "current_snapshot": "CURRENT_SNAPSHOT",
+            "historical_series": "HISTORICAL_SERIES",
+            "versioned_archive": "VERSIONED_ARCHIVE",
+        }.get(scenario, "PIT_CERTIFIED")
+        _persist_admission_packages(
+            database,
+            snapshot,
+            first_admission_level=level,
+            first_admission_status="REVOKED" if scenario == "revoked" else "ACCEPTED",
+            first_valid_to=(
+                NOW - timedelta(hours=1) if scenario == "expired" else None
+            ),
+            first_requested_date_to=(
+                date(2026, 8, 30)
+                if scenario == "date_scope"
+                else date(2026, 12, 31)
+            ),
+        )
+
+    first = snapshot.canonical_partitions[0]
+    if scenario.startswith("route_"):
+        with database.transaction() as session:
+            run = RawIngestionRepository().get_provider_run(session, first.provider_run_refs[0])
+        evidence = None
+        implementation_updates = {
+            "route_repository": {"adapter_repository": "https://example.test/other.git"},
+            "route_commit": {"adapter_commit": "d" * 40},
+            "route_entrypoint": {"adapter_entrypoint": "other.fetch"},
+            "route_bundle": {"adapter_name": "other_bundle"},
+            "route_release": {"adapter_release": "2.0.0"},
+        }
+        if scenario in implementation_updates:
+            evidence = synthetic_source_route(
+                run, **implementation_updates[scenario]
+            ).model_dump(mode="json")
+        elif scenario != "route_missing":
+            evidence = synthetic_source_route(
+                run, state="BLOCKED" if scenario == "route_blocked" else "FIXTURE_ONLY",
+                kind="HTTP" if scenario == "route_blocked" else "FIXTURE",
+            ).model_dump(mode="json")
+        with database.engine.begin() as connection:
+            connection.execute(update(provider_run).where(
+                provider_run.c.provider_run_id == run.provider_run_id
+            ).values(source_route_evidence=evidence))
+    if scenario == "raw_omission":
+        replacement_raw_id = snapshot.canonical_partitions[1].raw_object_refs[0]
+        with database.engine.begin() as connection:
+            connection.execute(
+                update(provider_run)
+                .where(provider_run.c.provider_run_id == first.provider_run_refs[0])
+                .values(raw_object_refs=[replacement_raw_id])
+            )
+    elif scenario == "request_mismatch":
+        with database.engine.begin() as connection:
+            connection.execute(
+                update(provider_run)
+                .where(provider_run.c.provider_run_id == first.provider_run_refs[0])
+                .values(request_fingerprint=_admission_hash("changed-request"))
+            )
+    elif scenario == "internal_source_switch":
+        with database.transaction() as session:
+            run = RawIngestionRepository().get_provider_run(session, first.provider_run_refs[0])
+        switched = run.model_copy(update={"actual_upstream": "financial-api"})
+        with database.engine.begin() as connection:
+            connection.execute(
+                update(provider_run)
+                .where(provider_run.c.provider_run_id == first.provider_run_refs[0])
+                .values(actual_upstream="financial-api", source_route_evidence=synthetic_source_route(switched).model_dump(mode="json"))
+            )
+            connection.execute(
+                update(raw_object)
+                .where(raw_object.c.raw_object_id == first.raw_object_refs[0])
+                .values(actual_upstream="financial-api")
+            )
+
+    service = _snapshot_service(
+        database,
+        tmp_path,
+        evidence_drift=scenario == "evidence_drift",
+        implementation_drift=scenario == "implementation_drift",
+    )
+    with pytest.raises(SnapshotGateError) as captured:
+        service.check_consumer(snapshot, requirement)
+    assert captured.value.error_code == expected_error
 
 
 def test_formal_gate_rejects_forged_snapshot_projection_against_real_postgres(isolated_postgres_database, tmp_path: Path) -> None:
@@ -484,10 +819,11 @@ def test_formal_gate_rejects_forged_snapshot_projection_against_real_postgres(is
     snapshot, certifications = _build_snapshot(snapshot_id=_resource(ResourceType.DATA_SNAPSHOT, "000000000002"), runtime_root=tmp_path)
     requirement = _requirement()
     _persist_snapshot(database, snapshot, certifications, requirement)
+    _persist_admission_packages(database, snapshot)
     forged = snapshot.model_copy(update={"certified_capabilities": (), "missing_capabilities": tuple(snapshot.certified_capabilities)})
     forged = DataSnapshot.model_validate({**forged.model_dump(mode="python"), "manifest_hash": compute_snapshot_manifest_hash(forged)})
 
-    service = SnapshotGateService(database, runtime_root=tmp_path, clock=lambda: NOW)
+    service = _snapshot_service(database, tmp_path)
     with pytest.raises(SnapshotGateError) as captured:
         service.check_consumer(forged, requirement)
     assert captured.value.error_code == "SNAPSHOT_PERSISTED_STATE_MISMATCH"
@@ -500,6 +836,7 @@ def test_current_pointer_cas_switch_preserves_previous_snapshot_and_repository_r
     first, first_certifications = _build_snapshot(snapshot_id=_resource(ResourceType.DATA_SNAPSHOT, "000000000003"), runtime_root=tmp_path, revision=1)
     requirement = _requirement()
     _persist_snapshot(database, first, first_certifications, requirement)
+    _persist_admission_packages(database, first)
     second, second_certifications = _build_snapshot(
         snapshot_id=_resource(ResourceType.DATA_SNAPSHOT, "000000000004"),
         runtime_root=tmp_path,
@@ -508,8 +845,9 @@ def test_current_pointer_cas_switch_preserves_previous_snapshot_and_repository_r
         supersedes_id=first.snapshot_id,
     )
     _persist_snapshot(database, second, second_certifications, requirement)
+    _persist_admission_packages(database, second)
 
-    service = SnapshotGateService(database, runtime_root=tmp_path, clock=lambda: NOW)
+    service = _snapshot_service(database, tmp_path)
     initial = service.update_current_pointer(
         scope="global",
         trade_date=TRADE_DATE,
@@ -582,19 +920,20 @@ def test_current_pointer_update_rolls_back_when_pointer_write_fails(
     requirement = _requirement()
     _persist_snapshot(database, first, first_certifications, requirement)
     _persist_snapshot(database, second, second_certifications, requirement)
+    _persist_admission_packages(database, first)
+    _persist_admission_packages(database, second)
 
-    service = SnapshotGateService(database, runtime_root=tmp_path, clock=lambda: NOW)
+    service = _snapshot_service(database, tmp_path)
     initial = service.update_current_pointer(
         scope="global",
         trade_date=TRADE_DATE,
         capability_id="backtest_core",
         snapshot=first,
     )
-    failing_service = SnapshotGateService(
+    failing_service = _snapshot_service(
         database,
-        runtime_root=tmp_path,
+        tmp_path,
         repository=_FailingPointerRepository(),
-        clock=lambda: NOW,
     )
     with pytest.raises(RuntimeError, match="pointer update rollback probe"):
         failing_service.update_current_pointer(
@@ -638,7 +977,9 @@ def test_current_pointer_cas_allows_one_of_two_concurrent_switches(
     requirement = _requirement()
     _persist_snapshot(database, first, first_certifications, requirement)
     _persist_snapshot(database, second, second_certifications, requirement)
-    service = SnapshotGateService(database, runtime_root=tmp_path, clock=lambda: NOW)
+    _persist_admission_packages(database, first)
+    _persist_admission_packages(database, second)
+    service = _snapshot_service(database, tmp_path)
     initial = service.update_current_pointer(
         scope="global",
         trade_date=TRADE_DATE,
@@ -649,7 +990,7 @@ def test_current_pointer_cas_allows_one_of_two_concurrent_switches(
     barrier = threading.Barrier(2)
 
     def switch_once() -> tuple[str, SnapshotCurrentPointer | str]:
-        worker_service = SnapshotGateService(database, runtime_root=tmp_path, clock=lambda: NOW)
+        worker_service = _snapshot_service(database, tmp_path)
         barrier.wait(timeout=10)
         try:
             return (

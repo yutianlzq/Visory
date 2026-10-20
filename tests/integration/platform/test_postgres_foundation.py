@@ -18,7 +18,7 @@ from src.repositories.platform import (
 )
 
 
-HEAD_REVISION = "0014_wp0207_source_binding"
+HEAD_REVISION = "0017_wp0303_mainline_merge"
 
 
 def _table_names(database: PostgresDatabase) -> tuple[str, ...]:
@@ -75,6 +75,7 @@ def test_empty_database_upgrade_is_idempotent_and_reversible(isolated_postgres_d
     assert upgraded.head_revision == HEAD_REVISION
     assert upgraded.is_at_head is True
     assert first_tables == (
+        "adapter_implementation_fingerprint",
         "alembic_version",
         "artifact_registry",
         "asset_alias",
@@ -97,6 +98,9 @@ def test_empty_database_upgrade_is_idempotent_and_reversible(isolated_postgres_d
         "platform_task",
         "provider_capability",
         "provider_definition",
+        "provider_endpoint_definition",
+        "provider_endpoint_run_binding",
+        "provider_endpoint_run_binding_raw_object",
         "provider_policy",
         "provider_rate_limit_window",
         "provider_raw_schema_definition",
@@ -105,6 +109,7 @@ def test_empty_database_upgrade_is_idempotent_and_reversible(isolated_postgres_d
         "raw_object",
         "snapshot_current_pointer",
         "snapshot_partition_ref",
+        "source_admission_receipt",
         "task_attempt",
         "task_checkpoint",
         "task_command_idempotency",

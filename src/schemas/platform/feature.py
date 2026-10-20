@@ -15,13 +15,16 @@ from .enums import ConsumerKind, PlatformStringEnum, PublicationStatus, QualityS
 from .hashing import canonical_json_bytes, compute_content_hash
 from .resources import parse_resource_id
 from .storage import StorageRef
+from .indicator import INDICATOR_ID_MAX_LENGTH
 
 _HASH = r"^sha256:[0-9a-f]{64}$"
 _SEMVER = r"^(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$"
-_IDENTIFIER = re.compile(r"^[a-z][a-z0-9_.:-]{0,127}$")
+_IDENTIFIER = re.compile(r"^[a-z][a-z0-9_.:-]*$")
 _COVERAGE_QUANTUM = Decimal("0.00001")
 _ALLOWED_VALUE_TYPES = frozenset({"boolean", "date", "decimal", "integer", "string"})
 _FEATURE_PARQUET_MEDIA_TYPE = "application/vnd.apache.parquet"
+# 原键算法在现有持久化字段边界下的最大派生长度；不扩其他输入字段。
+FEATURE_PARTITION_KEY_MAX_LENGTH = 386
 
 
 def _resource(value: str, expected: ResourceType, field_name: str) -> str:
@@ -32,7 +35,9 @@ def _resource(value: str, expected: ResourceType, field_name: str) -> str:
 
 
 def _identifier(value: str, field_name: str) -> str:
-    if not isinstance(value, str) or not _IDENTIFIER.fullmatch(value) or not value.strip():
+    # 指标长度与 Schema/metadata 共用契约；其他字段保留原有 128 字符边界。
+    max_length = INDICATOR_ID_MAX_LENGTH if field_name == "indicator_id" else 128
+    if not isinstance(value, str) or len(value) > max_length or not _IDENTIFIER.fullmatch(value) or not value.strip():
         raise ValueError(f"{field_name} must be a normalized non-blank identifier")
     return value
 
@@ -93,7 +98,7 @@ class FeatureRow(PlatformContractModel):
 
     entity_key: str
     trade_date: date
-    indicator_id: str
+    indicator_id: str = Field(max_length=INDICATOR_ID_MAX_LENGTH)
     definition_version: str = Field(pattern=_SEMVER)
     value: Any | None
     value_type: str
@@ -172,7 +177,7 @@ class FeaturePartitionRef(PlatformContractModel):
     schema_hash: str = Field(pattern=_HASH)
     revision: int = Field(ge=1)
     storage_ref: StorageRef
-    indicator_id: str
+    indicator_id: str = Field(max_length=INDICATOR_ID_MAX_LENGTH)
     definition_version: str = Field(pattern=_SEMVER)
     required_columns: tuple[str, ...] = ()
     retention_class: RetentionClass = RetentionClass.REBUILDABLE
@@ -218,11 +223,11 @@ class FeaturePartitionRef(PlatformContractModel):
 
 class FeaturePartition(PlatformContractModel):
     feature_partition_id: str
-    indicator_id: str
+    indicator_id: str = Field(max_length=INDICATOR_ID_MAX_LENGTH)
     definition_version: str = Field(pattern=_SEMVER)
     domain: str
     frequency: str
-    partition_key: str
+    partition_key: str = Field(max_length=FEATURE_PARTITION_KEY_MAX_LENGTH)
     data_snapshot_ids: tuple[str, ...] = Field(min_length=1)
     input_partition_ids: tuple[str, ...] = ()
     universe_scope_hash: str | None = Field(default=None, pattern=_HASH)

@@ -1,0 +1,734 @@
+{
+  "contract_id": "C-004/DerivedCanonicalPartition",
+  "payload": {
+    "partition_contract_version": "2.0.0",
+    "provenance_kind": "DERIVED",
+    "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000099",
+    "dataset_id": "adjustment_factor",
+    "dataset_schema_version": "1.0.0",
+    "partition_key": "fixture_factor_20260831",
+    "revision": 1,
+    "revision_kind": "INITIAL",
+    "supersedes_id": null,
+    "row_count": 2,
+    "storage_ref": {
+      "storage_backend": "local_fs",
+      "storage_namespace": "app",
+      "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+      "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "media_type": "application/vnd.apache.parquet",
+      "size_bytes": 1
+    },
+    "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "quality_status": "COMPLETE",
+    "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000099",
+    "lineage": {
+      "lineage_contract_version": "1.0.0",
+      "method_ref": {
+        "method_contract_version": "1.0.0",
+        "method_id": "pit_price_continuity",
+        "method_version": "1.0.0",
+        "method_contract_hash": "sha256:9b4faf1e0fad5f1a5ec0828d255c87efd1155535b90c1eba0f510bf5dec07f25",
+        "formula_digest": "sha256:fb4b987fa43044a80ddad0bb47847080448c89fd7877940a69b6fc90d56b4555"
+      },
+      "inputs": [
+        {
+          "role": "bar_1d_raw",
+          "snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000007",
+          "manifest_version": "1.0.0",
+          "snapshot_manifest_hash": "sha256:410c1b4676370ac95ab51252d06ce12ad2734ae28ae12a7c26d27e612e02ffe0",
+          "snapshot_content_hash": "sha256:3d19f74c8c02ff72b08c4a1f8d48070eae1ae75a7ebb27ad277f65adf2205e8a",
+          "snapshot_cutoff_at": "2026-08-31T08:00:00Z",
+          "partitions": [
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000001",
+              "dataset_id": "bar_1d_raw",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000001",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000001"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000001"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 1,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            },
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000002",
+              "dataset_id": "corporate_action",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000002",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000002"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000002"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 0,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            },
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000003",
+              "dataset_id": "security_master",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000003",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000003"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000003"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 1,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            },
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000004",
+              "dataset_id": "trading_calendar",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000004",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000004"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000004"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 1,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            }
+          ]
+        },
+        {
+          "role": "corporate_action",
+          "snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000007",
+          "manifest_version": "1.0.0",
+          "snapshot_manifest_hash": "sha256:410c1b4676370ac95ab51252d06ce12ad2734ae28ae12a7c26d27e612e02ffe0",
+          "snapshot_content_hash": "sha256:3d19f74c8c02ff72b08c4a1f8d48070eae1ae75a7ebb27ad277f65adf2205e8a",
+          "snapshot_cutoff_at": "2026-08-31T08:00:00Z",
+          "partitions": [
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000001",
+              "dataset_id": "bar_1d_raw",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000001",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000001"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000001"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 1,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            },
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000002",
+              "dataset_id": "corporate_action",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000002",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000002"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000002"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 0,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            },
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000003",
+              "dataset_id": "security_master",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000003",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000003"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000003"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 1,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            },
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000004",
+              "dataset_id": "trading_calendar",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000004",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000004"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000004"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 1,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            }
+          ]
+        },
+        {
+          "role": "security_master",
+          "snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000007",
+          "manifest_version": "1.0.0",
+          "snapshot_manifest_hash": "sha256:410c1b4676370ac95ab51252d06ce12ad2734ae28ae12a7c26d27e612e02ffe0",
+          "snapshot_content_hash": "sha256:3d19f74c8c02ff72b08c4a1f8d48070eae1ae75a7ebb27ad277f65adf2205e8a",
+          "snapshot_cutoff_at": "2026-08-31T08:00:00Z",
+          "partitions": [
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000001",
+              "dataset_id": "bar_1d_raw",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000001",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000001"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000001"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 1,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            },
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000002",
+              "dataset_id": "corporate_action",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000002",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000002"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000002"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 0,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            },
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000003",
+              "dataset_id": "security_master",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000003",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000003"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000003"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 1,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            },
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000004",
+              "dataset_id": "trading_calendar",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000004",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000004"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000004"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 1,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            }
+          ]
+        },
+        {
+          "role": "trading_calendar",
+          "snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000007",
+          "manifest_version": "1.0.0",
+          "snapshot_manifest_hash": "sha256:410c1b4676370ac95ab51252d06ce12ad2734ae28ae12a7c26d27e612e02ffe0",
+          "snapshot_content_hash": "sha256:3d19f74c8c02ff72b08c4a1f8d48070eae1ae75a7ebb27ad277f65adf2205e8a",
+          "snapshot_cutoff_at": "2026-08-31T08:00:00Z",
+          "partitions": [
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000001",
+              "dataset_id": "bar_1d_raw",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000001",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000001"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000001"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 1,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            },
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000002",
+              "dataset_id": "corporate_action",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000002",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000002"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000002"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 0,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            },
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000003",
+              "dataset_id": "security_master",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000003",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000003"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000003"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 1,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            },
+            {
+              "canonical_partition_id": "cpart_019dbd74-2a00-7000-8000-000000000004",
+              "dataset_id": "trading_calendar",
+              "dataset_schema_version": "1.0.0",
+              "provider_policy_version": "1.0.0",
+              "partition_key": "2026-08-31",
+              "revision": 1,
+              "revision_kind": "INITIAL",
+              "storage_ref": {
+                "storage_backend": "local_fs",
+                "storage_namespace": "app",
+                "relative_path": "canonical/dataset=bar_1d_raw/partition=2026-08-31/revision=1/cpart.parquet",
+                "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "media_type": "application/vnd.apache.parquet",
+                "size_bytes": 1
+              },
+              "partition_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "schema_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+              "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000004",
+              "quality_status": "COMPLETE",
+              "provider_run_refs": [
+                "prun_019dbd74-2a00-7000-8000-000000000004"
+              ],
+              "raw_object_refs": [
+                "raw_019dbd74-2a00-7000-8000-000000000004"
+              ],
+              "min_available_at": "2026-08-31T08:00:00Z",
+              "max_available_at": "2026-08-31T08:00:00Z",
+              "row_count": 1,
+              "coverage_ratio": "1.00000",
+              "excluded_instrument_count": 0,
+              "quality_threshold_version": "1.0.0"
+            }
+          ]
+        }
+      ],
+      "source_roots": [
+        {
+          "source_contract_version": "1.0.0",
+          "provider_run_id": "prun_019dbd74-2a00-7000-8000-000000000001",
+          "provider_run_contract_hash": "sha256:e5318b490a8c7bfcda94cf62879f0525dc966039a12887abd543aba53600d9dd",
+          "raw_object_id": "raw_019dbd74-2a00-7000-8000-000000000001",
+          "raw_object_contract_hash": "sha256:e82817829542be5a5ca5fd3c36c8096bf3b79ccf919683dec37530ae683310f8",
+          "raw_content_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "provider_schema_version": "1.0.0",
+          "observed_schema_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "adapter_version": "1.0.0",
+          "source_published_at": "2026-08-31T06:00:00Z",
+          "available_at": "2026-08-31T07:30:00Z",
+          "availability_basis": "OBSERVED_INGESTION"
+        },
+        {
+          "source_contract_version": "1.0.0",
+          "provider_run_id": "prun_019dbd74-2a00-7000-8000-000000000002",
+          "provider_run_contract_hash": "sha256:2f9ac549d222ee55a2f5ca54fda66d91035da1ae3188ccfca1f0b347efb42c79",
+          "raw_object_id": "raw_019dbd74-2a00-7000-8000-000000000002",
+          "raw_object_contract_hash": "sha256:1e72bdb3513f1c1e87fe12717955e7046686fedff83aa421e7285db42c4ad7ae",
+          "raw_content_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "provider_schema_version": "1.0.0",
+          "observed_schema_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "adapter_version": "1.0.0",
+          "source_published_at": "2026-08-31T06:00:00Z",
+          "available_at": "2026-08-31T07:30:00Z",
+          "availability_basis": "OBSERVED_INGESTION"
+        },
+        {
+          "source_contract_version": "1.0.0",
+          "provider_run_id": "prun_019dbd74-2a00-7000-8000-000000000003",
+          "provider_run_contract_hash": "sha256:f101bbbc1e3668b6a62e5e18241f417a7215156e1167123a8f97f4eb849d0e91",
+          "raw_object_id": "raw_019dbd74-2a00-7000-8000-000000000003",
+          "raw_object_contract_hash": "sha256:1c87ac3b9896d447890be98db90de3d82dd4c0c5b58a028c3ecf07fae29247d7",
+          "raw_content_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "provider_schema_version": "1.0.0",
+          "observed_schema_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "adapter_version": "1.0.0",
+          "source_published_at": "2026-08-31T06:00:00Z",
+          "available_at": "2026-08-31T07:30:00Z",
+          "availability_basis": "OBSERVED_INGESTION"
+        },
+        {
+          "source_contract_version": "1.0.0",
+          "provider_run_id": "prun_019dbd74-2a00-7000-8000-000000000004",
+          "provider_run_contract_hash": "sha256:9fd72645da36df956e4e3d4dac4eabbd3dda001e9b1b4ef98470a17a16fb1d97",
+          "raw_object_id": "raw_019dbd74-2a00-7000-8000-000000000004",
+          "raw_object_contract_hash": "sha256:6f5a878c75f4dafd1008f2fd40dc3539179025b002adfd01afc8f800c673e456",
+          "raw_content_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "provider_schema_version": "1.0.0",
+          "observed_schema_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "adapter_version": "1.0.0",
+          "source_published_at": "2026-08-31T06:00:00Z",
+          "available_at": "2026-08-31T07:30:00Z",
+          "availability_basis": "OBSERVED_INGESTION"
+        }
+      ],
+      "quality_evidence": [
+        {
+          "quality_contract_version": "1.0.0",
+          "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000001",
+          "quality_report_hash": "sha256:053ddf27283909059cffd61812e7778476f0ba8a523e5fcb97e9ae9753cc0b44",
+          "mapping_version": "1.0.0",
+          "mapping_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "quality_threshold_version": "1.0.0"
+        },
+        {
+          "quality_contract_version": "1.0.0",
+          "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000002",
+          "quality_report_hash": "sha256:16c9cc8acc2ff5b2af023e95929bd9c42db73f00c90db903240fe4cda99ca4dc",
+          "mapping_version": "1.0.0",
+          "mapping_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "quality_threshold_version": "1.0.0"
+        },
+        {
+          "quality_contract_version": "1.0.0",
+          "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000003",
+          "quality_report_hash": "sha256:07d7fbe684ced835f4bbc74e1986c8b90d765a98440788a215d8a8b79a71aeaa",
+          "mapping_version": "1.0.0",
+          "mapping_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "quality_threshold_version": "1.0.0"
+        },
+        {
+          "quality_contract_version": "1.0.0",
+          "quality_report_id": "quality_019dbd74-2a00-7000-8000-000000000004",
+          "quality_report_hash": "sha256:6e5abd6f02a0a1456951f42547a876be9becf17cf51d443c0d66c78692f2c102",
+          "mapping_version": "1.0.0",
+          "mapping_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "quality_threshold_version": "1.0.0"
+        }
+      ],
+      "coverage_receipt": {
+        "receipt_contract_version": "1.0.0",
+        "receipt_id": "fixture_complete_v1",
+        "action_snapshot_id": "ds_019dbd74-2a00-7000-8000-000000000007",
+        "action_manifest_hash": "sha256:410c1b4676370ac95ab51252d06ce12ad2734ae28ae12a7c26d27e612e02ffe0",
+        "universe_scope_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "date_from": "2026-08-28",
+        "date_to": "2026-08-31",
+        "cutoff_at": "2026-08-31T08:00:00Z",
+        "available_at": "2026-08-31T08:00:00Z",
+        "coverage_status": "COMPLETE",
+        "completion_basis": "EXHAUSTIVE_SOURCE_MANIFEST",
+        "event_type_coverage": [
+          "BONUS",
+          "DIVIDEND",
+          "OTHER",
+          "RIGHTS",
+          "SPLIT"
+        ],
+        "page_raw_object_refs": [
+          "raw_019dbd74-2a00-7000-8000-000000000002"
+        ],
+        "end_marker": "fixture_exhaustive_end",
+        "source_row_count": 0,
+        "receipt_hash": "sha256:82618399a830ad8f4f065d5c5bb7475e6e8dbc8706422fbda607fe372c5bc4d5"
+      },
+      "selected_event_refs": [],
+      "base_trade_date": "2026-08-28",
+      "anchor_trade_date": "2026-08-31",
+      "cutoff_at": "2026-08-31T08:00:00Z",
+      "available_at": "2026-08-31T08:00:00Z",
+      "universe_scope_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "lineage_hash": "sha256:e0f119881513c48c577fb3d54415af4cb937238423b72c6001860dcee8befef7"
+    },
+    "created_at": "2026-09-01T08:00:00Z",
+    "published_at": "2026-09-01T08:00:00Z"
+  }
+}
