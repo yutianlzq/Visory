@@ -9,11 +9,14 @@ from pydantic import ValidationError
 
 from src.schemas.platform import (
     EndpointDatasetBinding,
+    ProviderRun,
+    ResourceType,
     build_adapter_implementation_fingerprint,
     build_provider_endpoint_definition,
     build_provider_endpoint_run_binding,
     build_source_admission_receipt,
     compute_content_hash,
+    generate_resource_id,
 )
 from src.services.platform.provider_admission import (
     AdapterImplementationObservation,
@@ -250,6 +253,47 @@ def test_formal_verifier_accepts_only_complete_current_evidence() -> None:
             object(), RUN_ID, target_market="CN", target_date=date(2026, 1, 10), cutoff_at=NOW
         )
         == binding
+    )
+
+
+@pytest.mark.parametrize(
+    "updates",
+    (
+        {"adapter_repository": "https://example.test/different-adapter.git"},
+        {"adapter_commit": "b" * 40},
+        {"adapter_entrypoint": "bar.other_fetch"},
+        {"adapter_name": "different_bundle"},
+        {"adapter_release": "2.0.0"},
+        {"adapter_version": "2.0.0"},
+    ),
+    ids=("repository", "commit", "entrypoint", "bundle", "release", "wrapper"),
+)
+def test_formal_verifier_rejects_resealed_route_implementation_mismatch(updates) -> None:
+    verifier = _verifier(*_package())
+    original = verifier.raw_repository.run
+    route = synthetic_source_route(original, **updates)
+    # 使用完整且经 JSON 往返校验的 Run，错配对象自身的 Hash/契约仍然有效。
+    run = ProviderRun(
+        **(
+            vars(original)
+            | {
+                "adapter_version": route.adapter_version,
+                "source_route_evidence": route,
+                "provider_policy_id": "bar_1d_raw_v1",
+                "provider_policy_version": "1.0.0",
+                "capability_frequency": "daily",
+                "task_id": generate_resource_id(ResourceType.TASK),
+                "attempt_id": generate_resource_id(ResourceType.ATTEMPT),
+                "started_at": NOW - timedelta(minutes=5),
+                "finished_at": NOW,
+                "run_outcome": "SUCCEEDED",
+            }
+        )
+    )
+    verifier.raw_repository.run = ProviderRun.model_validate_json(run.model_dump_json())
+
+    _assert_rejected(
+        verifier, "SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH"
     )
 
 

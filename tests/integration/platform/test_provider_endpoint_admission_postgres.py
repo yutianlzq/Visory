@@ -623,6 +623,60 @@ def test_real_repository_formal_gate_rejects_source_evidence_hash_drift(
     assert captured.value.error_code == "SOURCE_ADMISSION_EVIDENCE_HASH_MISMATCH"
 
 
+@pytest.mark.parametrize("boundary", ("publication", "formal"))
+@pytest.mark.parametrize(
+    "updates",
+    (
+        {"adapter_repository": "https://example.test/different-adapter.git"},
+        {"adapter_commit": "b" * 40},
+        {"adapter_entrypoint": "security_master.other_fetch"},
+        {"adapter_name": "different_bundle"},
+        {"adapter_release": "2.0.0"},
+        {"adapter_version": "2.0.0"},
+    ),
+    ids=("repository", "commit", "entrypoint", "bundle", "release", "wrapper"),
+)
+def test_persisted_resealed_route_cannot_reuse_another_implementation(
+    isolated_postgres_database, tmp_path, boundary, updates
+):
+    database = isolated_postgres_database
+    upgrade_database(database.engine, LATEST)
+    run, raw = _create_run(database, tmp_path)
+    package = _package(run, raw)
+    service = ProviderAdmissionService(database)
+    if boundary == "formal":
+        service.publish_package(*package)
+    before = _counts(database)
+    route = synthetic_source_route(run, **updates)
+    with database.engine.begin() as connection:
+        connection.execute(
+            update(provider_run)
+            .where(provider_run.c.provider_run_id == run.provider_run_id)
+            .values(
+                adapter_version=route.adapter_version,
+                source_route_evidence=route.model_dump(mode="json"),
+            )
+        )
+
+    if boundary == "publication":
+        with pytest.raises(ValueError, match="source route implementation"):
+            service.publish_package(*package)
+    else:
+        with database.transaction() as session:
+            with pytest.raises(ProviderAdmissionGateError) as captured:
+                _verifier().verify_formal_run(
+                    session,
+                    run.provider_run_id,
+                    target_market="CN",
+                    target_date=NOW.date(),
+                    cutoff_at=NOW,
+                )
+        assert captured.value.error_code == (
+            "SOURCE_ADMISSION_SOURCE_ROUTE_IMPLEMENTATION_MISMATCH"
+        )
+    assert _counts(database) == before
+
+
 def test_downgrade_refuses_records_before_drop_and_empty_database_is_reversible(
     isolated_postgres_database, tmp_path
 ):
