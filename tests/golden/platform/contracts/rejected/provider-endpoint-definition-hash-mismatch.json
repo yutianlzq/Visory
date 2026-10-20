@@ -1,0 +1,44 @@
+{
+  "contract_id": "C-004/ProviderEndpointDefinition",
+  "expected_error_fields": [],
+  "payload": {
+    "cancellation_semantics": "cancelled revisions remain explicit",
+    "dataset_bindings": [
+      {
+        "dataset_id": "bar_1d_raw",
+        "dataset_schema_version": "1.0.0",
+        "market_scope": [
+          "CN"
+        ]
+      }
+    ],
+    "definition_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "effective_from": "2026-01-01T00:00:00Z",
+    "effective_to": null,
+    "endpoint_contract_version": "1.0.0",
+    "error_semantics": "transport and provider errors are explicit",
+    "license_evidence_hash": "sha256:7f68ffac1d5e52715dbe00021c6a2827fbf25a82038f61be09c39cc616e7deeb",
+    "license_semantics": "pinned license evidence controls permitted use",
+    "market_scope": [
+      "CN"
+    ],
+    "no_data_semantics": "no data is distinct from transport or schema failure",
+    "pagination_semantics": "cursor token is explicit and stable",
+    "path_family": "/v1/bars/*",
+    "provider_endpoint_id": "a_stock_data_bar_daily",
+    "provider_id": "a_stock_data",
+    "rate_limit_semantics": "provider policy defines a fixed request window",
+    "redacted_origin_allowlist": [
+      "https://api.example.test"
+    ],
+    "request_method": "GET",
+    "request_schema_hash": "sha256:83561aa9f6d526216874a2f23848163465a30fcb291f07455161d52e0222306a",
+    "response_schema_hash": "sha256:4a719714c0631b8b656c6a734df15e62da6ff331b914a64c3b9475432d4d320c",
+    "retry_semantics": "only bounded retryable errors may be retried",
+    "revision_semantics": "stable source identity and monotonic revision are required",
+    "source_publication_semantics": "source publication time is preserved when available",
+    "terminal_semantics": "missing next cursor terminates pagination",
+    "total_semantics": "reported total is authoritative for coverage",
+    "valid_zero_row_semantics": "zero rows require successful terminal coverage evidence"
+  }
+}

@@ -1,5 +1,133 @@
 # Visory 实现状态
 
+## 2026-10-20 WP-0303 独立候选交付 / WP 仍 IN_PROGRESS
+
+- 基于重新 fetch 核实的 main `0d4d5bb6b67c391a5c6b18ff6480d61eaffedc47`，在独立 `codex/wp-0303-mainline-delivery` 分支交付封存的 87 路径候选；代码/测试/配置/生成物与已验收候选保持一致，只校准三份交付文档。Registry 实际为 main 74 → candidate 81，下方历史计数不得替代该实际值。
+- PR #42 已合入该 main；下方 WP-0207 / PR #42 的 OPEN、旧 CI 和未提交叙述保留为当时快照，不是当前远端状态。本 WP 候选 PR 的远端结论只认其当前 head 的 governance/backend/web，不使用 main 或第 22 节本地测试替代，详见[实现记录第 23 节](WP-0303-IMPLEMENTATION.md#23-2026-10-20-独立候选交付与当前证据入口)。
+- `WP-0303=IN_PROGRESS`、`VERIFIED=15/45`；B1–B4 `NO_GO`、`market_breadth/market_emotion=missing`，真实来源 Formal/Paper 拒绝，`NOT CERTIFIED`、`RELEASED=false`。不自动 merge/tag/release/部署；完整 Receipt 撤销生命周期仍须在真实 Endpoint 准入前另行验收。
+
+## 2026-10-19 WP-0303 mainline convergence：PR-ready 本地候选 / WP 仍 IN_PROGRESS
+
+- 只在干净隔离 detached worktree 收敛 f468 成果，基于实时只读核验的 main `0d4d5bb6b67c391a5c6b18ff6480d61eaffedc47`；83 个来源路径分类后排除独立 WP-0302 状态治理，8 个重叠路径保留 PR #42 来源绑定和公开脱敏语义，生成物只经既有 exporter 更新。
+- 追加 `0017_wp0303_mainline_merge`，原迁移与业务数据不改；空库/main 来源证据库/WP-0303 Admission 库均升级至统一 head。Formal 同时要求有效 SourceRoute 与 EndpointAdmission，旧 F1/F2/Golden/Hash/固定引用保留，LF/CRLF 兼容回归不改旧预期。
+- 当前候选原生 Git tree Linux 定向 `802 passed / 0 skipped`，全部真实隔离 PostgreSQL `256 passed / 0 skipped`；原样完整 `bash scripts/ci_gate.sh` exit 0，`8178 passed / 0 failed / 0 skipped / 4 deselected`、572 subtests passed。测试后 1603 项源文件无漂移，Linux 契约/治理/基线通过。该结果支持本地 PR-ready，不表示远程 CI、PR、合入或生产认证。完整命令、中间失败、环境、Hash/回滚与最终结论见[实现记录第 22 节](WP-0303-IMPLEMENTATION.md#mainline-convergence)。下方 2026-10-15 及更早结果全部是历史，不替代当前验证。
+- 当前唯一 WP 表统计为 `VERIFIED=15/45`、`IN_PROGRESS=2`、`NOT_STARTED=28`、`RELEASED=0`。WP-0303 仍 `IN_PROGRESS`，两市场能力 missing，真实来源 Formal/Paper 拒绝，`NOT CERTIFIED`、`RELEASED=false`；Receipt 完整撤销生命周期必须在真实 Endpoint 准入前另行验收，本轮不实现。
+
+## 2026-10-15 WP-0303 C-004 Endpoint Admission：本地基础设施完成 / 来源未准入
+
+- 纯追加 `ProviderEndpointDefinition@1.0.0`、`AdapterImplementationFingerprint@1.0.0`、`SourceAdmissionReceipt@1.0.0`、`ProviderEndpointRunBinding@1.0.0`，纳入 Registry、JSON Schema、成功/拒绝 Golden 和确定性 Hash；旧 `ProviderRun@1.0.0`、`RawObject@1.0.0` 及历史 C-004/F1/F2 契约不原地改版。
+- 新增后继 `0016_wp0303_provider_endpoint_admission`、精确读回 Repository 与同事务包发布；逐字段相同的 Endpoint/Fingerprint/Receipt/Binding 可幂等重放，不同 Run 可复用相同不可变前置对象，并发首次发布由五表事务锁序列化；同身份内容漂移拒绝。Binding 仍校验 ProviderRun、全部 RawObject、Endpoint/provider/version、Dataset/schema/market、request/schema Hash、实际 origin、实现指纹和 Receipt，一个 Run 只允许一个 Binding。
+- Snapshot `backtest_core` build、Formal consumer 和 current pointer 均重新验证有效 `PIT_CERTIFIED` Receipt、来源证据 Hash 与当前实现观察；旧 Run 缺 Binding、非 PIT 等级、撤销/失效/越界、证据或实现漂移、Raw 遗漏及内部换源均 fail closed。
+- 隔离 PostgreSQL 与合成材料已覆盖 migration、重启读回、FK/唯一约束、事务失败回收、危险 downgrade 拒绝、空表 downgrade/re-upgrade 及 Formal 成功/拒绝路径；这些结果不认证任何真实 Endpoint。**B1—B4 仍 `NO_GO`，WP-0303=IN_PROGRESS、15/45，market_breadth/market_emotion=missing，Formal/Paper 真实来源路径拒绝，NOT CERTIFIED、RELEASED=false**。
+- 定向保护套件 505 passed，Provider/Raw/Canonical/Snapshot/Backfill 实际 PostgreSQL 组 63 passed；通配 Endpoint 的明文/编码点段越界拒绝、多 Run 精确复用、并发首次发布和同身份漂移拒绝均有回归。完整 `ci_gate.sh all` 仍为 exit 1：7249 passed / 82 failed / 167 skipped / 4 deselected，572 subtests passed；当前 82 项是既有 83 项归因矩阵的严格子集，0 项新增且 `C004_ATTRIBUTABLE=0`（环境 58、既有测试缺陷 21、flaky 2、越界产品缺陷 1），不等于完整 gate 通过，也不授权在本 Goal 内修复越界模块。
+- `SourceAdmissionReceipt.REVOKED` 当前只约束 Binding 直接引用的 Receipt；不可变 `ACCEPTED` Receipt 的后续撤销尚缺 supersession/status-event 链，必须在阶段 C 真实 Endpoint 准入前收敛。该缺口不以原地改 Receipt 或无关联的新 REVOKED ID 掩盖。
+
+## 2026-10-15 WP-0303 完整 Goal 重排：PARTIAL
+
+- 新增 [WP-0303-FULL-INPUT-TO-FEATURE-CLOSEOUT Goal v2](WP-0303-FULL-INPUT-TO-FEATURE-CLOSEOUT-GOAL.md)，完整验收不变；执行顺序重排为 Adapter Bundle/Provider 分层 → C-004 Endpoint Admission → 单 Endpoint 真实准入 → 输入/派生 → 固定消费与真实 Correction 综合验收。
+- 下一可执行阶段只纯追加 `ProviderEndpointDefinition`、`AdapterImplementationFingerprint`、`SourceAdmissionReceipt` 和 `ProviderEndpointRunBinding`，不原地修改旧 `ProviderRun@1.0.0`、`RawObject@1.0.0`、Registry/Golden/Hash 或 0014/0015。Formal 必须有一致 Binding 和有效 `PIT_CERTIFIED` Receipt。
+- 本轮仅文档架构调整，不修改产品代码、Schema、Migration、测试或来源证据，不认证具体 Endpoint；B1—B4 新增整体关闭项仍为 0，全部保持 `NO_GO`。
+- **WP-0303=IN_PROGRESS、15/45，market_breadth/market_emotion=missing，Formal/Paper 拒绝，NOT CERTIFIED、RELEASED=false**。没有 commit/push/PR/merge、真实 Provider API、生产数据库、真实 `/data`、调度、部署或发布。
+
+## 2026-10-15 WP-0303 a-stock-data 数据源架构调整：PARTIAL
+
+- 固定 `simonlin1212/a-stock-data@29b07d2e37005b9fd568bca1262f6e572b5f9407`，将其从“统一生产 Provider”收敛为 Adapter Bundle / 实现指纹；腾讯、通达信、东财、巨潮、BaoStock、新浪及交易所等实际上游按 Provider/Endpoint 独立注册、运行、覆盖和修订认证。架构与 B1—B4 端点映射见 [Adapter Bundle 分层架构](WP-0303-A-STOCK-DATA-ADAPTER-ARCHITECTURE.md)。
+- 现有 `a_stock_data@1.0.0`、旧 Provider/Golden/Policy、14 F1、65 F2、0014/0015、B5/N1/N2 均保留；本次不追加运行时 Schema、Mapping、Dataset、Definition、Migration 或生产 Adapter，不把 `actual_upstream`、Git commit、当前历史查询或 Bundle 内 fallback 当 PIT 证据。
+- B1—B4 新增整体关闭项 0：当前流通市值/股本、历史换手率、公司行动/因子、盘后包/首封/状态端点均缺各自所需的历史版本、`available_at`、revision/cancel 或完整覆盖收据，继续 `NO_GO`。
+- **WP-0303=IN_PROGRESS、15/45，market_breadth/market_emotion=missing，Formal/Paper 拒绝，NOT CERTIFIED、RELEASED=false**。没有 commit/push/PR/merge、Provider 业务 API、生产数据库、真实 `/data`、调度、部署或发布。
+
+## 2026-10-14 WP-0303 新公开历史包与覆盖/股本更正核验：PARTIAL
+
+- [来源证据第 12 节](WP-0303-B3-SOURCE-EVIDENCE-PREP.md#public-history-coverage-evidence)记录 9 个新仓库完整树、201 个固定来源文件、3 份官方 PDF；9 证券 8,636 个同键配对支持数值口径核验，当前 master cohort 与 5,463 个目录身份对齐不等于历史冻结池。
+- 79 个首封日期文件的涨停/炸板/跌停榜有 50/32/21 个日期截断，包含周六日期；因子样本有 10 个日期缺对应行情。301061 官方初版→更正证明实施前/后无限售股变更语义，不能回填公告日股本或历史 available_at；Provider 原始 revision/cancel/覆盖/PIT 仍缺。
+- 本轮只追加四份文档和仓库外资料/审计，产品测试运行数 0；实际生成/治理/保护与链接检查见[实现记录第 18 节](WP-0303-IMPLEMENTATION.md#public-history-evidence-resume)。前轮测试、PostgreSQL/合成 Correction 与完整 gate 85 failed 分开保留，没有提升来源认证。
+- B1—B4 新增整体关闭项 0，正式输入全部 NO_GO；旧 14 F1/65 F2/Hash/Golden/固定引用、停牌 2.0.0、0014/0015、B5/N1/N2 保留。**WP-0303=IN_PROGRESS、15/45，两市场 missing，Formal/Paper 拒绝，NOT CERTIFIED、RELEASED=false**。主目录不改，无 commit/push/PR/merge/生产操作。
+
+## 2026-10-14 WP-0303 GitHub 索引到发行人初版/更正版：PARTIAL
+
+- [来源证据第 11 节](WP-0303-B3-SOURCE-EVIDENCE-PREP.md#issuer-static-correction-evidence)固定 688320.SH 初版 `2024-040` 与更正版 `2024-041` 的两份实际 PDF；初版 Hash 与参考项目索引一致，但更正版实际派息 0.11038、虚拟除息 0.10990 与原方案/初版 0.11 的基数和版本不同，不能按参考窄修正规则直接回写旧值。
+- 只有一个发行人更正样本，历史 Provider observed/available_at、全类型/全页/零行动覆盖、取消与固定前一 session P 仍未提供。两 SSE 镜像非 PDF 响应已拒绝；没有新增正式 Dataset/Mapping/Method/Definition 或提升 fixture 标签。[本轮实现与验收第 17 节](WP-0303-IMPLEMENTATION.md#issuer-static-evidence-resume)记录命令、证据和增量回滚。
+- 本轮 14 passed / 0 skipped，生成/治理/baseline/六模块编译/critical lint 通过；旧 14 F1/65 F2 的完整载荷、版本和 Hash 逐项不变。历史 all gate 85 failed 的 BLOCKER 保留，隔离 PostgreSQL/完整 gate 未在本轮重跑。
+- B1—B4 新增整体关闭项 0，既有 B4 停牌 2.0.0、0014/0015、B5/N1/N2 保留；**WP-0303=IN_PROGRESS、15/45，market_breadth/market_emotion=missing，Formal/Paper 拒绝，NOT CERTIFIED、RELEASED=false**。主目录不改，没有 commit/push/PR/merge/生产操作。
+
+## 2026-10-14 WP-0303 第二批 GitHub 新来源与实际数值核验：PARTIAL
+
+- [当前实现与验收第 16 节](WP-0303-IMPLEMENTATION.md#github-new-source-resume)记录本轮实际搜索/下载 7 个新仓库的 154 个固定来源文件；[来源第 10 节](WP-0303-B3-SOURCE-EVIDENCE-PREP.md#github-new-source-search)是 102 CSV/208,612 行、身份/股本分母/日期对齐反例、公告号/Hash 索引和最小材料的权威记录。
+- quant-data 行情/扩展的 103,735 个诊断配对全部存在 CN/US 标签冲突，90,628 个换手率值只匹配总股本分母，另有 16 个未对齐日期；LUEIG 是昨日涨停池/昨日封板，KPL 两集合无保存响应。CNEquity/TDX 只有本轮取得的契约/源码；A_stock/free-data 原始库不在所查 GitHub 树中。公告代码索引不替代原 PDF、初版/修订/观察归档。
+- 本轮 14 个既有入口回归 passed/0 skipped，生成契约/治理/baseline/六模块编译通过；510/66 及完整 gate 85 failed 是前轮结果，不计为本轮执行。完整 gate 阻断与真实来源/发布/修订传播未验证项保留。
+- 只追加四份 WP 文档，保留旧 14 F1/65 F2/Hash/Golden/固定引用、停牌 2.0.0 与 B5/N1/N2；未追加不确定正式 Dataset/Mapping/Definition。B1—B4 没有新增整体关闭项，**WP-0303=IN_PROGRESS、15/45、两市场 missing、Formal 拒绝、NOT CERTIFIED、RELEASED=false**。
+
+## 2026-10-14 WP-0303 GitHub 实际样本门禁与目标续跑：PARTIAL
+
+- [当前实现与验收记录第 15 节](WP-0303-IMPLEMENTATION.md#github-input-resume)基于 19 个固定 GitHub 源文件、8 个 CSV 的 18,616 行实际字节重新执行输入门禁；[来源第 9 节](WP-0303-B3-SOURCE-EVIDENCE-PREP.md#github-sample-admission)记录零资本字段、重复/冲突、首封缺包及单位/身份/覆盖/PIT 的具体决策与最小材料。
+- 全部 8 个候选 CSV 正式输入 NO_GO；没有追加不确定 Dataset/Mapping/Definition 或更改 fixture 标签。当前 Tushare 字典只部分确认当前单位/分母，未认证历史 CSV。停牌 2.0.0、旧 14 F1/65 F2/Hash/Golden/固定引用、0014/0015 和 B5/N1/N2 保留。
+- 本轮定向 **510 passed / 0 skipped**、隔离 PostgreSQL **66 passed / 0 skipped**；修正临时路径后的完整 gate 为 **7363 passed / 85 failed / 10 skipped / 4 deselected**，572 subtests passed，外层 KeyboardInterrupt/exit 1、Bash 退出码未取得。必需 576 个测试在完整 XML 中均 passed/0 skipped；临时产物和数据库/凭据已回收，停库前计数未执行。实际命令、失败/skip 明细及增量保护以第 15 节为准，旧计数不替代本轮。
+- WP-0303 仍 **IN_PROGRESS、15/45**；完整真实输入/正式派生/真实修订传播未闭合，两市场 missing、Formal 拒绝，**NOT CERTIFIED、RELEASED=false**。没有 commit/push/PR/merge/生产访问或部署。
+
+## 2026-10-13 WP-0303 FULL-INPUT-TO-FEATURE-CLOSEOUT：PARTIAL
+
+- 仅追加 `trading_halt_state@2.0.0` 的真实 Canonical 字段引用；旧 14 F1/65 F2载荷/Hash、旧停牌 1.0.0及无版本调用不变，新版必须显式选择。B4仅关闭此引用子项，基准/首封时间三项仍 FIXTURE_ONLY。
+- 本次定向 **500 passed / 0 skipped**；隔离 PostgreSQL **66 passed / 0 skipped**，包含既有B5及两个新增独立Python PID的固定Parquet/Manifest/Bundle读取与合成Correction验证。续跑复用已有主checkout的只读解释器，在累计目录完成完整平台/API **944 passed / 5个既有Windows平台skip**；完整all gate实际执行为 **7358 passed / 80 failed / 10 skipped / 4 deselected**，其中本Goal的500/66项全部通过。缺tenacity/markdown2的早期失败已被现有环境验证补充，完整gate仍未通过，不将未修改文件的失败一概认定为既有问题。
+- **B1/B2/B3真实版本、样本、覆盖和历史PIT仍NO_GO；完整真实输入→正式DERIVED→F1/F2消费/真实修订传播未闭合。WP-0303保持IN_PROGRESS、15/45，两市场missing，Formal/Paper拒绝，NOT CERTIFIED、RELEASED=false。** N1/N2/B5仅复用，不重做；本次无commit/push/PR/merge/部署，基线CI不覆盖dirty增量。
+- 当前验收矩阵、完整绝对路径、命令/结果、证据及仅增量回滚见[实现记录第13节](WP-0303-IMPLEMENTATION.md#13-2026-10-13-full-input-to-feature-closeout部分推进与阻断)，完整平台与gate失败分布见[第13.7节](WP-0303-IMPLEMENTATION.md#137-现有环境补充验收完整平台通过all-gate-失败)。下方各轮计数保留为历史证据。
+
+## 2026-10-11 WP-0303-B3 N2：版本化执行收据桥接
+
+- `WP-0303-B3-VERSIONED-EXECUTION-RECEIPT-BRIDGE` 仅完成 fixture-only 的 `FixtureExecutionReceipt`/`calculate_fixture` 到现有 `DERIVED AdjustmentLineage` 的版本化内存桥接；显式绑定 Method/算法/实现指纹、raw/semantic/result bytes Hash、selection/coverage/quality 和 PIT 时钟，并对取消、范围外、部分选择、缺 graph 根、未来时钟和重 seal 伪造 fail-closed。
+- N2 本地定向 **195 passed / 1 warning**，受影响 Contract/Golden/Registry/Schema/Snapshot/Feature/Indicator/Market/Hash/Canonical 回归 **301 passed / 1 warning**；`py_compile`、Contract export check、`git diff --check` 通过。未连接真实 Provider/生产 DB/真实 `/data`，未注册生产 Dataset/API/FeatureStore/Repository，未运行完整 gate 或远端 CI。
+- **N2 不关闭 B3/WP-0303**：状态继续 **IN_PROGRESS、15/45**；`market_breadth`/`market_emotion` missing，Formal/Paper 拒绝，生产 **NOT CERTIFIED、RELEASED=false**。见 [WP-0303 实现记录](WP-0303-IMPLEMENTATION.md#12-2026-10-11-b3-n2-版本化执行收据到-derived-血缘桥接)。
+
+## 2026-10-09 WP-0303-B3 N1：精确版本 Catalog 技术切片
+
+- `WP-0303-B3-CATALOG-EXACT-VERSION` 已将内部 Dataset Catalog 收敛为强制 `(dataset_id, schema_version)` 精确查找；多版本可共存，未知版本、重复精确键及字段/frequency/domain/PIT/capability 投影漂移均 fail-closed。Resolver 和 market sentiment 直接调用方使用输入引用中的显式版本；未修改公共 Schema、生产 Registry/Definition、Capability、Migration、Provider 或身份/Hash。
+- 定向最终 **77 passed**，含 Store/Registry/Golden 的相关回归 **126 passed**；原始平台离线命令因 3 个 API 文件缺 `markdown2` 收集中止，排除同源 blocker 的替代回归 **886 passed / 5 skipped**。生成契约、AI 资产、基线和本 Goal `py_compile` 通过；完整 gate 仍受本机 bash/Python 依赖环境阻断，不据此宣称全量 gate 通过。
+- **只完成 SOURCE-EVIDENCE-PREP 的 N1，不关闭 D2/B3/WP-0303。** WP-0303 保持 **IN_PROGRESS、15/45**；`market_breadth/market_emotion` 仍 missing，Formal/Paper 继续拒绝，生产 **NOT CERTIFIED、RELEASED=false**。N2–N4、真实来源/Provider/PIT、生产接入、持久化及完整 Correction 传播仍需独立授权和证据。
+
+## 2026-10-09 WP-0303-B3 来源证据与接入差异审核：仅文档
+
+- [B3 SOURCE-EVIDENCE-PREP](WP-0303-B3-SOURCE-EVIDENCE-PREP.md)完成两个既有 Provider 的 D2 公开文档证据矩阵、D5/D6 注册/版本/执行血缘/持久化/消费者差异及下一授权范围；部分税前/送股/日期语义可确认，但真实版本、事件身份/修订取消、完整覆盖与历史 PIT 仍不足，生产来源实施继续 **NO_GO**。
+- Method/DERIVED 契约及 FIXTURE_ONLY 算法均为已获批完成的基线，不重做；建议下一最小范围仅为 Catalog 精确版本查找，**CONDITIONAL_GO，须新代码授权**。本轮未修改代码/测试/生成契约，未运行代码测试；下方 89/79/458 等计数均为历史证据，不是本轮结果。
+- **B3 未关闭；WP-0303 IN_PROGRESS、15/45**；两市场能力 missing、Formal/Paper 拒绝、生产 **NOT CERTIFIED、RELEASED=false** 不变。开工 48 项成果受保护，仅三份入口文档插入增量及新增审核文档；实时远端查询失败，不宣称与远端一致。
+
+## 2026-10-09 WP-0303-B3 第二阶段：受限离线复权算法本地验收
+
+- 单独授权的 `WP-0303-B3-OFFLINE-FACTOR-ALGORITHM` 完成 FIXTURE_ONLY 实际JSON内容Hash、全revision选择收据、固定P/同日组合及双方向Decimal因子、规范结果字节/Hash与实际源码指纹；新专项 **89 passed**，含其和既有派生79的定向 **458 passed / 0 skipped**，计数不相加。旧14 F1/65 F2完整载荷/Hash、119旧Golden、固定引用、生成契约及客户端字节不变。[当前第10节：范围、验收与独立回滚](WP-0303-IMPLEMENTATION.md#10-2026-10-09-b3-第二阶段受限离线复权因子算法验收)。
+- **仅离线算法Goal完成，B3未关闭**：旧Method仍CONTRACT_ONLY；未注册生产Dataset/API、认证Provider/Mapping/PIT历史、接入Resolver/F1/F2/FeatureStore、发布正式DERIVED或运行数据库/完整Correction E2E。D2真实来源仍NO_GO，后续接入需新的明确授权；开工44项成果保留，无依赖/Migration/Git写入。
+- WP-0303 **IN_PROGRESS、15/45**，market_breadth/market_emotion仍missing、Formal/Paper拒绝，生产 **NOT CERTIFIED、RELEASED=false**。以下第9节契约阶段、PREP及B5说明保留为历史，不以新算法验收覆盖其当时证据。
+
+## 2026-10-08 WP-0303-B3 第一阶段：离线派生契约本地验收
+
+- 单独授权的 `WP-0303-B3-DERIVED-CONTRACT` 已完成本地契约层：严格不可变 AdjustmentMethod1、显式 DERIVED Partition/Snapshot2、固定输入/Method/coverage/真实根引用、确定性Hash和新旧版本显式拒绝。专项 **79 passed**，含其的旧契约/Golden/Snapshot/Store/F1/F2定向 **354 passed / 0 skipped**（计数不相加）；旧14/65完整载荷/Hash、119旧Golden字节、74旧导出及生成客户端TypeScript不变。详见 [第9节契约验收与独立回滚](WP-0303-IMPLEMENTATION.md#9-2026-10-08-b3-第一阶段离线派生血缘与-method-契约验收)。
+- **只完成契约Goal，不关闭B3**：未计算因子/注册新版Dataset、未接入Provider/Mapping/质量/Resolver/F1/F2/Repository/FeatureStore/数据库/API；无数据/Migration/依赖/Git远端变更。PREP及原31项开工成果保留；D2真实来源仍NO_GO，下一算法/消费/持久化Goal需明确新授权和输入证据。更早PREP段落为该准备阶段记录，当前契约层结论以本节为准。
+- WP-0303 **IN_PROGRESS、15/45**，两市场能力missing、Formal/Paper拒绝、生产 **NOT CERTIFIED、RELEASED=false** 不变；远端CI/全量gate/运行E2E未验收，不以定向回归或模型收据冒充真实来源完整性。
+
+## 2026-10-08 WP-0303-B3 输入契约 PREP：仅文档
+
+- [B3 PIT Adjustment Factor/Method 契约记录](WP-0303-B3-ADJUSTMENT-CONTRACT-PREP.md)已完成证据与设计收敛；真实来源实施 NO_GO，离线 fixture 实施须新 Goal 授权及契约决策确认。本轮无复权运行代码、生成契约或 Migration 变更；B3 未关闭，WP-0303 IN_PROGRESS、15/45、两市场能力 missing、Formal/Paper 拒绝、生产 NOT CERTIFIED/RELEASED=false 不变。
+
+## 2026-10-08 WP-0303-B5 完整持久化契约：已关闭
+
+- 用户追加授权后，新增后继 `0015_wp0303_partition_key`，仅将原算法派生 `feature_partition.partition_key` 从255扩为386；保留0014三表indicator_id扩至128、历史0013及原ID/Definition Hash/固定引用。Schema/metadata共用上限，Store/Repository在文件或DML前检查真实数据库列宽，0013/0014仍提前fail-closed。
+- 真实随机隔离 PostgreSQL **64 passed / 0 skipped**：0013→0014→0015、三个实际长ID/128与最大386键、完整评分DAG发布→重启固定Bundle消费→Correction尾部重算、旧文件/Hash/引用保留、危险降级任何ALTER前拒绝、短数据安全降级再升级、单连接发布事务及真实COMMIT失败后的文件/缓存清理。**B5 已关闭；仅本地 Goal 完成，不表示完整 WP 或生产认证完成。** [完整证据与独立回滚](WP-0303-IMPLEMENTATION.md#8-2026-10-08-b5-后继派生键迁移与完整数据库链路验收)。
+- 定向 **130 passed**、平台核心 **685 passed / 5 skipped**（既有Windows权限限制）；export/治理/语法/critical lint/diff check通过。all gate仍缺`tenacity`，Web lint/build缺`eslint`/`tsc`且Node不兼容，未安装依赖或宣称通过；当前实现无远端CI/合入。仅临时数据库执行迁移，测试库计数0，容器/凭据已清理。
+- WP-0303保持 **IN_PROGRESS**、已验收 **15/45**；B1–B3/B4残余保留，fixture显式隔离/PROVISIONAL，两个市场能力missing、Formal/Paper拒绝；生产 **NOT CERTIFIED、RELEASED=false**。原17项及追加授权前28项成果均保留，无新分支/worktree、commit/tag/push/PR/merge/部署。下方第7节对应未关闭结论及更早章节均为历史，以本节和唯一WP表为当前状态。
+
+## 历史：2026-10-08 WP-0303-B5 指标 ID 契约增量：未关闭
+
+- `0014_wp0303_indicator_id` 仅扩三列 `indicator_id` 到 128，不改历史 0013；Schema/metadata/Store/Repository 对齐且预检真实数据库列宽。旧库 fail-closed、拒绝危险 downgrade、短 ID 安全降级/再升级及旧数据/约束/索引/固定文件保持不变均有真实隔离 PostgreSQL 证据。
+- B5/市场 PostgreSQL 为 **22 passed / 2 failed / 0 skipped**；完整保留 ID 的 fixture 生成 `partition_key` 长 256，合成 128 ID 的 Store 键长 257，均超现有 `VARCHAR(255)`。当前授权不允许扩其他字段或改固定键，故 **B5 未关闭、当前 Goal 未完成**；完整 fixture 数据库重启消费及 Correction 未到达。详见 [增量验收及独立回滚](WP-0303-IMPLEMENTATION.md#7-2026-10-08-b5-指标-id-持久化契约增量验收)。
+- 本次核心平台 **681 passed / 5 skipped**，Store/Repository/Foundation PostgreSQL **17 passed**，export/治理/语法/critical lint/diff check 通过；all gate 仍缺 `tenacity`，Web lint/build 缺依赖且 Node 不兼容，均未修复或宣称通过。17 项既有变更保留；只有本 Goal 临时数据库执行迁移，容器/凭据已清理，无 Git/远端写入或部署。
+- WP-0303 保持 `IN_PROGRESS`，计数 **15/45**，B1–B3/B4 残余未处理，`market_breadth/market_emotion` missing、Formal/Paper 拒绝；生产 `NOT CERTIFIED`、`RELEASED=false`。以下同日章节保留为此前受限实现的历史证据，不覆盖本节当前 B5 状态。
+
+## 历史：2026-10-08 WP-0303 受限实现与本地验收
+
+- 本轮固定工作树 `f468/Visory`；开工 `git fetch --all --prune` 后 `HEAD=origin/main=efe8e9b362cba13eca183c55be57bbbbc832b60b`，差异 `0/0`。保留原五份文档输入；不 pull、不创建分支/工作树、不 commit/tag/push/PR/merge/部署。
+- [WP-0303 受限实现验收记录](WP-0303-IMPLEMENTATION.md)：复用既有 Registry/Builtin/DAG/FeatureStore/Repository，Catalog 只投影真实字段，追加 65 个单值 F2 Definition，真实受限原始指标与隔离完整评分算法分开验收。
+- 最终定向套件 `111 passed`、平台核心 `666 passed, 5 skipped`、隔离 PostgreSQL `14 passed`；export、治理、受影响 Python 语法/critical lint、diff check 通过。完整 backend/API/offline gate 受既有缺失依赖阻断，未把排除/跳过解释为全量通过；测试数据库和凭据已清理。
+- WP-0303 为 `IN_PROGRESS`；45 个唯一条目为 `VERIFIED=15 / IN_PROGRESS=2 / NOT_STARTED=28 / RELEASED=0`，已验收仍 `15/45`，WP-0207 状态不变，生产 `NOT CERTIFIED`、`RELEASED=false`。
+- B1–B3 上游输入、B4 旧 F1 残余字段引用、B5 长 normalized ID 的 PostgreSQL 64 字符限制及本轮远端 CI/合入仍未闭合；`market_breadth/market_emotion` 均 missing，Formal/Paper 拒绝。完整 WP 和生产能力未认证。
+- 以下同日 PREP/合入记录及更早章节保留为历史；当前 WP 状态以本节和唯一 WP 表为准。
+
 ## 2026-10-19 WP-0207 / PR #42 公开文本安全与状态收敛
 
 - PR #41 已合入，实时 main=`efe8e9b362cba13eca183c55be57bbbbc832b60b`；当前 main 的 VERIFIED 已为 15/45、IN_PROGRESS 1、NOT_STARTED 29、RELEASED 0。WP-0302 的代码/契约已合入，不再称“仅分支验收、未合入”；仍不代表生产认证或 RELEASED。下方带日期的旧准备结论/计数只作历史。
@@ -217,7 +345,7 @@ WP-0302 在 `codex/wp-0302-feature-bundle` 完成代码/契约验收，状态为
 | Visory-G017 | COMPLETE / MERGED | [G017 / WP-0204 Backtest Core Certification](GOAL-G017-STATUS.md)；Migration `0012_wp0204_benchmark_dataset_extension`；独立 `benchmark_index_1d` Dataset/Provider/Raw/Canonical/Quality/Snapshot 血缘与 Formal Consumer Gate 完成；本地平台测试 `381 passed, 5 skipped` 与真实 PostgreSQL 16 集成 `61 passed`；PR #32 的 Run `34176102715` 中 Governance/Python deterministic gate/Web lint and build 三项阻断 Job 全部成功；实现提交 `6d28889b11e128f7d963acab469218c5c7955a8a` 以普通 merge commit `38bb737067e4e89bf766fb1b73023c3193cfa8ea` 合入 `main`；WP-0204 `VERIFIED`，`backtest_core` 代码能力门禁 `VERIFIED`，生产 `backtest_core` 数据 `NOT CERTIFIED` |
 | Visory-G018 | COMPLETE / MERGED | [G018 / WP-0205 Daily Scheduler 与补充源](GOAL-G018-STATUS.md)；`Asia/Shanghai` 九阶段盘后调度、非交易日跳过、幂等依赖链、`a_stock_data` 主源与 `financial_api` 显式补充、19:00 Formal Deadline 和 20:30 Correction Audit 完成；本地平台 `390 passed, 5 skipped`、PostgreSQL 16 集成 `63 passed`；PR #34 head `d9255474dc52a4e36bf9eb33c5e967383a06f7a8`，Run `34264795037` 三项阻断 Job 全绿，普通 merge commit `76194dc378f689c0e0f34cc88d7a3989431a96fc`；WP-0205 `VERIFIED`，进度 `12/45`，生产数据 `NOT CERTIFIED` |
 | DSA Baseline | IMPORTED / VERIFIED | 1126/1126 blob 验签；Python/Web 双基线；`baseline_regression_delta=0`；`web_lint_build_regression_delta=0` |
-| Implemented Work Packages | 15/45 | 按下方 45 个唯一 WP 条目计数：15 个 `VERIFIED`、1 个 `IN_PROGRESS`、29 个 `NOT_STARTED`、0 个 `RELEASED`；15 个中 14 个已合入 main，WP-0302 为已验收未合入分支；WP-0207 和同一 WP 的重复 Goal/状态 PR 不计入 |
+| Implemented Work Packages | 15/45 | 按下方 45 个唯一 WP 条目计数：15 个 `VERIFIED`、2 个 `IN_PROGRESS`、28 个 `NOT_STARTED`、0 个 `RELEASED`；15 个中 14 个已合入 main，WP-0302 为已验收未合入分支；WP-0207 和同一 WP 的重复 Goal/状态 PR 不计入 |
 
 Historical Goal snapshot (2026-09-29): Visory-G020 / WP-0207 分批 Backfill is `COMPLETE / MERGED` after PR #38 merge commit `a1d31f9c3d16e62ea4fd78217c992bfe96dc33a8`; the WP-0207 implementation added BackfillBatch/TaskRequirements/Projection contracts, a fixed seven-stage Durable Task control chain, controlled Backfill Task creation, deterministic MONTH/YEAR partition planning, existing Durable Task child-task coordination, checkpoint validation, idempotent fixture publication, and Operations/P-DATA observation entry points. Implemented work packages were `13/45`; WP-0207 is not `VERIFIED` or `RELEASED`; no real Provider, production database, real `/data`, production scheduler, or production backfill certification is included.
 
@@ -294,7 +422,7 @@ implemented work packages 仅统计当前 WP 表中状态为 `VERIFIED` 或 `REL
 | WP-0207 | 分批Backfill | IN_PROGRESS | 历史控制面 PR #38 已合入；当前来源绑定/公开边界增量为 PR #42（OPEN / non-draft），远端 head `206b85c69e0e3c9181b496d468d0e743a688d98e`、Run `38871182213` 三项成功仅覆盖远端内容。2026-10-19 后续安全补丁仍在本地、未提交/推送；精确共享语料、真实 HTTP/SSE、checkpoint/resume、隔离 PostgreSQL、完整 gate 与本地判定见 [WP-0207 最新验收](WP-0207-END-TO-END-CLOSEOUT.md#2026-10-19-pr-42-公开文本安全与状态收敛)。8 条真实 routes BLOCKED、Capability UNVERIFIED、Coverage UNPROVEN；完整七阶段真实来源/历史 PIT/生产认证未完成，NOT CERTIFIED、RELEASED=false；不计入 VERIFIED 15/45 |
 | WP-0301 | Indicator Registry与DAG | VERIFIED | PR #40；实现 head `50b15b7f13b2787bde92f5ff96f093014165002f`；普通 merge commit `6aa9fa82e31ad0ad175cc1f6650ad7db67fa0222`；合入后 Run `36601155597` 三项阻断 Job 均 `completed / success`。IndicatorDefinition/Builtin Registry/确定性 DAG、参数与定义 Hash、PIT/Capability/universe 门禁及 C-006/Golden 完成；无新增 Migration 或 runtime API。测试入口 `tests/platform/test_indicator_registry.py` 与 generated contract 均由该 CI 覆盖；生产 `NOT CERTIFIED`，`RELEASED=false`；若单独回滚 WP-0301，使用 `git revert -m 1 6aa9fa82e31ad0ad175cc1f6650ad7db67fa0222`，不包含在 WP-0302 回滚中 |
 | WP-0302 | Feature Partition/Snapshot/Bundle | VERIFIED | [WP-0302 实现与验收](WP-0302-IMPLEMENTATION.md)；基于 `6aa9fa82e31ad0ad175cc1f6650ad7db67fa0222`；核心契约、增量/warmup/PIT、Schema/质量/覆盖率、correction lineage、固定引用、Formal pin 同事务、跨进程发布锁与 Migration `0013_wp0302_feature_store` 已验收。实现阶段：Feature 定向/隔离 PostgreSQL `56 passed`、核心行执行覆盖率 `87.86%`，Run `37568286328` 三项成功、Python `7119 passed`，均为实现提交 `a7ba8d055b3fccc8bfd5bd14eeabb27680ab0b8a` 的历史证据。本轮 PR-PREP：平台及隔离 PostgreSQL `761 passed, 5 skipped, 11 warnings`，治理/generated/syntax/flake8/deterministic/Web lint/build/diff 校验通过；未重测覆盖率；这些是 PR 创建前的准备证据，不能代替 PR 当前 HEAD 的阻断 CI。2026-10-19 实时核验：PR #41 已合入，merge/main=`efe8e9b362cba13eca183c55be57bbbbc832b60b`，Run `37645716721` 三项 SUCCESS；main 已为 15/45。上述 PR-PREP 为历史准备证据，不再表示当前未合入；未部署，生产 `NOT CERTIFIED`，`RELEASED=false` |
-| WP-0303 | 市场宽度与情绪F2 | NOT_STARTED | — |
+| WP-0303 | 市场宽度与情绪F2 | IN_PROGRESS | 当前 mainline 候选 PR-ready（仅本地）：完整 gate 8178 passed/0 failed/0 skipped；详情见本轮第22节。以下为累计历史与来源边界：[a-stock-data Adapter Bundle 分层架构](WP-0303-A-STOCK-DATA-ADAPTER-ARCHITECTURE.md)（固定实现指纹；实际 Provider/Endpoint 独立运行和认证；B1—B4 正式输入仍 NO_GO） / [第二批 GitHub 新来源核验](WP-0303-IMPLEMENTATION.md#github-new-source-resume)（7个仓库/154文件/102 CSV/208,612行；本轮14 passed/0 skipped，正式输入仍NO_GO，PARTIAL） / [前轮 GitHub 实际样本门禁与续跑](WP-0303-IMPLEMENTATION.md#github-input-resume)（19 个源文件/8 个 CSV/18,616 行，全部正式输入 NO_GO；当前复验与回滚见该节，PARTIAL） / [历史参考源码与消费反例](WP-0303-IMPLEMENTATION.md#reference-development)（三个参考下载成功，Financial-API仅历史副本；510/954/66通过，平台5个Windows skip；完整gate 80 failed，PARTIAL/NO_GO） / [2026-10-13 累计核验](WP-0303-IMPLEMENTATION.md#13-2026-10-13-full-input-to-feature-closeout部分推进与阻断)（历史停牌2.0.0引用和独立进程技术验证，500/66通过；B1–B3/B4残余NO_GO，WP/生产不认证） / [B3来源证据与接入差异](WP-0303-B3-SOURCE-EVIDENCE-PREP.md)（文档历史；D2生产NO_GO，下述测试为历史） / [PREP](WP-0303-PREP.md) / [B3 输入契约 PREP](WP-0303-B3-ADJUSTMENT-CONTRACT-PREP.md)（仅设计，不关闭 B3） / [B3第一阶段离线派生契约](WP-0303-IMPLEMENTATION.md#9-2026-10-08-b3-第一阶段离线派生血缘与-method-契约验收)（第一阶段历史79/354通过，当时无算法/真实来源/持久化） / [B3第二阶段受限离线算法](WP-0303-IMPLEMENTATION.md#10-2026-10-09-b3-第二阶段受限离线复权因子算法验收)（当前专项89/联合458通过；仅fixture算法，不接生产来源/消费者/持久化，B3未关闭） / [本地实现验收及B5关闭](WP-0303-IMPLEMENTATION.md#8-2026-10-08-b5-后继派生键迁移与完整数据库链路验收)；65个F2 Definition，真实受限路径与完整算法fixture分离。B5已关闭：0014三列indicator_id128、0015原派生键386，真实PostgreSQL64 passed/0 skipped（完整发布/重启固定消费/Correction/安全降级/单连接事务/COMMIT失败清理），定向130 passed、核心685 passed/5 skipped。旧F1/Hash/引用不改；B1–B3上游PIT/流通市值/换手率及B4旧F1残余、真实来源/远端CI/合入仍未闭合。本次无客户端变更，未补构建。两个市场能力missing，Formal/Paper拒绝，不标VERIFIED/RELEASED，15/45不变 |
 | WP-0304 | 板块与资金F2 | NOT_STARTED | — |
 | WP-0305 | Hikyuu Cache Builder | NOT_STARTED | — |
 | WP-0401 | Market Observation | NOT_STARTED | — |

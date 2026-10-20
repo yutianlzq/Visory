@@ -13,6 +13,7 @@ from .migrations import MigrationStatus, downgrade_database, get_migration_statu
 from .settings import PostgresSettings, read_secret_file
 from .task import TaskControlRepository
 from .provider import ProviderRegistryRepository
+from .provider_admission import ProviderAdmissionRepository
 from .raw_ingestion import RawIngestionRepository
 from .snapshot import SnapshotRepository
 from .feature import FeatureRepository
@@ -35,6 +36,7 @@ __all__ = [
     "ResolverAliasRow",
     "TaskControlRepository",
     "ProviderRegistryRepository",
+    "ProviderAdmissionRepository",
     "RawIngestionRepository",
     "SnapshotRepository",
     "FeatureRepository",

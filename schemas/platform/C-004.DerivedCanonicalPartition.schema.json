@@ -1,0 +1,844 @@
+{
+  "$defs": {
+    "AdjustmentCoverageReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "action_manifest_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Action Manifest Hash",
+          "type": "string"
+        },
+        "action_snapshot_id": {
+          "title": "Action Snapshot Id",
+          "type": "string"
+        },
+        "available_at": {
+          "format": "date-time",
+          "title": "Available At",
+          "type": "string"
+        },
+        "completion_basis": {
+          "const": "EXHAUSTIVE_SOURCE_MANIFEST",
+          "default": "EXHAUSTIVE_SOURCE_MANIFEST",
+          "title": "Completion Basis",
+          "type": "string"
+        },
+        "coverage_status": {
+          "const": "COMPLETE",
+          "default": "COMPLETE",
+          "title": "Coverage Status",
+          "type": "string"
+        },
+        "cutoff_at": {
+          "format": "date-time",
+          "title": "Cutoff At",
+          "type": "string"
+        },
+        "date_from": {
+          "format": "date",
+          "title": "Date From",
+          "type": "string"
+        },
+        "date_to": {
+          "format": "date",
+          "title": "Date To",
+          "type": "string"
+        },
+        "end_marker": {
+          "minLength": 1,
+          "title": "End Marker",
+          "type": "string"
+        },
+        "event_type_coverage": {
+          "default": [
+            "BONUS",
+            "DIVIDEND",
+            "OTHER",
+            "RIGHTS",
+            "SPLIT"
+          ],
+          "items": {
+            "enum": [
+              "DIVIDEND",
+              "BONUS",
+              "SPLIT",
+              "RIGHTS",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "title": "Event Type Coverage",
+          "type": "array"
+        },
+        "page_raw_object_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Page Raw Object Refs",
+          "type": "array"
+        },
+        "receipt_contract_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Receipt Contract Version",
+          "type": "string"
+        },
+        "receipt_hash": {
+          "default": "",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Receipt Hash",
+          "type": "string"
+        },
+        "receipt_id": {
+          "pattern": "^[a-z][a-z0-9_]{1,63}$",
+          "title": "Receipt Id",
+          "type": "string"
+        },
+        "source_row_count": {
+          "minimum": 0,
+          "title": "Source Row Count",
+          "type": "integer"
+        },
+        "universe_scope_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Universe Scope Hash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "receipt_id",
+        "action_snapshot_id",
+        "action_manifest_hash",
+        "universe_scope_hash",
+        "date_from",
+        "date_to",
+        "cutoff_at",
+        "available_at",
+        "page_raw_object_refs",
+        "end_marker",
+        "source_row_count"
+      ],
+      "title": "AdjustmentCoverageReceipt",
+      "type": "object"
+    },
+    "AdjustmentEventRef": {
+      "additionalProperties": false,
+      "properties": {
+        "action_group_id": {
+          "pattern": "^[a-z][a-z0-9_]{1,63}$",
+          "title": "Action Group Id",
+          "type": "string"
+        },
+        "action_type": {
+          "enum": [
+            "DIVIDEND",
+            "BONUS",
+            "SPLIT"
+          ],
+          "title": "Action Type",
+          "type": "string"
+        },
+        "available_at": {
+          "format": "date-time",
+          "title": "Available At",
+          "type": "string"
+        },
+        "economic_event_key": {
+          "pattern": "^[a-z][a-z0-9_]{1,63}$",
+          "title": "Economic Event Key",
+          "type": "string"
+        },
+        "event_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Event Hash",
+          "type": "string"
+        },
+        "event_state": {
+          "default": "ACTIVE",
+          "enum": [
+            "ACTIVE",
+            "CANCELLED"
+          ],
+          "title": "Event State",
+          "type": "string"
+        },
+        "ex_trade_date": {
+          "format": "date",
+          "title": "Ex Trade Date",
+          "type": "string"
+        },
+        "raw_object_id": {
+          "title": "Raw Object Id",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "source_published_at": {
+          "format": "date-time",
+          "title": "Source Published At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "economic_event_key",
+        "action_group_id",
+        "revision",
+        "action_type",
+        "event_hash",
+        "ex_trade_date",
+        "source_published_at",
+        "available_at",
+        "raw_object_id"
+      ],
+      "title": "AdjustmentEventRef",
+      "type": "object"
+    },
+    "AdjustmentLineage": {
+      "additionalProperties": false,
+      "properties": {
+        "anchor_trade_date": {
+          "format": "date",
+          "title": "Anchor Trade Date",
+          "type": "string"
+        },
+        "available_at": {
+          "format": "date-time",
+          "title": "Available At",
+          "type": "string"
+        },
+        "base_trade_date": {
+          "format": "date",
+          "title": "Base Trade Date",
+          "type": "string"
+        },
+        "coverage_receipt": {
+          "$ref": "#/$defs/AdjustmentCoverageReceipt"
+        },
+        "cutoff_at": {
+          "format": "date-time",
+          "title": "Cutoff At",
+          "type": "string"
+        },
+        "inputs": {
+          "items": {
+            "$ref": "#/$defs/SnapshotInputRef"
+          },
+          "title": "Inputs",
+          "type": "array"
+        },
+        "lineage_contract_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Lineage Contract Version",
+          "type": "string"
+        },
+        "lineage_hash": {
+          "default": "",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Lineage Hash",
+          "type": "string"
+        },
+        "method_ref": {
+          "$ref": "#/$defs/MethodRef"
+        },
+        "quality_evidence": {
+          "items": {
+            "$ref": "#/$defs/QualityEvidenceRef"
+          },
+          "title": "Quality Evidence",
+          "type": "array"
+        },
+        "selected_event_refs": {
+          "items": {
+            "$ref": "#/$defs/AdjustmentEventRef"
+          },
+          "title": "Selected Event Refs",
+          "type": "array"
+        },
+        "source_roots": {
+          "items": {
+            "$ref": "#/$defs/SourceRootRef"
+          },
+          "title": "Source Roots",
+          "type": "array"
+        },
+        "universe_scope_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Universe Scope Hash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "method_ref",
+        "inputs",
+        "source_roots",
+        "quality_evidence",
+        "coverage_receipt",
+        "selected_event_refs",
+        "base_trade_date",
+        "anchor_trade_date",
+        "cutoff_at",
+        "available_at",
+        "universe_scope_hash"
+      ],
+      "title": "AdjustmentLineage",
+      "type": "object"
+    },
+    "MethodRef": {
+      "additionalProperties": false,
+      "properties": {
+        "formula_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Formula Digest",
+          "type": "string"
+        },
+        "method_contract_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Method Contract Hash",
+          "type": "string"
+        },
+        "method_contract_version": {
+          "const": "1.0.0",
+          "title": "Method Contract Version",
+          "type": "string"
+        },
+        "method_id": {
+          "pattern": "^[a-z][a-z0-9_]{1,63}$",
+          "title": "Method Id",
+          "type": "string"
+        },
+        "method_version": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "title": "Method Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "method_contract_version",
+        "method_id",
+        "method_version",
+        "method_contract_hash",
+        "formula_digest"
+      ],
+      "title": "MethodRef",
+      "type": "object"
+    },
+    "QualityEvidenceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "mapping_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Mapping Hash",
+          "type": "string"
+        },
+        "mapping_version": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "title": "Mapping Version",
+          "type": "string"
+        },
+        "quality_contract_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Quality Contract Version",
+          "type": "string"
+        },
+        "quality_report_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Quality Report Hash",
+          "type": "string"
+        },
+        "quality_report_id": {
+          "title": "Quality Report Id",
+          "type": "string"
+        },
+        "quality_threshold_version": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "title": "Quality Threshold Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "quality_report_id",
+        "quality_report_hash",
+        "mapping_version",
+        "mapping_hash",
+        "quality_threshold_version"
+      ],
+      "title": "QualityEvidenceRef",
+      "type": "object"
+    },
+    "QualityStatus": {
+      "enum": [
+        "COMPLETE",
+        "PARTIAL",
+        "FAILED",
+        "UNAVAILABLE",
+        "STALE"
+      ],
+      "title": "QualityStatus",
+      "type": "string"
+    },
+    "RevisionKind": {
+      "enum": [
+        "INITIAL",
+        "CORRECTION",
+        "REBUILD",
+        "MIGRATION"
+      ],
+      "title": "RevisionKind",
+      "type": "string"
+    },
+    "SnapshotInputRef": {
+      "additionalProperties": false,
+      "properties": {
+        "manifest_version": {
+          "const": "1.0.0",
+          "title": "Manifest Version",
+          "type": "string"
+        },
+        "partitions": {
+          "items": {
+            "$ref": "#/$defs/SnapshotPartitionRef"
+          },
+          "title": "Partitions",
+          "type": "array"
+        },
+        "role": {
+          "enum": [
+            "bar_1d_raw",
+            "corporate_action",
+            "security_master",
+            "trading_calendar"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "snapshot_content_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Snapshot Content Hash",
+          "type": "string"
+        },
+        "snapshot_cutoff_at": {
+          "format": "date-time",
+          "title": "Snapshot Cutoff At",
+          "type": "string"
+        },
+        "snapshot_id": {
+          "title": "Snapshot Id",
+          "type": "string"
+        },
+        "snapshot_manifest_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Snapshot Manifest Hash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "role",
+        "snapshot_id",
+        "manifest_version",
+        "snapshot_manifest_hash",
+        "snapshot_content_hash",
+        "snapshot_cutoff_at",
+        "partitions"
+      ],
+      "title": "SnapshotInputRef",
+      "type": "object"
+    },
+    "SnapshotPartitionRef": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical_partition_id": {
+          "title": "Canonical Partition Id",
+          "type": "string"
+        },
+        "coverage_ratio": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "1.00000",
+          "title": "Coverage Ratio"
+        },
+        "dataset_id": {
+          "title": "Dataset Id",
+          "type": "string"
+        },
+        "dataset_schema_version": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "title": "Dataset Schema Version",
+          "type": "string"
+        },
+        "excluded_instrument_count": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Excluded Instrument Count",
+          "type": "integer"
+        },
+        "max_available_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Available At"
+        },
+        "min_available_at": {
+          "format": "date-time",
+          "title": "Min Available At",
+          "type": "string"
+        },
+        "partition_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Partition Hash",
+          "type": "string"
+        },
+        "partition_key": {
+          "title": "Partition Key",
+          "type": "string"
+        },
+        "provider_policy_version": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "title": "Provider Policy Version",
+          "type": "string"
+        },
+        "provider_run_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Provider Run Refs",
+          "type": "array"
+        },
+        "quality_report_id": {
+          "title": "Quality Report Id",
+          "type": "string"
+        },
+        "quality_status": {
+          "$ref": "#/$defs/QualityStatus"
+        },
+        "quality_threshold_version": {
+          "default": "1.0.0",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "title": "Quality Threshold Version",
+          "type": "string"
+        },
+        "raw_object_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Raw Object Refs",
+          "type": "array"
+        },
+        "revision": {
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "revision_kind": {
+          "$ref": "#/$defs/RevisionKind",
+          "default": "INITIAL"
+        },
+        "row_count": {
+          "minimum": 0,
+          "title": "Row Count",
+          "type": "integer"
+        },
+        "schema_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Schema Hash",
+          "type": "string"
+        },
+        "storage_ref": {
+          "$ref": "#/$defs/StorageRef"
+        }
+      },
+      "required": [
+        "canonical_partition_id",
+        "dataset_id",
+        "dataset_schema_version",
+        "provider_policy_version",
+        "partition_key",
+        "revision",
+        "storage_ref",
+        "partition_hash",
+        "schema_hash",
+        "quality_report_id",
+        "quality_status",
+        "provider_run_refs",
+        "raw_object_refs",
+        "min_available_at",
+        "row_count"
+      ],
+      "title": "SnapshotPartitionRef",
+      "type": "object"
+    },
+    "SourceRootRef": {
+      "additionalProperties": false,
+      "properties": {
+        "adapter_version": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "title": "Adapter Version",
+          "type": "string"
+        },
+        "availability_basis": {
+          "const": "OBSERVED_INGESTION",
+          "default": "OBSERVED_INGESTION",
+          "title": "Availability Basis",
+          "type": "string"
+        },
+        "available_at": {
+          "format": "date-time",
+          "title": "Available At",
+          "type": "string"
+        },
+        "observed_schema_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Observed Schema Hash",
+          "type": "string"
+        },
+        "provider_run_contract_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Provider Run Contract Hash",
+          "type": "string"
+        },
+        "provider_run_id": {
+          "title": "Provider Run Id",
+          "type": "string"
+        },
+        "provider_schema_version": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "title": "Provider Schema Version",
+          "type": "string"
+        },
+        "raw_content_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Raw Content Hash",
+          "type": "string"
+        },
+        "raw_object_contract_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Raw Object Contract Hash",
+          "type": "string"
+        },
+        "raw_object_id": {
+          "title": "Raw Object Id",
+          "type": "string"
+        },
+        "source_contract_version": {
+          "const": "1.0.0",
+          "default": "1.0.0",
+          "title": "Source Contract Version",
+          "type": "string"
+        },
+        "source_published_at": {
+          "format": "date-time",
+          "title": "Source Published At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider_run_id",
+        "provider_run_contract_hash",
+        "raw_object_id",
+        "raw_object_contract_hash",
+        "raw_content_hash",
+        "provider_schema_version",
+        "observed_schema_hash",
+        "adapter_version",
+        "source_published_at",
+        "available_at"
+      ],
+      "title": "SourceRootRef",
+      "type": "object"
+    },
+    "StorageBackend": {
+      "enum": [
+        "local_fs"
+      ],
+      "title": "StorageBackend",
+      "type": "string"
+    },
+    "StorageNamespace": {
+      "enum": [
+        "app"
+      ],
+      "title": "StorageNamespace",
+      "type": "string"
+    },
+    "StorageRef": {
+      "additionalProperties": false,
+      "properties": {
+        "content_hash": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "media_type": {
+          "title": "Media Type",
+          "type": "string"
+        },
+        "relative_path": {
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "storage_backend": {
+          "$ref": "#/$defs/StorageBackend"
+        },
+        "storage_namespace": {
+          "$ref": "#/$defs/StorageNamespace"
+        }
+      },
+      "required": [
+        "storage_backend",
+        "storage_namespace",
+        "relative_path",
+        "content_hash",
+        "media_type",
+        "size_bytes"
+      ],
+      "title": "StorageRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "沿用 Canonical 资源身份/StorageRef；尚无 Repository 或发布者。",
+  "properties": {
+    "canonical_partition_id": {
+      "title": "Canonical Partition Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "dataset_id": {
+      "const": "adjustment_factor",
+      "default": "adjustment_factor",
+      "title": "Dataset Id",
+      "type": "string"
+    },
+    "dataset_schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Dataset Schema Version",
+      "type": "string"
+    },
+    "lineage": {
+      "$ref": "#/$defs/AdjustmentLineage"
+    },
+    "partition_contract_version": {
+      "const": "2.0.0",
+      "default": "2.0.0",
+      "title": "Partition Contract Version",
+      "type": "string"
+    },
+    "partition_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Partition Hash",
+      "type": "string"
+    },
+    "partition_key": {
+      "minLength": 1,
+      "title": "Partition Key",
+      "type": "string"
+    },
+    "provenance_kind": {
+      "const": "DERIVED",
+      "default": "DERIVED",
+      "title": "Provenance Kind",
+      "type": "string"
+    },
+    "published_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Published At"
+    },
+    "quality_report_id": {
+      "title": "Quality Report Id",
+      "type": "string"
+    },
+    "quality_status": {
+      "const": "COMPLETE",
+      "default": "COMPLETE",
+      "title": "Quality Status",
+      "type": "string"
+    },
+    "revision": {
+      "minimum": 1,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "revision_kind": {
+      "$ref": "#/$defs/RevisionKind",
+      "default": "INITIAL"
+    },
+    "row_count": {
+      "minimum": 1,
+      "title": "Row Count",
+      "type": "integer"
+    },
+    "schema_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Schema Hash",
+      "type": "string"
+    },
+    "storage_ref": {
+      "$ref": "#/$defs/StorageRef"
+    },
+    "supersedes_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Supersedes Id"
+    }
+  },
+  "required": [
+    "canonical_partition_id",
+    "partition_key",
+    "revision",
+    "row_count",
+    "storage_ref",
+    "partition_hash",
+    "schema_hash",
+    "quality_report_id",
+    "lineage",
+    "created_at"
+  ],
+  "title": "DerivedCanonicalPartition",
+  "type": "object"
+}

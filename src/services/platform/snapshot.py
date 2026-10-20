@@ -14,6 +14,10 @@ from src.repositories.platform.canonical import CanonicalRepository
 from src.repositories.platform.provider import ProviderRegistryRepository
 from src.repositories.platform.raw_ingestion import RawIngestionRepository
 from src.repositories.platform.snapshot import SnapshotRepository
+from src.services.platform.provider_admission import (
+    ProviderAdmissionGateError,
+    ProviderEndpointAdmissionVerifier,
+)
 from src.schemas.platform import (
     BenchmarkIndexBar,
     CapabilityCertification,
@@ -483,6 +487,7 @@ class SnapshotGateService:
         canonical_repository: CanonicalRepository | None = None,
         raw_repository: RawIngestionRepository | None = None,
         provider_registry: ProviderRegistryRepository | None = None,
+        admission_verifier: ProviderEndpointAdmissionVerifier | None = None,
         clock: Callable[[], datetime] = _utc_now,
     ) -> None:
         self.database = database
@@ -490,6 +495,9 @@ class SnapshotGateService:
         self.canonical_repository = canonical_repository or CanonicalRepository()
         self.raw_repository = raw_repository or RawIngestionRepository()
         self.provider_registry = provider_registry or ProviderRegistryRepository()
+        self.admission_verifier = admission_verifier or ProviderEndpointAdmissionVerifier(
+            raw_repository=self.raw_repository
+        )
         self.clock = clock
         self.manifest_publisher = SnapshotManifestPublisher(runtime_root)
 
@@ -707,6 +715,21 @@ class SnapshotGateService:
                     "Provider capability is not available for the certified partition.",
                     details={"provider_run_id": run_id, "provider_id": run.provider_id},
                 )
+
+            try:
+                self.admission_verifier.verify_formal_run(
+                    session,
+                    run_id,
+                    target_market=run.capability_market,
+                    target_date=trade_date,
+                    cutoff_at=cutoff_at,
+                )
+            except ProviderAdmissionGateError as exc:
+                raise SnapshotGateError(
+                    exc.error_code,
+                    exc.public_message,
+                    details={"provider_run_id": run_id},
+                ) from exc
 
             required_rules = tuple(getattr(policy, "required_quality_rules", ()))
             if any(report.rule_results.get(rule_id) != "PASS" for rule_id in required_rules):

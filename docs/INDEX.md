@@ -50,6 +50,12 @@
 | [盘后数据采集与 Snapshot 发布 SLA v1](architecture/a-share-platform/data-ingestion-and-snapshot-sla.md) | 盘后采集、Provisional、Certified、Correction 和能力认证 |
 | [Feature Store 与指标注册中心架构 v1](architecture/a-share-platform/feature-store-architecture.md) | F1/F2/F3、依赖 DAG、PIT 和不可变 Manifest |
 | [市场情绪与资金行为架构 v1](architecture/a-share-platform/market-sentiment-and-capital-flow-architecture.md) | 市场宽度、五维情绪和资金证据 |
+| [WP-0303-PREP：市场宽度与情绪 F2](architecture/a-share-platform/WP-0303-PREP.md) | WP-0303 输入矩阵、契约决定、验收反例、BLOCKER 与实现启动边界 |
+| [WP-0303-B3：PIT 复权输入契约 PREP](architecture/a-share-platform/WP-0303-B3-ADJUSTMENT-CONTRACT-PREP.md) | 公司行动与派生 Factor/Method 差异、PIT/覆盖/公式/版本化与验收设计；仅文档，不关闭 B3 |
+| [WP-0303-B3：真实来源证据与接入差异 PREP](architecture/a-share-platform/WP-0303-B3-SOURCE-EVIDENCE-PREP.md) | D2 双源证据矩阵、D5/D6 接入差异、下一最小范围与 GO/CONDITIONAL_GO/NO_GO；仅文档，不关闭 B3 |
+| [WP-0303：a-stock-data Adapter Bundle 分层架构](architecture/a-share-platform/WP-0303-A-STOCK-DATA-ADAPTER-ARCHITECTURE.md) | 固定参考 commit、实际 Provider/Endpoint 身份、fallback/覆盖/PIT 门禁、B1—B4 候选映射及本地 C-004 Admission 基础设施；真实接入仍 NO_GO |
+| [WP-0303-FULL-INPUT-TO-FEATURE-CLOSEOUT Goal v2](architecture/a-share-platform/WP-0303-FULL-INPUT-TO-FEATURE-CLOSEOUT-GOAL.md) | 完整 Goal 不变；A—E 阶段重排，阶段 B 的四对象/0016/Formal 门禁已本地完成，阶段 C 真实 Endpoint 准入仍阻断 |
+| [WP-0303 受限实现与本地验收](architecture/a-share-platform/WP-0303-IMPLEMENTATION.md) | F2、算法/发布消费/Correction、C-004 Endpoint Admission 与 PostgreSQL/门禁证据；真实输入未闭合，IN_PROGRESS |
 | [板块观察与策略评分边界 v1](architecture/a-share-platform/sector-observation-and-strategy-scoring-architecture.md) | Taxonomy、独立榜单、规则事件和策略引用边界 |
 | [全球市场观察与 A 股策略隔离 v1](architecture/a-share-platform/global-market-observation-boundary.md) | 全球观察数据与 A 股正式策略的隔离规则 |
 

@@ -16,11 +16,19 @@ _SEMVER = re.compile(r"^(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(
 _IDENTIFIER = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
 _FREQUENCY = re.compile(r"^[a-z0-9][a-z0-9_./-]{0,31}$")
 _HASH = re.compile(r"^sha256:[0-9a-f]{64}$")
+INDICATOR_ID_MAX_LENGTH = 128
 
 
 def _identifier(value: str, field_name: str) -> str:
     if not _IDENTIFIER.fullmatch(value):
         raise ValueError(f"{field_name} must be a normalized lowercase identifier")
+    return value
+
+
+def _indicator_identifier(value: str) -> str:
+    # 保留 F1 名称，追加 C-006 点分命名空间；不放宽 Dataset/Capability/资源 ID。
+    if len(value) > INDICATOR_ID_MAX_LENGTH or not re.fullmatch(r"[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*", value):
+        raise ValueError("indicator_id must be a normalized indicator identifier")
     return value
 
 
@@ -128,14 +136,14 @@ class DatasetInputRef(PlatformContractModel):
 
 
 class IndicatorDependencyRef(PlatformContractModel):
-    indicator_id: str
+    indicator_id: str = Field(max_length=INDICATOR_ID_MAX_LENGTH)
     definition_version: str | None = None
     parameter_bindings: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator("indicator_id")
     @classmethod
     def validate_indicator_id(cls, value: str) -> str:
-        return _identifier(value, "indicator_id")
+        return _indicator_identifier(value)
 
     @field_validator("definition_version")
     @classmethod
@@ -152,7 +160,7 @@ class IndicatorDependencyRef(PlatformContractModel):
 class IndicatorDefinition(PlatformContractModel):
     """Immutable semantic contract for one versioned indicator definition."""
 
-    indicator_id: str
+    indicator_id: str = Field(max_length=INDICATOR_ID_MAX_LENGTH)
     name: str
     domain: str
     frequency: str
@@ -189,7 +197,7 @@ class IndicatorDefinition(PlatformContractModel):
     @field_validator("indicator_id")
     @classmethod
     def validate_indicator_id(cls, value: str) -> str:
-        return _identifier(value, "indicator_id")
+        return _indicator_identifier(value)
 
     @field_validator("owner")
     @classmethod
@@ -334,7 +342,7 @@ class IndicatorDefinition(PlatformContractModel):
 
 
 class FeatureInstanceKey(PlatformContractModel):
-    indicator_id: str
+    indicator_id: str = Field(max_length=INDICATOR_ID_MAX_LENGTH)
     definition_version: str
     canonical_parameter_json: str
     parameter_hash: str
@@ -344,7 +352,7 @@ class FeatureInstanceKey(PlatformContractModel):
     @field_validator("indicator_id")
     @classmethod
     def validate_indicator_id(cls, value: str) -> str:
-        return _identifier(value, "indicator_id")
+        return _indicator_identifier(value)
 
     @field_validator("definition_version")
     @classmethod
@@ -385,7 +393,7 @@ class FeatureInstanceKey(PlatformContractModel):
 
 
 class FeatureInstance(PlatformContractModel):
-    indicator_id: str
+    indicator_id: str = Field(max_length=INDICATOR_ID_MAX_LENGTH)
     definition_version: str | None = None
     parameters: dict[str, Any] = Field(default_factory=dict)
     universe_scope_hash: str | None = None
@@ -393,7 +401,7 @@ class FeatureInstance(PlatformContractModel):
     @field_validator("indicator_id")
     @classmethod
     def validate_indicator_id(cls, value: str) -> str:
-        return _identifier(value, "indicator_id")
+        return _indicator_identifier(value)
 
     @field_validator("definition_version")
     @classmethod

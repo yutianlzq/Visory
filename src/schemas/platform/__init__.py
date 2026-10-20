@@ -1,3 +1,4 @@
+from .adjustment import AdjustmentMethod, DerivedCanonicalPartition, DerivedDataSnapshot
 from .benchmark import BenchmarkIndexBar
 from .backfill import BackfillBatchProjection, BackfillBatchRequest, BackfillBatchType, BackfillStage, BackfillStageChainProjection, BackfillStageChainRequest, BackfillStatus, BackfillTaskRequirements
 from .canonical import (
@@ -119,6 +120,22 @@ from .provider_source import (
     ProviderSourceRouteEvidence,
     build_provider_source_route_evidence,
 )
+from .provider_admission import (
+    AdapterImplementationFingerprint,
+    EndpointDatasetBinding,
+    ProviderEndpointDefinition,
+    ProviderEndpointRunBinding,
+    SourceAdmissionReceipt,
+    build_adapter_implementation_fingerprint,
+    build_provider_endpoint_definition,
+    build_provider_endpoint_run_binding,
+    build_source_admission_receipt,
+    compute_actual_origin_hash,
+    compute_adapter_implementation_fingerprint,
+    compute_provider_endpoint_definition_hash,
+    compute_provider_endpoint_run_binding_hash,
+    compute_source_admission_receipt_hash,
+)
 from .provider_raw_schema import ProviderRawSchemaDefinition, build_provider_raw_schema_definition, compute_provider_raw_schema_hash
 from .raw_ingestion import (
     ProviderRun,
@@ -164,6 +181,9 @@ from .task import (
 from .versioning import PublicationMetadata, RevisionMetadata, TaskStateMetadata
 
 __all__ = [
+    "AdjustmentMethod",
+    "DerivedCanonicalPartition",
+    "DerivedDataSnapshot",
     "BenchmarkIndexBar",
     "BackfillBatchProjection",
     "BackfillBatchRequest",
@@ -247,12 +267,26 @@ __all__ = [
     "DatasetDefinition",
     "ProviderCapability",
     "ProviderDefinition",
+    "ProviderEndpointDefinition",
+    "ProviderEndpointRunBinding",
+    "AdapterImplementationFingerprint",
+    "EndpointDatasetBinding",
+    "SourceAdmissionReceipt",
     "ProviderRawSchemaDefinition",
     "ProviderPolicy",
     "ProviderSettingsProvider",
     "ProviderSettingsProjection",
     "build_provider_raw_schema_definition",
     "compute_provider_raw_schema_hash",
+    "build_adapter_implementation_fingerprint",
+    "build_provider_endpoint_definition",
+    "build_provider_endpoint_run_binding",
+    "build_source_admission_receipt",
+    "compute_actual_origin_hash",
+    "compute_adapter_implementation_fingerprint",
+    "compute_provider_endpoint_definition_hash",
+    "compute_provider_endpoint_run_binding_hash",
+    "compute_source_admission_receipt_hash",
     "ProviderCapabilityStatus",
     "ProviderKind",
     "ProviderMergeMode",

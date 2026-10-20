@@ -1,0 +1,212 @@
+{
+  "additionalProperties": false,
+  "description": "不可执行的受控 Method 规范；这里不计算任何复权因子。",
+  "properties": {
+    "action_whitelist": {
+      "default": [
+        "BONUS",
+        "DIVIDEND",
+        "SPLIT"
+      ],
+      "items": {
+        "enum": [
+          "DIVIDEND",
+          "BONUS",
+          "SPLIT"
+        ],
+        "type": "string"
+      },
+      "title": "Action Whitelist",
+      "type": "array"
+    },
+    "algorithm_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Algorithm Version",
+      "type": "string"
+    },
+    "backward_formula": {
+      "const": "H(B)=1;H(t)=product(1/q;B<ex<=t)",
+      "default": "H(B)=1;H(t)=product(1/q;B<ex<=t)",
+      "title": "Backward Formula",
+      "type": "string"
+    },
+    "bonus_formula": {
+      "const": "Q=P/(1+b);q=Q/P",
+      "default": "Q=P/(1+b);q=Q/P",
+      "title": "Bonus Formula",
+      "type": "string"
+    },
+    "bonus_unit": {
+      "const": "NEW_FREE_SHARES_PER_PRE_EVENT_SHARE",
+      "default": "NEW_FREE_SHARES_PER_PRE_EVENT_SHARE",
+      "title": "Bonus Unit",
+      "type": "string"
+    },
+    "cash_formula": {
+      "const": "Q=P-D;q=Q/P",
+      "default": "Q=P-D;q=Q/P",
+      "title": "Cash Formula",
+      "type": "string"
+    },
+    "cash_unit": {
+      "const": "PRE_TAX_CNY_PER_PRE_EVENT_SHARE",
+      "default": "PRE_TAX_CNY_PER_PRE_EVENT_SHARE",
+      "title": "Cash Unit",
+      "type": "string"
+    },
+    "combined_formula": {
+      "const": "Q=(P-sum(D))/(1+sum(b));q=Q/P",
+      "default": "Q=(P-sum(D))/(1+sum(b));q=Q/P",
+      "title": "Combined Formula",
+      "type": "string"
+    },
+    "coverage_policy": {
+      "const": "EXHAUSTIVE_PINNED_ACTION_SNAPSHOT_AND_RECEIPT",
+      "default": "EXHAUSTIVE_PINNED_ACTION_SNAPSHOT_AND_RECEIPT",
+      "title": "Coverage Policy",
+      "type": "string"
+    },
+    "decimal_encoding": {
+      "const": "FACTOR_FIXED_18_PARAMETERS_PLAIN_TRIMMED_ZERO_NORMALIZED",
+      "default": "FACTOR_FIXED_18_PARAMETERS_PLAIN_TRIMMED_ZERO_NORMALIZED",
+      "title": "Decimal Encoding",
+      "type": "string"
+    },
+    "direction": {
+      "default": "FORWARD_FIXED_ANCHOR",
+      "enum": [
+        "FORWARD_FIXED_ANCHOR",
+        "BACKWARD_FIXED_BASE"
+      ],
+      "title": "Direction",
+      "type": "string"
+    },
+    "event_order": {
+      "const": "EX_SESSION_GROUP_COMPONENT_ROLE_EVENT_REVISION",
+      "default": "EX_SESSION_GROUP_COMPONENT_ROLE_EVENT_REVISION",
+      "title": "Event Order",
+      "type": "string"
+    },
+    "execution_status": {
+      "const": "CONTRACT_ONLY",
+      "default": "CONTRACT_ONLY",
+      "title": "Execution Status",
+      "type": "string"
+    },
+    "formula_digest": {
+      "default": "",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Formula Digest",
+      "type": "string"
+    },
+    "forward_formula": {
+      "const": "F(t,A)=product(q;t<ex<=A)",
+      "default": "F(t,A)=product(q;t<ex<=A)",
+      "title": "Forward Formula",
+      "type": "string"
+    },
+    "method_contract_hash": {
+      "default": "",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Method Contract Hash",
+      "type": "string"
+    },
+    "method_contract_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Method Contract Version",
+      "type": "string"
+    },
+    "method_id": {
+      "const": "pit_price_continuity",
+      "default": "pit_price_continuity",
+      "title": "Method Id",
+      "type": "string"
+    },
+    "method_version": {
+      "default": "1.0.0",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Method Version",
+      "type": "string"
+    },
+    "missing_input_policy": {
+      "const": "FAIL_CLOSED_NOT_FACTOR_ONE",
+      "default": "FAIL_CLOSED_NOT_FACTOR_ONE",
+      "title": "Missing Input Policy",
+      "type": "string"
+    },
+    "numeric_failure_policy": {
+      "const": "REJECT_NONFINITE_NONPOSITIVE_OVERFLOW_OR_QUANTIZED_ZERO",
+      "default": "REJECT_NONFINITE_NONPOSITIVE_OVERFLOW_OR_QUANTIZED_ZERO",
+      "title": "Numeric Failure Policy",
+      "type": "string"
+    },
+    "operation_policy": {
+      "const": "CONTEXT_EACH_DIVISION_AND_SORTED_PRODUCT_QUANTIZE_OUTPUT_ONLY",
+      "default": "CONTEXT_EACH_DIVISION_AND_SORTED_PRODUCT_QUANTIZE_OUTPUT_ONLY",
+      "title": "Operation Policy",
+      "type": "string"
+    },
+    "output_scale": {
+      "default": 18,
+      "title": "Output Scale",
+      "type": "integer"
+    },
+    "pit_policy": {
+      "const": "SOURCE_PUBLISHED_LE_AVAILABLE_LE_CUTOFF_NO_BACKFILL",
+      "default": "SOURCE_PUBLISHED_LE_AVAILABLE_LE_CUTOFF_NO_BACKFILL",
+      "title": "Pit Policy",
+      "type": "string"
+    },
+    "precision": {
+      "default": 38,
+      "title": "Precision",
+      "type": "integer"
+    },
+    "price_source": {
+      "const": "PINNED_RAW_CLOSE_PREVIOUS_SESSION_NO_FILL",
+      "default": "PINNED_RAW_CLOSE_PREVIOUS_SESSION_NO_FILL",
+      "title": "Price Source",
+      "type": "string"
+    },
+    "return_semantics": {
+      "const": "PRICE_CONTINUITY_NOT_TOTAL_RETURN",
+      "default": "PRICE_CONTINUITY_NOT_TOTAL_RETURN",
+      "title": "Return Semantics",
+      "type": "string"
+    },
+    "revision_policy": {
+      "const": "HIGHEST_KNOWN_IN_PINNED_INPUT_RETAIN_CANCELLED_EVIDENCE",
+      "default": "HIGHEST_KNOWN_IN_PINNED_INPUT_RETAIN_CANCELLED_EVIDENCE",
+      "title": "Revision Policy",
+      "type": "string"
+    },
+    "rounding": {
+      "const": "ROUND_HALF_EVEN",
+      "default": "ROUND_HALF_EVEN",
+      "title": "Rounding",
+      "type": "string"
+    },
+    "same_day_policy": {
+      "const": "ONE_CONFIRMED_GROUP_COMMON_OLD_SHARE_BASIS",
+      "default": "ONE_CONFIRMED_GROUP_COMMON_OLD_SHARE_BASIS",
+      "title": "Same Day Policy",
+      "type": "string"
+    },
+    "split_formula": {
+      "const": "Q=P/s;q=Q/P",
+      "default": "Q=P/s;q=Q/P",
+      "title": "Split Formula",
+      "type": "string"
+    },
+    "split_unit": {
+      "const": "POST_SHARES_OVER_PRE_SHARES_GT_ONE",
+      "default": "POST_SHARES_OVER_PRE_SHARES_GT_ONE",
+      "title": "Split Unit",
+      "type": "string"
+    }
+  },
+  "title": "AdjustmentMethod",
+  "type": "object"
+}

@@ -33,6 +33,7 @@
           "type": "string"
         },
         "indicator_id": {
+          "maxLength": 128,
           "title": "Indicator Id",
           "type": "string"
         },

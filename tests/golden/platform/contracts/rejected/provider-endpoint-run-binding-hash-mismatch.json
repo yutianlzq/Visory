@@ -1,0 +1,27 @@
+{
+  "contract_id": "C-004/ProviderEndpointRunBinding",
+  "expected_error_fields": [],
+  "payload": {
+    "actual_origin_hash": "sha256:39c57b5e5abc3556596c573027585d588a4cfeba882c3400d4182990f2c8be18",
+    "actual_origin_redacted": "https://api.example.test/v1/bars/daily",
+    "adapter_implementation_fingerprint_id": "a_stock_data_bar_impl_v1",
+    "binding_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "created_at": "2026-01-01T00:00:00Z",
+    "dataset_id": "bar_1d_raw",
+    "dataset_schema_version": "1.0.0",
+    "endpoint_contract_version": "1.0.0",
+    "implementation_fingerprint": "sha256:1b758b4f1c62ea7c116f1f6c4948505fefde203c4f3e1a2621d77930fee19a6c",
+    "market": "CN",
+    "observed_schema_hash": "sha256:5f5d8f391846d9b430886a42035664b3f137a6d5cbe3b3a4333664aef3d389a1",
+    "provider_endpoint_id": "a_stock_data_bar_daily",
+    "provider_endpoint_run_binding_id": "binding_bar_cn_2026",
+    "provider_id": "a_stock_data",
+    "provider_run_id": "prun_019dbd74-2a00-7000-8000-000000000001",
+    "raw_object_refs": [
+      "raw_019dbd74-2a00-7000-8000-000000000001"
+    ],
+    "receipt_hash": "sha256:47775a51a560fd7e3a38a02550e703cdd377c29d935b7fcd1bb3f5e7d8e1c184",
+    "request_fingerprint": "sha256:d2fab5798f752f2f77d4f7b9854418c065c63f9cf917046bf63fc5525c1a1a44",
+    "source_admission_receipt_id": "receipt_bar_cn_2026"
+  }
+}

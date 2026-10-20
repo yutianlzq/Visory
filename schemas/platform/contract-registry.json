@@ -724,6 +724,87 @@
       ]
     },
     {
+      "business_key": "adapter_implementation_fingerprint_id",
+      "compatibility": "new fingerprints are append-only and never rewrite ProviderDefinition adapter versions",
+      "consumers": [
+        "ProviderEndpointRunBinding",
+        "Formal snapshot gate"
+      ],
+      "contract_id": "C-004/AdapterImplementationFingerprint",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/adapter-implementation-fingerprint.json",
+        "tests/golden/platform/contracts/rejected/adapter-implementation-fingerprint-hash-mismatch.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.AdapterImplementationFingerprint.schema.json",
+      "lineage_fields": [
+        "provider_endpoint_id",
+        "source_commit",
+        "implementation_fingerprint"
+      ],
+      "owner_module": "src.schemas.platform.provider_admission",
+      "producer": "Provider Endpoint Admission",
+      "quality_semantics": [
+        "commit, source bytes, function symbol, wrapper, Mapping and quality rules are revalidated"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL adapter_implementation_fingerprint",
+      "time_semantics": [
+        "created_at"
+      ],
+      "version_semantics": [
+        "adapter_bundle_version",
+        "endpoint_contract_version",
+        "visory_wrapper_version",
+        "mapping_version",
+        "quality_rule_versions"
+      ]
+    },
+    {
+      "business_key": "method_id,method_version",
+      "compatibility": "legacy PROVIDER payloads and hashes are unchanged; explicit DERIVED opt-in only",
+      "consumers": [
+        "offline contract tests"
+      ],
+      "contract_id": "C-004/AdjustmentMethod",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/adjustment-method.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [],
+        "profile_id": "adjustment_semantic_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.AdjustmentMethod.schema.json",
+      "lineage_fields": [
+        "method_contract_hash",
+        "formula_digest"
+      ],
+      "owner_module": "src.schemas.platform.adjustment",
+      "producer": "offline adjustment contract validation",
+      "quality_semantics": [
+        "fail-closed references, PIT and complete coverage; not certification"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "contract only; existing Canonical/Snapshot resource and storage namespace",
+      "time_semantics": [
+        "source availability is separate from platform audit clocks"
+      ],
+      "version_semantics": [
+        "explicit contract version and exact input versions"
+      ]
+    },
+    {
       "business_key": "benchmark_id + trade_date",
       "compatibility": "benchmark rows are independent from stock bar_1d_raw and cannot be coerced to stock entities",
       "consumers": [
@@ -1115,6 +1196,81 @@
       ]
     },
     {
+      "business_key": "dataset_id,dataset_schema_version,partition_key,revision",
+      "compatibility": "legacy PROVIDER payloads and hashes are unchanged; explicit DERIVED opt-in only",
+      "consumers": [
+        "offline contract tests"
+      ],
+      "contract_id": "C-004/DerivedCanonicalPartition",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/derived-canonical-partition.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [],
+        "profile_id": "adjustment_semantic_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.DerivedCanonicalPartition.schema.json",
+      "lineage_fields": [
+        "lineage.inputs",
+        "lineage.source_roots",
+        "lineage.quality_evidence",
+        "lineage.coverage_receipt",
+        "supersedes_id"
+      ],
+      "owner_module": "src.schemas.platform.adjustment",
+      "producer": "offline adjustment contract validation",
+      "quality_semantics": [
+        "fail-closed references, PIT and complete coverage; not certification"
+      ],
+      "resource_id_field": "canonical_partition_id",
+      "retention_class": "PINNED",
+      "schema_version": "2.0.0",
+      "storage_profile": "contract only; existing Canonical/Snapshot resource and storage namespace",
+      "time_semantics": [
+        "source availability is separate from platform audit clocks"
+      ],
+      "version_semantics": [
+        "explicit contract version and exact input versions"
+      ]
+    },
+    {
+      "business_key": "trade_date,cutoff_at,canonical_partitions,revision",
+      "compatibility": "legacy PROVIDER payloads and hashes are unchanged; explicit DERIVED opt-in only",
+      "consumers": [
+        "offline contract tests"
+      ],
+      "contract_id": "C-004/DerivedDataSnapshot",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/derived-data-snapshot.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [],
+        "profile_id": "adjustment_semantic_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.DerivedDataSnapshot.schema.json",
+      "lineage_fields": [
+        "canonical_partitions",
+        "supersedes_id"
+      ],
+      "owner_module": "src.schemas.platform.adjustment",
+      "producer": "offline adjustment contract validation",
+      "quality_semantics": [
+        "fail-closed references, PIT and complete coverage; not certification"
+      ],
+      "resource_id_field": "snapshot_id",
+      "retention_class": "PINNED",
+      "schema_version": "2.0.0",
+      "storage_profile": "contract only; existing Canonical/Snapshot resource and storage namespace",
+      "time_semantics": [
+        "source availability is separate from platform audit clocks"
+      ],
+      "version_semantics": [
+        "explicit contract version and exact input versions"
+      ]
+    },
+    {
       "business_key": "provider_id + dataset_id + mapping_version",
       "compatibility": "mapping rows are immutable and versioned",
       "consumers": [
@@ -1231,6 +1387,92 @@
       ],
       "version_semantics": [
         "adapter_version"
+      ]
+    },
+    {
+      "business_key": "provider_endpoint_id + provider_id + endpoint_contract_version",
+      "compatibility": "pure additive C-004 object; ProviderRun@1.0.0 and RawObject@1.0.0 remain byte-identical",
+      "consumers": [
+        "raw ingestion admission",
+        "Formal snapshot gate"
+      ],
+      "contract_id": "C-004/ProviderEndpointDefinition",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/provider-endpoint-definition.json",
+        "tests/golden/platform/contracts/rejected/provider-endpoint-definition-hash-mismatch.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.ProviderEndpointDefinition.schema.json",
+      "lineage_fields": [
+        "provider_id",
+        "dataset_bindings",
+        "definition_hash"
+      ],
+      "owner_module": "src.schemas.platform.provider_admission",
+      "producer": "Provider Endpoint Admission",
+      "quality_semantics": [
+        "request/response, pagination, zero-row, revision, retry and license semantics are immutable"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL provider_endpoint_definition",
+      "time_semantics": [
+        "effective_from",
+        "effective_to"
+      ],
+      "version_semantics": [
+        "endpoint_contract_version"
+      ]
+    },
+    {
+      "business_key": "provider_endpoint_run_binding_id + provider_run_id",
+      "compatibility": "legacy runs remain readable for Preview but cannot enter Formal without a binding",
+      "consumers": [
+        "Canonical/Snapshot lineage",
+        "Formal snapshot gate"
+      ],
+      "contract_id": "C-004/ProviderEndpointRunBinding",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/provider-endpoint-run-binding.json",
+        "tests/golden/platform/contracts/rejected/provider-endpoint-run-binding-hash-mismatch.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.ProviderEndpointRunBinding.schema.json",
+      "lineage_fields": [
+        "provider_run_id",
+        "raw_object_refs",
+        "adapter_implementation_fingerprint_id",
+        "source_admission_receipt_id",
+        "binding_hash"
+      ],
+      "owner_module": "src.schemas.platform.provider_admission",
+      "producer": "Provider Endpoint Admission",
+      "quality_semantics": [
+        "one ProviderRun binds one actual Endpoint and every RawObject exactly once"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL provider_endpoint_run_binding and raw-object join",
+      "time_semantics": [
+        "created_at"
+      ],
+      "version_semantics": [
+        "endpoint_contract_version",
+        "dataset_schema_version"
       ]
     },
     {
@@ -1703,6 +1945,53 @@
         "provider_policy_version",
         "revision",
         "revision_kind"
+      ]
+    },
+    {
+      "business_key": "source_admission_receipt_id",
+      "compatibility": "CURRENT_SNAPSHOT, HISTORICAL_SERIES and VERSIONED_ARCHIVE never imply PIT certification",
+      "consumers": [
+        "ProviderEndpointRunBinding",
+        "Formal snapshot gate"
+      ],
+      "contract_id": "C-004/SourceAdmissionReceipt",
+      "golden_payloads": [
+        "tests/golden/platform/contracts/success/source-admission-receipt.json",
+        "tests/golden/platform/contracts/rejected/source-admission-receipt-hash-mismatch.json"
+      ],
+      "hash_profile": {
+        "excluded_fields": [
+          "content_hash"
+        ],
+        "profile_id": "platform_canonical_json_1.0.0",
+        "unordered_array_paths": []
+      },
+      "json_schema_file": "C-004.SourceAdmissionReceipt.schema.json",
+      "lineage_fields": [
+        "provider_endpoint_id",
+        "dataset_id",
+        "receipt_hash"
+      ],
+      "owner_module": "src.schemas.platform.provider_admission",
+      "producer": "Provider Endpoint Admission",
+      "quality_semantics": [
+        "only an accepted, effective, in-scope PIT_CERTIFIED receipt can admit Formal input"
+      ],
+      "resource_id_field": null,
+      "retention_class": "PINNED",
+      "schema_version": "1.0.0",
+      "storage_profile": "PostgreSQL source_admission_receipt",
+      "time_semantics": [
+        "requested_date_from",
+        "requested_date_to",
+        "issued_at",
+        "valid_from",
+        "valid_to"
+      ],
+      "version_semantics": [
+        "endpoint_contract_version",
+        "dataset_schema_version",
+        "admission_level"
       ]
     },
     {

@@ -12,6 +12,7 @@ import pytest
 from src.artifacts.hashing import compute_bytes_hash
 from src.services.platform.canonical_normalization import deterministic_manifest_hash
 from src.services.platform.snapshot import SnapshotCapabilityEngine, SnapshotGateError, SnapshotGateService, SnapshotManifestPublisher
+from tests.platform._provider_admission_support import synthetic_admission_verifier, synthetic_source_route
 from src.schemas.platform import (
     BenchmarkIndexBar,
     CapabilityCertification,
@@ -462,6 +463,7 @@ class _PersistedRawRepository:
                     started_at=snapshot.cutoff_at,
                     finished_at=snapshot.cutoff_at,
                 )
+                self.runs[run_id].source_route_evidence = synthetic_source_route(self.runs[run_id])
             for raw_id in ref.raw_object_refs:
                 self.raws[raw_id] = SimpleNamespace(
                     raw_object_id=raw_id,
@@ -733,12 +735,19 @@ def test_formal_consumer_requires_registered_snapshot_and_capability_evidence() 
     snapshot, certifications, requirement = _certified_snapshot_fixture()
     repository = _PersistedSnapshotRepository(snapshot, certifications, requirement)
     canonical, raw, registry = _persisted_lineage_repositories(snapshot)
+    admission = synthetic_admission_verifier(
+        runs=raw.runs.values(),
+        raw_repository=raw,
+        cutoff_at=snapshot.cutoff_at,
+        admission_level="PIT_CERTIFIED",
+    )
     service = SnapshotGateService(
         _FakeDatabase(),
         repository=repository,
         canonical_repository=canonical,
         raw_repository=raw,
         provider_registry=registry,
+        admission_verifier=admission,
         clock=lambda: datetime(2026, 8, 31, 9, tzinfo=timezone.utc),
     )
     service._validate_persisted_snapshot_files = lambda snapshot: None

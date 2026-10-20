@@ -1,0 +1,41 @@
+{
+  "contract_id": "C-004/AdjustmentMethod",
+  "payload": {
+    "method_contract_version": "1.0.0",
+    "method_id": "pit_price_continuity",
+    "method_version": "1.0.0",
+    "algorithm_version": "1.0.0",
+    "execution_status": "CONTRACT_ONLY",
+    "return_semantics": "PRICE_CONTINUITY_NOT_TOTAL_RETURN",
+    "action_whitelist": [
+      "BONUS",
+      "DIVIDEND",
+      "SPLIT"
+    ],
+    "cash_unit": "PRE_TAX_CNY_PER_PRE_EVENT_SHARE",
+    "bonus_unit": "NEW_FREE_SHARES_PER_PRE_EVENT_SHARE",
+    "split_unit": "POST_SHARES_OVER_PRE_SHARES_GT_ONE",
+    "price_source": "PINNED_RAW_CLOSE_PREVIOUS_SESSION_NO_FILL",
+    "cash_formula": "Q=P-D;q=Q/P",
+    "bonus_formula": "Q=P/(1+b);q=Q/P",
+    "split_formula": "Q=P/s;q=Q/P",
+    "combined_formula": "Q=(P-sum(D))/(1+sum(b));q=Q/P",
+    "same_day_policy": "ONE_CONFIRMED_GROUP_COMMON_OLD_SHARE_BASIS",
+    "direction": "FORWARD_FIXED_ANCHOR",
+    "forward_formula": "F(t,A)=product(q;t<ex<=A)",
+    "backward_formula": "H(B)=1;H(t)=product(1/q;B<ex<=t)",
+    "precision": 38,
+    "output_scale": 18,
+    "rounding": "ROUND_HALF_EVEN",
+    "operation_policy": "CONTEXT_EACH_DIVISION_AND_SORTED_PRODUCT_QUANTIZE_OUTPUT_ONLY",
+    "decimal_encoding": "FACTOR_FIXED_18_PARAMETERS_PLAIN_TRIMMED_ZERO_NORMALIZED",
+    "numeric_failure_policy": "REJECT_NONFINITE_NONPOSITIVE_OVERFLOW_OR_QUANTIZED_ZERO",
+    "event_order": "EX_SESSION_GROUP_COMPONENT_ROLE_EVENT_REVISION",
+    "pit_policy": "SOURCE_PUBLISHED_LE_AVAILABLE_LE_CUTOFF_NO_BACKFILL",
+    "revision_policy": "HIGHEST_KNOWN_IN_PINNED_INPUT_RETAIN_CANCELLED_EVIDENCE",
+    "coverage_policy": "EXHAUSTIVE_PINNED_ACTION_SNAPSHOT_AND_RECEIPT",
+    "missing_input_policy": "FAIL_CLOSED_NOT_FACTOR_ONE",
+    "formula_digest": "sha256:fb4b987fa43044a80ddad0bb47847080448c89fd7877940a69b6fc90d56b4555",
+    "method_contract_hash": "sha256:9b4faf1e0fad5f1a5ec0828d255c87efd1155535b90c1eba0f510bf5dec07f25"
+  }
+}

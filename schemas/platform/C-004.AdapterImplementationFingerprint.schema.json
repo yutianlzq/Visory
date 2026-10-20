@@ -1,0 +1,126 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "adapter_bundle_id": {
+      "title": "Adapter Bundle Id",
+      "type": "string"
+    },
+    "adapter_bundle_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Adapter Bundle Version",
+      "type": "string"
+    },
+    "adapter_implementation_fingerprint_id": {
+      "title": "Adapter Implementation Fingerprint Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "endpoint_contract_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Endpoint Contract Version",
+      "type": "string"
+    },
+    "function_symbol": {
+      "title": "Function Symbol",
+      "type": "string"
+    },
+    "implementation_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Implementation Fingerprint",
+      "type": "string"
+    },
+    "mapping_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Mapping Hash",
+      "type": "string"
+    },
+    "mapping_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Mapping Version",
+      "type": "string"
+    },
+    "provider_endpoint_id": {
+      "title": "Provider Endpoint Id",
+      "type": "string"
+    },
+    "provider_id": {
+      "title": "Provider Id",
+      "type": "string"
+    },
+    "quality_rule_hashes": {
+      "items": {
+        "pattern": "^sha256:[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "title": "Quality Rule Hashes",
+      "type": "array"
+    },
+    "quality_rule_versions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Quality Rule Versions",
+      "type": "array"
+    },
+    "source_commit": {
+      "title": "Source Commit",
+      "type": "string"
+    },
+    "source_file_blob_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Source File Blob Sha256",
+      "type": "string"
+    },
+    "source_file_path": {
+      "title": "Source File Path",
+      "type": "string"
+    },
+    "source_file_sha256": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Source File Sha256",
+      "type": "string"
+    },
+    "source_repository": {
+      "title": "Source Repository",
+      "type": "string"
+    },
+    "visory_wrapper_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Visory Wrapper Hash",
+      "type": "string"
+    },
+    "visory_wrapper_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "title": "Visory Wrapper Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "adapter_implementation_fingerprint_id",
+    "provider_endpoint_id",
+    "provider_id",
+    "endpoint_contract_version",
+    "adapter_bundle_id",
+    "adapter_bundle_version",
+    "source_repository",
+    "source_commit",
+    "source_file_path",
+    "source_file_blob_sha256",
+    "source_file_sha256",
+    "function_symbol",
+    "visory_wrapper_version",
+    "visory_wrapper_hash",
+    "mapping_version",
+    "mapping_hash",
+    "quality_rule_versions",
+    "quality_rule_hashes",
+    "created_at",
+    "implementation_fingerprint"
+  ],
+  "title": "AdapterImplementationFingerprint",
+  "type": "object"
+}

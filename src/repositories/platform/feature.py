@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import BigInteger, Column, Date, DateTime, Index, Integer, MetaData, Numeric, String, Table, func, insert, select, update
+from sqlalchemy import BigInteger, Column, Date, DateTime, Index, Integer, MetaData, Numeric, String, Table, func, insert, inspect, select, text, update
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
 
@@ -22,17 +22,20 @@ from src.schemas.platform import (
     StorageRef,
 )
 
+from src.schemas.platform.indicator import INDICATOR_ID_MAX_LENGTH
+from src.schemas.platform.feature import FEATURE_PARTITION_KEY_MAX_LENGTH
+
 metadata = MetaData()
 
 feature_partition = Table(
     "feature_partition",
     metadata,
     Column("feature_partition_id", String(64), primary_key=True),
-    Column("indicator_id", String(64), nullable=False),
+    Column("indicator_id", String(INDICATOR_ID_MAX_LENGTH), nullable=False),
     Column("definition_version", String(32), nullable=False),
     Column("domain", String(64), nullable=False),
     Column("frequency", String(32), nullable=False),
-    Column("partition_key", String(255), nullable=False),
+    Column("partition_key", String(FEATURE_PARTITION_KEY_MAX_LENGTH), nullable=False),
     Column("data_snapshot_ids", JSONB, nullable=False),
     Column("input_partition_ids", JSONB, nullable=False),
     Column("universe_scope_hash", String(71)),
@@ -113,7 +116,7 @@ feature_snapshot_partition_ref = Table(
     Column("relative_path", String(1024), nullable=False),
     Column("media_type", String(255), nullable=False),
     Column("size_bytes", BigInteger, nullable=False),
-    Column("indicator_id", String(64), nullable=False),
+    Column("indicator_id", String(INDICATOR_ID_MAX_LENGTH), nullable=False),
     Column("definition_version", String(32), nullable=False),
     Column("required_columns", JSONB, nullable=False),
     Column("retention_class", String(32), nullable=False),
@@ -150,7 +153,7 @@ feature_bundle_partition_ref = Table(
     Column("relative_path", String(1024), nullable=False),
     Column("media_type", String(255), nullable=False),
     Column("size_bytes", BigInteger, nullable=False),
-    Column("indicator_id", String(64), nullable=False),
+    Column("indicator_id", String(INDICATOR_ID_MAX_LENGTH), nullable=False),
     Column("definition_version", String(32), nullable=False),
     Column("required_columns", JSONB, nullable=False),
     Column("retention_class", String(32), nullable=False),
@@ -314,6 +317,8 @@ def _validate_partition_lineage(session: Session, record: FeaturePartition) -> N
 
 
 def _validate_snapshot_publication(session: Session, record: FeatureSnapshot) -> None:
+    from src.services.platform.market_sentiment import validate_market_publication
+    validate_market_publication(record, ConsumerKind.PREVIEW)
     partitions = tuple(
         FeatureRepository.get_partition(session, ref.feature_partition_id)
         for ref in record.feature_partition_refs
@@ -390,6 +395,9 @@ def _validate_bundle(session: Session, record: FeatureBundle) -> None:
     if any(snapshot is None for snapshot in snapshots):
         raise ValueError("feature bundle references a missing snapshot")
     persisted_snapshots = tuple(snapshot for snapshot in snapshots if snapshot is not None)
+    from src.services.platform.market_sentiment import validate_market_publication
+    for snapshot in persisted_snapshots:
+        validate_market_publication(snapshot, record.consumer_kind)
     if any(snapshot.publication_status is PublicationStatus.DRAFT or snapshot.published_at is None for snapshot in persisted_snapshots):
         raise ValueError("feature bundle references an unpublished snapshot")
     if record.consumer_kind is ConsumerKind.FORMAL_BACKTEST and any(
@@ -435,7 +443,43 @@ class FeatureRepository:
     """PostgreSQL control-plane persistence for immutable Feature artifacts."""
 
     @staticmethod
+    def validate_indicator_ids(
+        session: Session, indicator_ids: tuple[str, ...], *, partition_keys: tuple[str, ...] = (),
+    ) -> None:
+        """在当前事务锁下核验指标及其派生键的真实列宽，不信任 Python metadata。"""
+        required_length = max((len(value) for value in indicator_ids), default=0)
+        if required_length > INDICATOR_ID_MAX_LENGTH:
+            raise ValueError(f"indicator_id exceeds the {INDICATOR_ID_MAX_LENGTH} character contract")
+        required_key_length = max((len(value) for value in partition_keys), default=0)
+        if required_key_length > FEATURE_PARTITION_KEY_MAX_LENGTH:
+            raise ValueError(f"partition_key exceeds the {FEATURE_PARTITION_KEY_MAX_LENGTH} character contract")
+        # 与后继 migration 的表锁互斥；写入/Store 文件发布期间不得并发缩列。
+        session.execute(text(
+            "LOCK TABLE feature_partition, feature_snapshot_partition_ref, "
+            "feature_bundle_partition_ref IN ROW EXCLUSIVE MODE"
+        ))
+        inspector = inspect(session.connection())
+        for table in (feature_partition, feature_snapshot_partition_ref, feature_bundle_partition_ref):
+            columns = inspector.get_columns(table.name)
+            column = next((item for item in columns if item["name"] == "indicator_id"), None)
+            actual_length = getattr(column["type"], "length", None) if column is not None else None
+            if not isinstance(actual_length, int) or actual_length < required_length:
+                raise ValueError(
+                    f"existing PostgreSQL indicator_id limit in {table.name} cannot accept this publication; "
+                    "apply the authorized indicator_id migration first"
+                )
+            if table is feature_partition and partition_keys:
+                key_column = next((item for item in columns if item["name"] == "partition_key"), None)
+                key_length = getattr(key_column["type"], "length", None) if key_column is not None else None
+                if not isinstance(key_length, int) or key_length < required_key_length:
+                    raise ValueError(
+                        "existing PostgreSQL partition_key limit cannot accept this publication; "
+                        "apply the authorized partition_key migration first"
+                    )
+
+    @staticmethod
     def add_partition(session: Session, record: FeaturePartition) -> None:
+        FeatureRepository.validate_indicator_ids(session, (record.indicator_id,), partition_keys=(record.partition_key,))
         _validate_partition_lineage(session, record)
         session.execute(insert(feature_partition).values(**_partition_values(record)))
 
@@ -449,6 +493,7 @@ class FeatureRepository:
 
     @staticmethod
     def add_snapshot(session: Session, record: FeatureSnapshot) -> None:
+        FeatureRepository.validate_indicator_ids(session, tuple(ref.indicator_id for ref in record.feature_partition_refs))
         _validate_refs(session, record.feature_partition_refs)
         _validate_snapshot_publication(session, record)
         _validate_snapshot_lineage(session, record)
@@ -473,6 +518,7 @@ class FeatureRepository:
 
     @staticmethod
     def add_bundle(session: Session, record: FeatureBundle) -> None:
+        FeatureRepository.validate_indicator_ids(session, tuple(ref.indicator_id for ref in record.required_partition_refs))
         _validate_refs(session, record.required_partition_refs)
         _validate_bundle(session, record)
         session.execute(insert(feature_bundle).values(**_bundle_values(record)))

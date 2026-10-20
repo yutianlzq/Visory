@@ -314,6 +314,8 @@ class DataSnapshot(PlatformContractModel):
 
     @model_validator(mode="after")
     def validate_snapshot(self) -> "DataSnapshot":
+        if self.manifest_version != "1.0.0":
+            raise ValueError("unsupported PROVIDER manifest_version")
         if self.available_at > self.cutoff_at:
             raise ValueError("available_at must not exceed cutoff_at")
         if self.published_at is not None and self.published_at < self.created_at:

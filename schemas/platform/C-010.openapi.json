@@ -3195,6 +3195,7 @@
             "type": "string"
           },
           "indicator_id": {
+            "maxLength": 128,
             "title": "Indicator Id",
             "type": "string"
           },
@@ -3237,6 +3238,7 @@
             "type": "string"
           },
           "partition_key": {
+            "maxLength": 386,
             "title": "Partition Key",
             "type": "string"
           },
@@ -3366,6 +3368,7 @@
             "type": "string"
           },
           "indicator_id": {
+            "maxLength": 128,
             "title": "Indicator Id",
             "type": "string"
           },

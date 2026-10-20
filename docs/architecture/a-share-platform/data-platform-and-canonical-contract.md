@@ -2,13 +2,13 @@
 
 状态：已确认（Design Approved）
 
-最后更新：2026-08-28
+最后更新：2026-10-15
 
 ## 1. 决策摘要
 
 平台第一版数据策略固定为：
 
-- a-stock-data 是 A 股核心数据源和主要数据能力参考；
+- a-stock-data 是固定 Adapter Bundle 和主要数据能力参考；实际生产核心源按 Provider/Endpoint 独立注册、运行和认证；
 - Financial-API 是补充源、交叉校验源和核心源不可用时的受控灾备；
 - 平台不直接把外部项目的数据结构当成内部事实，所有数据必须经过 Provider Adapter、身份解析、Canonical Schema、质量门禁和不可变 DataSnapshot；
 - A股股票在`asset_type=stock`上下文中以带交易所前缀的`canonical_id`作为唯一规范代码，例如`sh600519`、`sz000001`；跨资产类型和跨域关联使用`entity_key=stock:<canonical_id>`；
@@ -20,15 +20,18 @@
 
 ## 2. 数据源职责
 
-### 2.1 a-stock-data 核心源
+### 2.1 a-stock-data Adapter Bundle 与实际核心源
 
-a-stock-data 聚合多个公开数据源，覆盖行情、财务、估值、ST/停牌、上市退市、行业变迁、资金流、板块、龙虎榜、题材、公告、新闻和宏观数据。平台复用其数据源选择、接口适配和降级经验，但生产实现必须：
+a-stock-data 聚合多个公开数据源，覆盖行情、财务、估值、ST/停牌、上市退市、行业变迁、资金流、板块、龙虎榜、题材、公告、新闻和宏观数据。平台复用其数据源选择、接口适配和降级经验，但把固定仓库版本视为 **Adapter Bundle / 实现指纹**，不把腾讯、通达信、东财、巨潮、BaoStock、新浪和交易所等不同来源合并成一个可认证的生产 Provider。详细版本和 WP-0303 接入边界见 [a-stock-data Adapter Bundle 分层架构](WP-0303-A-STOCK-DATA-ADAPTER-ARCHITECTURE.md)。生产实现必须：
 
 1. 把需要的能力迁移到平台 Provider Adapter；
 2. 固定代码或契约版本，不在运行时执行远端可变 Skill 文本；
-3. 保存实际上游来源，例如 `mootdx`、`tencent`、`eastmoney`、`baostock`，不能只保存聚合项目名；
+3. 为实际上游和 Endpoint 建立稳定版本化身份，例如 `tencent_finance`、`tdx_official_package`、`eastmoney_push2ex`、`cninfo`、`baostock`；`ProviderRun.actual_upstream` 仍保存脱敏 origin，但自由文本本身不能替代 Provider/Endpoint 注册；
 4. 为每个数据集单独声明主源和备源，禁止一个全局优先级覆盖所有数据；
-5. 外部接口结构变化时先进入隔离区，不能直接写入 Canonical 层。
+5. 来源 fallback 必须结束原 ProviderRun 并创建独立的新 Run/Raw/Partition/QualityReport，不能在同一成功运行内只改 `actual_upstream` 或把异常空数组解释为真实零行；
+6. 外部接口结构变化时先进入隔离区，不能直接写入 Canonical 层。
+
+现有 `a_stock_data@1.0.0` Provider/Golden/Policy 是兼容基线和本地 `UNVERIFIED` 契约，继续保留且不原地改写。新正式数据集必须追加实际 Provider/Endpoint 版本；只有 Adapter Bundle commit 或 `provider_id=a_stock_data` 不足以通过 PIT、覆盖和修订门禁。
 
 ### 2.2 Financial-API 补充源
 
@@ -36,7 +39,7 @@ Financial-API 用于：
 
 - 补充股票目录、交易日历、日K、公司行动、复权、财务、指数和板块数据；
 - 对核心行情、公司行动、交易日历和财务字段进行交叉校验；
-- a-stock-data 对应能力不可用或质量不合格时，按数据集策略执行受控灾备；
+- 当前数据集的主 Provider Endpoint 不可用或质量不合格时，按版本化策略执行受控灾备；
 - 利用全市场文件或本地数据库能力完成批量补数，但输出仍须转换为平台 Canonical Schema。
 
 Financial-API 的凭据、权限和调用额度属于 Provider 配置，不进入策略、回测 Manifest 或普通诊断页面；Manifest 只保存非敏感 Provider、能力和版本信息。
@@ -134,6 +137,8 @@ verification_status
 | `news_announcement` | a-stock-data公告/新闻能力 | 其他已批准Provider | 不进入价格真源 |
 
 矩阵是第一版默认。每次修改主备、字段口径或允许的降级路径都必须提升 `ProviderPolicy` 版本，不能只修改配置顺序。
+
+表中的“a-stock-data能力”表示由其固定实现参考定位到、并已单独注册和认证的实际 Provider Endpoint，不表示整个 Adapter Bundle 共用一个 Capability、Schema 或历史证据等级。
 
 ## 5. 物理分层
 
@@ -353,7 +358,7 @@ Certified DataSnapshot
 ```text
 交易日收盘
   → 等待至16:00
-  → a-stock-data核心采集
+  → 通过固定 Adapter Bundle 运行实际主 Provider Endpoint
   → 身份/Schema/质量校验
   → Financial-API抽样或全量交叉校验
   → 差异隔离与重试
@@ -405,7 +410,7 @@ BacktestRun
 2. 裸`000001`不会被数据采集链误写入`sh000001`指数桶；
 3. 股票、指数和ETF不能共享同一Canonical事实分区；
 4. Provider Symbol冲突时任务失败而非最后写入覆盖；
-5. a-stock-data内部实际使用的上游可以追溯；
+5. 实际 Provider/Endpoint、脱敏 origin 和 Adapter Bundle 实现指纹均可追溯；
 6. Financial-API补数创建新分区和新Snapshot；
 7. 双源关键字段冲突不取平均且不能发布Certified Snapshot；
 8. 未复权价格、公司行动和复权派生结果可以逐日复算；
@@ -429,7 +434,7 @@ BacktestRun
 
 ### Phase D1：核心日线事实
 
-- 实现a-stock-data核心Adapter；
+- 以固定 a-stock-data Adapter Bundle 实现首批实际 Provider Endpoint Adapter；
 - 建立Security、Calendar、Bar、Status和RawObject Schema；
 - 接入Financial-API交叉校验；
 - 生成首个Certified DataSnapshot。

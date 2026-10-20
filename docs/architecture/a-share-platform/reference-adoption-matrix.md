@@ -21,7 +21,7 @@
 | daily_stock_analysis | `base_upstream` | `migration` | React/FastAPI 平台壳、LLM、报告、通知、历史和测试经验 | 将 SQLite、内存任务或旧数据口径直接视为目标实现 | WP-0003、WP-0103、WP-0501～0505、WP-0701、WP-0703、WP-0802 |
 | Hikyuu | `runtime_dependency`，唯一正式回测引擎 | `dependency` | 回测、组合、市场模拟和结果接口 | 成为事实/特征唯一存储；产生第二套 FORMAL 内核 | WP-0305、WP-0602～0607 |
 | Fleur | `design_reference` | `design_reference` | 分层建模、契约、幂等任务、五阶段回测思想 | 引入完整 Rust/NATS/Dagster/ClickHouse/RustFS 运行栈 | WP-0001、WP-0103、WP-0201～0204、WP-0301～0302、WP-0604 |
-| a-stock-data | `primary_data_provider_reference` | `adapter` | 核心数据能力、限流、fallback 和 Provider 经验 | 将外部 Schema 直接作为 Canonical 事实 | WP-0201～0205 |
+| a-stock-data | `adapter_bundle_reference` | `adapter` | 实际来源发现、端点实现、限流、完整性检查和 fallback 经验 | 将 Adapter Bundle 当统一生产 Provider、将外部 Schema 直接作为 Canonical 事实、在同一 Run 内静默换源 | WP-0201～0205、WP-0303 |
 | Financial-API | `supplementary_data_provider_reference` | `adapter` | 补充、校验和批量灾备能力 | 静默逐行混合双源；暴露 API Key | WP-0201～0205 |
 | Vibe-Research | `market_observation_and_ui_reference` | `clean_reimplementation` | 市场、板块、复盘和页面信息架构 | 运行第二套应用或绕过统一事实口径 | WP-0401～0405、WP-0501、WP-0505 |
 | Sequoia-X | `strategy_reference` | `clean_reimplementation` | 首批策略方法和测试反例 | 直接执行任意 Python 策略；复用其 SQLite 为正式事实 | WP-0601～0603 |
